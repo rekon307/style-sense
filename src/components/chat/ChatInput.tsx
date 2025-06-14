@@ -47,13 +47,13 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
     }
   };
 
-  const handleAutomaticSend = (finalTranscript: string) => {
-    console.log('Auto-sending voice message:', finalTranscript);
+  const handleCognitiveAutoSend = (finalTranscript: string) => {
+    console.log('Alex cognitive auto-send:', finalTranscript);
     
     const capturedPhoto = capturePhotoFromWebcam();
     onSendMessage(finalTranscript, capturedPhoto, temperature);
     
-    // Clear the text area after auto-send
+    // Clear the text area after cognitive auto-send
     setMessage("");
   };
 
@@ -88,15 +88,15 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
   };
 
-  const toggleListening = () => {
+  const toggleCognitiveListening = () => {
     if (isListening) {
       stopListening();
     } else {
-      startListening(handleAutomaticSend);
+      startListening(handleCognitiveAutoSend);
     }
   };
 
-  // Use live transcript when listening, otherwise use typed message
+  // Enhanced UI for cognitive mode
   const currentMessage = isListening ? liveTranscript : message;
   const isInputDisabled = isAnalyzing || isListening;
 
@@ -111,15 +111,15 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
             onKeyPress={handleKeyPress}
             placeholder={
               isListening 
-                ? "Alex ascultă... vorbește natural" 
+                ? "Alex analizează în timp real... vorbește natural" 
                 : isAnalyzing 
-                ? "Alex analizează..." 
+                ? "Alex procesează cu arhitectura cognitivă..." 
                 : "Întreabă pe Alex despre stilul tău..."
             }
             disabled={isInputDisabled}
-            className={`min-h-[44px] max-h-[120px] resize-none pr-16 transition-colors ${
+            className={`min-h-[44px] max-h-[120px] resize-none pr-16 transition-all duration-300 ${
               isListening 
-                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600' 
+                ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-300 dark:border-blue-600 shadow-lg' 
                 : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
             }`}
             style={{ height: 'auto' }}
@@ -130,11 +130,11 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
               type="button"
               variant="ghost"
               size="sm"
-              onClick={toggleListening}
+              onClick={toggleCognitiveListening}
               disabled={isAnalyzing}
-              className={`absolute right-2 top-2 h-7 w-7 p-0 transition-all ${
+              className={`absolute right-2 top-2 h-7 w-7 p-0 transition-all duration-300 ${
                 isListening 
-                  ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300' 
+                  ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 animate-pulse' 
                   : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
@@ -150,12 +150,16 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
         <Button 
           type="submit" 
           disabled={isAnalyzing || isListening || (!currentMessage.trim())}
-          className="h-11 px-4 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+          className={`h-11 px-4 transition-all duration-300 ${
+            isAnalyzing 
+              ? 'bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse' 
+              : 'bg-blue-600 hover:bg-blue-700'
+          } text-white disabled:opacity-50`}
         >
           {isAnalyzing ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              <span className="text-sm">Analizez...</span>
+              <span className="text-sm">Alex gândește...</span>
             </div>
           ) : (
             <Send className="h-4 w-4" />

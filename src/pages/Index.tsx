@@ -6,7 +6,7 @@ import ChatHistory from "@/components/ChatHistory";
 import AuthButton from "@/components/AuthButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { PanelLeft, PanelLeftClose, Sparkles } from "lucide-react";
+import { PanelLeft, PanelLeftClose, Sparkles, Cpu } from "lucide-react";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -40,9 +40,20 @@ const Index = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showChatHistory, setShowChatHistory] = useState(true);
 
+  // Enhanced cognitive message handler
+  const handleCognitiveMessage = (message: string, image?: string | null, temperature?: number) => {
+    console.log('=== ALEX COGNITIVE PROCESSING ===');
+    console.log('Message:', message);
+    console.log('Has image:', !!image);
+    console.log('Cognitive Temperature:', temperature);
+    console.log('Chain-of-Thought Mode: Active');
+    
+    handleSendMessage(message, image, temperature);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
-      {/* Header */}
+      {/* Enhanced Header with Cognitive Indicators */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-4">
@@ -64,11 +75,19 @@ const Index = ({
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600">
                   <Sparkles className="h-5 w-5 text-white" />
                 </div>
-                <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-green-500 dark:border-slate-900"></div>
+                <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-green-500 dark:border-slate-900">
+                  <Cpu className="h-2 w-2 text-white m-0.5" />
+                </div>
               </div>
               <div>
-                <h1 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">AI Style</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Powered by Lovable</p>
+                <h1 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+                  AI Style - Alex
+                </h1>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Cognitive Architecture</p>
+                  <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></div>
+                  <p className="text-xs text-green-600 dark:text-green-400">Active</p>
+                </div>
               </div>
             </div>
           </div>
@@ -105,7 +124,7 @@ const Index = ({
               <StyleAdvice 
                 messages={messages} 
                 isAnalyzing={isAnalyzing}
-                onSendMessage={handleSendMessage}
+                onSendMessage={handleCognitiveMessage}
                 selectedModel={selectedModel}
                 onModelChange={onModelChange}
               />

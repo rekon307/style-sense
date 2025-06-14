@@ -37,13 +37,13 @@ export const useVoiceRecording = () => {
       recognition.lang = 'ro-RO';
 
       recognition.onstart = () => {
-        console.log('Voice recognition started - real-time mode');
+        console.log('Alex is listening - real-time cognitive mode');
         setIsListening(true);
         setLiveTranscript('');
         
         toast({
           title: "Alex ascultă în timp real",
-          description: "Vorbește natural. Textul va apărea pe măsură ce vorbești.",
+          description: "Vorbește natural. Alex analizează continuu cu arhitectura sa cognitivă.",
         });
       };
 
@@ -69,12 +69,12 @@ export const useVoiceRecording = () => {
           pauseTimerRef.current = null;
         }
 
-        // Smart pause detection - 1.5 seconds of silence
+        // Enhanced smart pause detection - 1.5 seconds for cognitive processing
         if (fullTranscript.trim()) {
           pauseTimerRef.current = setTimeout(() => {
             const currentTranscript = fullTranscript.trim();
             if (currentTranscript && onSpeechEndRef.current) {
-              console.log('Speech pause detected, auto-sending:', currentTranscript);
+              console.log('Cognitive pause detected, processing:', currentTranscript);
               stopListening();
               onSpeechEndRef.current(currentTranscript);
             }
