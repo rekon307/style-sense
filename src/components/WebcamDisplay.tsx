@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, AlertCircle, Play, Square } from "lucide-react";
@@ -20,7 +21,11 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
       setError(null);
       
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480 },
+        video: { 
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        },
         audio: false
       });
       
@@ -66,10 +71,8 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
   };
 
   useEffect(() => {
-    // Auto-start webcam on component mount
     startWebcam();
 
-    // Cleanup function to stop the webcam stream using streamRef
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
@@ -89,11 +92,11 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
   const renderOverlay = () => {
     if (isLoading) {
       return (
-        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-center text-gray-400 rounded-lg">
+        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-lg">
           <div>
-            <Camera className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
-            <p className="text-lg font-medium">Starting camera...</p>
-            <p className="text-sm mt-2">Please allow camera access when prompted</p>
+            <Camera className="h-20 w-20 mx-auto mb-6 opacity-50 animate-pulse" />
+            <p className="text-xl font-medium mb-2">Starting camera...</p>
+            <p className="text-sm opacity-75">Please allow camera access when prompted</p>
           </div>
         </div>
       );
@@ -101,11 +104,11 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
 
     if (error) {
       return (
-        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-center text-gray-400 rounded-lg">
-          <div>
-            <AlertCircle className="h-16 w-16 mx-auto mb-4 text-red-400" />
-            <p className="text-lg font-medium text-red-400">Camera Error</p>
-            <p className="text-sm mt-2">{error}</p>
+        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-lg">
+          <div className="max-w-md px-6">
+            <AlertCircle className="h-20 w-20 mx-auto mb-6 text-red-400" />
+            <p className="text-xl font-medium text-red-400 mb-4">Camera Error</p>
+            <p className="text-sm opacity-75">{error}</p>
           </div>
         </div>
       );
@@ -113,11 +116,11 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
 
     if (!isActive) {
       return (
-        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-center text-gray-400 rounded-lg">
+        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-lg">
           <div>
-            <Camera className="h-16 w-16 mx-auto mb-4 opacity-50" />
-            <p className="text-lg font-medium">Camera Stopped</p>
-            <p className="text-sm mt-2">Click "Start Camera" to begin</p>
+            <Camera className="h-20 w-20 mx-auto mb-6 opacity-50" />
+            <p className="text-xl font-medium mb-2">Camera Stopped</p>
+            <p className="text-sm opacity-75">Click "Start Camera" to begin</p>
           </div>
         </div>
       );
@@ -127,19 +130,21 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Camera className="h-5 w-5" />
-            Webcam View
+    <Card className="h-full flex flex-col bg-gradient-to-br from-slate-50/80 to-slate-100/80 dark:from-slate-900/80 dark:to-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center justify-between text-slate-800 dark:text-slate-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Camera className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <span className="font-semibold">Webcam View</span>
           </div>
           <Button
             onClick={handleToggleWebcam}
             variant="outline"
             size="sm"
             disabled={isLoading}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105 shadow-md"
           >
             {isActive ? (
               <>
@@ -155,14 +160,14 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
           </Button>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-700 overflow-hidden relative">
+      <CardContent className="flex-1 p-4">
+        <div className="h-full bg-gray-900 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-700 overflow-hidden relative">
           <video
             ref={videoRef}
             autoPlay
             muted
             playsInline
-            className="w-full h-full object-cover rounded-lg transform -scale-x-100"
+            className="w-full h-full object-cover rounded-xl transform -scale-x-100"
           />
           {renderOverlay()}
         </div>

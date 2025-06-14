@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, Clock, AlertCircle } from "lucide-react";
+import { Plus, MessageSquare, Trash2, Clock } from "lucide-react";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { toast } from "@/components/ui/use-toast";
 
@@ -94,25 +94,25 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
   };
 
   return (
-    <Card className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-lg transition-all duration-300">
-      <CardHeader className="pb-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-700/50">
+    <Card className="h-full flex flex-col bg-gradient-to-br from-slate-50/90 to-slate-100/90 dark:from-slate-900/90 dark:to-slate-800/90 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 shadow-lg">
+      <CardHeader className="pb-4 border-b border-slate-200/50 dark:border-slate-700/50">
         <CardTitle className="flex items-center justify-between text-slate-800 dark:text-slate-200">
-          <span className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
               <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <span className="font-semibold">Chat History</span>
-          </span>
-          <Button
-            onClick={handleNewChat}
-            size="sm"
-            disabled={isLoading}
-            className="h-9 px-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            New Chat
-          </Button>
+          </div>
         </CardTitle>
+        <Button
+          onClick={handleNewChat}
+          size="sm"
+          disabled={isLoading}
+          className="w-full mt-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          New Chat
+        </Button>
       </CardHeader>
       
       <CardContent className="flex-1 p-0">
