@@ -13,6 +13,8 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let currentStream: MediaStream | null = null;
+
     const startWebcam = async () => {
       try {
         setIsLoading(true);
@@ -23,10 +25,13 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
           audio: false
         });
         
+        currentStream = mediaStream;
         setStream(mediaStream);
         
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
+          // Ensure the video plays
+          videoRef.current.play().catch(console.error);
         }
         
         setIsLoading(false);
@@ -52,8 +57,8 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
 
     // Cleanup function to stop the webcam stream
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
       }
     };
   }, [videoRef]);
