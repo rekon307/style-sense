@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -90,7 +89,7 @@ async function handleImageAnalysis(imageDataURL: string, model: string) {
     body: JSON.stringify({
       model: model,
       messages: messages,
-      max_tokens: 1000,
+      max_tokens: 4024,
       temperature: 1,
     }),
   });
@@ -158,7 +157,7 @@ async function handleConversation(messages: any[], visualContext: string | null,
     body: JSON.stringify({
       model: model,
       messages: apiMessages,
-      max_tokens: 800,
+      max_tokens: 4024,
       temperature: 1,
     }),
   });
