@@ -104,12 +104,12 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
             onKeyPress={handleKeyPress}
             placeholder={
               isListening 
-                ? "Alex analizează în timp real... vorbește natural" 
+                ? "Alex is analyzing in real-time... speak naturally" 
                 : isAnalyzing 
-                ? "Alex procesează cu arhitectura cognitivă..." 
+                ? "Alex is processing with cognitive architecture..." 
                 : webcamAvailable
-                ? "Întreabă pe Alex despre stilul tău (foto auto-capturată)..."
-                : "Întreabă pe Alex despre stilul tău..."
+                ? "Ask Alex about your style (photo auto-captured)..."
+                : "Ask Alex about your style..."
             }
             disabled={isInputDisabled}
             className={`min-h-[44px] max-h-[120px] resize-none pr-16 transition-all duration-300 ${
@@ -154,7 +154,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
           {isAnalyzing ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              <span className="text-sm">Alex gândește...</span>
+              <span className="text-sm">Alex thinking...</span>
             </div>
           ) : (
             <Send className="h-4 w-4" />
@@ -165,7 +165,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
       {!webcamAvailable && (
         <div className="px-4 pb-2">
           <p className="text-xs text-amber-600 dark:text-amber-400">
-            📷 Camera nu este disponibilă - mesajele vor fi trimise fără imagine
+            📷 Camera not available - messages will be sent without image
           </p>
         </div>
       )}

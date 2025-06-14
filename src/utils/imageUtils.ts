@@ -48,14 +48,33 @@ export const captureImageFromWebcam = (): ImageCaptureResult => {
 };
 
 export const isWebcamAvailable = (): boolean => {
-  const videoElement = document.querySelector('video[autoplay]') as HTMLVideoElement || 
-                      document.querySelector('video') as HTMLVideoElement;
-  
-  if (!videoElement) return false;
-  
-  return videoElement.videoWidth > 0 && 
-         videoElement.videoHeight > 0 && 
-         videoElement.readyState >= 2 && 
-         !videoElement.paused &&
-         !!videoElement.srcObject;
+  try {
+    console.log('=== CHECKING WEBCAM AVAILABILITY ===');
+    
+    const videoElement = document.querySelector('video[autoplay]') as HTMLVideoElement || 
+                        document.querySelector('video') as HTMLVideoElement;
+    
+    if (!videoElement) {
+      console.log('No video element found');
+      return false;
+    }
+
+    const isReady = videoElement.videoWidth > 0 && 
+                   videoElement.videoHeight > 0 && 
+                   videoElement.readyState >= 2 && 
+                   !videoElement.paused &&
+                   !!videoElement.srcObject;
+
+    console.log('=== WEBCAM AVAILABILITY CHECK ===');
+    console.log('Video dimensions:', videoElement.videoWidth, 'x', videoElement.videoHeight);
+    console.log('Ready state:', videoElement.readyState);
+    console.log('Paused:', videoElement.paused);
+    console.log('Has stream:', !!videoElement.srcObject);
+    console.log('Is available:', isReady);
+
+    return isReady;
+  } catch (error) {
+    console.error('Error checking webcam availability:', error);
+    return false;
+  }
 };
