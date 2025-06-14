@@ -1,7 +1,8 @@
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Mic, MicOff } from "lucide-react";
+import { Send, Mic, MicOff, Square } from "lucide-react";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
 interface ChatInputProps {
@@ -15,7 +16,10 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
   
   const {
     isRecording,
+    isProcessing,
     transcript,
+    audioLevel,
+    recordingDuration,
     startRecording,
     stopRecording,
     isSupported
@@ -114,11 +118,30 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
             value={currentMessage}
             onChange={handleTextareaChange}
             onKeyPress={handleKeyPress}
-            placeholder={isRecording ? "Listening..." : "Ask Alex about your style..."}
-            disabled={isAnalyzing || isRecording}
-            className="min-h-[44px] max-h-[120px] resize-none pr-12 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
+            placeholder={
+              isRecording 
+                ? `Înregistrez... ${recordingDuration}` 
+                : isProcessing 
+                ? "Procesez înregistrarea..." 
+                : "Întreabă pe Alex despre stilul tău..."
+            }
+            disabled={isAnalyzing || isRecording || isProcessing}
+            className="min-h-[44px] max-h-[120px] resize-none pr-16 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
             style={{ height: 'auto' }}
           />
+          
+          {/* Audio level indicator */}
+          {isRecording && (
+            <div className="absolute right-12 top-3 w-2 bg-slate-200 dark:bg-slate-700 rounded-full h-8 overflow-hidden">
+              <div 
+                className="bg-gradient-to-t from-green-500 to-red-500 w-full transition-all duration-100 rounded-full"
+                style={{ 
+                  height: `${audioLevel}%`,
+                  transform: 'translateY(' + (100 - audioLevel) + '%)'
+                }}
+              />
+            </div>
+          )}
           
           {isSupported && (
             <Button
@@ -126,15 +149,19 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
               variant="ghost"
               size="sm"
               onClick={toggleRecording}
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || isProcessing}
               className={`absolute right-2 top-2 h-7 w-7 p-0 ${
                 isRecording 
-                  ? 'text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' 
+                  ? 'text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 animate-pulse' 
+                  : isProcessing
+                  ? 'text-orange-500 animate-spin'
                   : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               {isRecording ? (
-                <MicOff className="h-4 w-4" />
+                <Square className="h-3 w-3 fill-current" />
+              ) : isProcessing ? (
+                <div className="h-3 w-3 border border-current border-t-transparent rounded-full animate-spin" />
               ) : (
                 <Mic className="h-4 w-4" />
               )}
@@ -144,13 +171,13 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
         
         <Button 
           type="submit" 
-          disabled={isAnalyzing || (!currentMessage.trim())}
+          disabled={isAnalyzing || isRecording || isProcessing || (!currentMessage.trim())}
           className="h-11 px-4 bg-blue-600 hover:bg-blue-700 text-white"
         >
           {isAnalyzing ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              <span className="text-sm">Analyzing...</span>
+              <span className="text-sm">Analizez...</span>
             </div>
           ) : (
             <Send className="h-4 w-4" />
