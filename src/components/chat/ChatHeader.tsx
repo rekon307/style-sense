@@ -9,6 +9,17 @@ interface ChatHeaderProps {
 }
 
 const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderProps) => {
+  const getModelDisplayName = (model: string) => {
+    switch (model) {
+      case "gpt-4o-mini":
+        return "AI Style";
+      case "gpt-4o":
+        return "AI Style PRO";
+      default:
+        return "AI Style";
+    }
+  };
+
   return (
     <div className="border-b border-slate-200/50 dark:border-slate-700/50 px-4 py-4">
       <div className="flex items-center justify-between">
@@ -21,7 +32,9 @@ const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderPro
             <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 ${isAnalyzing ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`}></div>
           </div>
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">Alex AI</h2>
+            <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+              {getModelDisplayName(selectedModel)}
+            </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">Style Consultant</p>
           </div>
         </div>
@@ -38,12 +51,22 @@ const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderPro
           <div className="flex items-center gap-1.5">
             <Settings className="h-3 w-3 text-slate-500 dark:text-slate-400" />
             <Select value={selectedModel} onValueChange={onModelChange}>
-              <SelectTrigger className="h-8 w-32 text-xs bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
+              <SelectTrigger className="h-8 w-36 text-xs bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
                 <SelectValue placeholder="Model" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="gpt-4o-mini">GPT-4o Mini</SelectItem>
-                <SelectItem value="gpt-4o">GPT-4o Pro</SelectItem>
+                <SelectItem value="gpt-4o-mini">
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium">AI Style</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Based on GPT-4o Mini</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="gpt-4o">
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium">AI Style PRO</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">Based on GPT-4o</span>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
