@@ -1,3 +1,4 @@
+
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,20 +25,25 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
   } = useVoiceRecording();
 
   const handleCognitiveAutoSend = (finalTranscript: string) => {
-    console.log('=== COGNITIVE AUTO-SEND ===');
-    console.log('Transcript:', finalTranscript);
+    console.log('=== COGNITIVE AUTO-SEND START ===');
+    console.log('Final transcript:', finalTranscript);
     
     if (!finalTranscript.trim()) {
-      console.warn('=== EMPTY TRANSCRIPT - SKIPPING ===');
+      console.warn('=== EMPTY TRANSCRIPT - SKIPPING AUTO-SEND ===');
       return;
     }
 
-    // Debug webcam status before capture
+    // Debug webcam and capture photo
     debugWebcamStatus();
+    console.log('=== ATTEMPTING AUTO PHOTO CAPTURE ===');
     
-    const capturedPhoto = isWebcamReady() ? capturePhotoFromWebcam() : null;
-    console.log('=== AUTO-SEND PHOTO RESULT ===');
-    console.log('Photo captured:', !!capturedPhoto);
+    const webcamReady = isWebcamReady();
+    console.log('Webcam ready for auto-capture:', webcamReady);
+    
+    const capturedPhoto = webcamReady ? capturePhotoFromWebcam() : null;
+    console.log('=== AUTO-SEND PHOTO CAPTURE RESULT ===');
+    console.log('Photo captured successfully:', !!capturedPhoto);
+    console.log('Photo data length:', capturedPhoto ? capturedPhoto.length : 0);
     
     onSendMessage(finalTranscript, capturedPhoto, temperature);
     setMessage("");
@@ -47,17 +53,31 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
     e.preventDefault();
     
     const messageToSend = message.trim();
-    if (!messageToSend) return;
+    if (!messageToSend) {
+      console.warn('=== EMPTY MESSAGE - SKIPPING SUBMIT ===');
+      return;
+    }
 
-    console.log('=== MANUAL SUBMIT ===');
-    console.log('Message:', messageToSend);
+    console.log('=== MANUAL SUBMIT START ===');
+    console.log('Message to send:', messageToSend);
     
-    // Debug webcam status before capture
+    // Debug webcam status and capture photo automatically
     debugWebcamStatus();
+    console.log('=== ATTEMPTING MANUAL PHOTO CAPTURE ===');
     
-    const capturedPhoto = isWebcamReady() ? capturePhotoFromWebcam() : null;
-    console.log('=== SUBMIT PHOTO RESULT ===');
-    console.log('Photo captured:', !!capturedPhoto);
+    const webcamReady = isWebcamReady();
+    console.log('Webcam ready for manual capture:', webcamReady);
+    
+    const capturedPhoto = webcamReady ? capturePhotoFromWebcam() : null;
+    console.log('=== MANUAL SUBMIT PHOTO CAPTURE RESULT ===');
+    console.log('Photo captured successfully:', !!capturedPhoto);
+    console.log('Photo data length:', capturedPhoto ? capturedPhoto.length : 0);
+    
+    if (capturedPhoto) {
+      console.log('=== PHOTO CAPTURE SUCCESS - SENDING WITH IMAGE ===');
+    } else {
+      console.log('=== NO PHOTO CAPTURED - SENDING TEXT ONLY ===');
+    }
     
     onSendMessage(messageToSend, capturedPhoto, temperature);
     setMessage("");
@@ -84,8 +104,10 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
 
   const toggleCognitiveListening = () => {
     if (isListening) {
+      console.log('=== STOPPING COGNITIVE LISTENING ===');
       stopListening();
     } else {
+      console.log('=== STARTING COGNITIVE LISTENING ===');
       startListening(handleCognitiveAutoSend);
     }
   };

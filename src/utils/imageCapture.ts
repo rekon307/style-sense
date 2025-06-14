@@ -4,12 +4,12 @@
  */
 export const capturePhotoFromWebcam = (): string | null => {
   try {
-    console.log('=== STARTING PHOTO CAPTURE ===');
+    console.log('=== STARTING PHOTO CAPTURE PROCESS ===');
     
     // Try multiple selectors to find video element
     const videoSelectors = [
       'video[autoplay]',
-      'video[data-webcam="true"]',
+      'video[data-webcam="true"]', 
       'video',
       '.webcam-video',
       '#webcam-video'
@@ -18,10 +18,12 @@ export const capturePhotoFromWebcam = (): string | null => {
     let videoElement: HTMLVideoElement | null = null;
     
     for (const selector of videoSelectors) {
-      videoElement = document.querySelector(selector) as HTMLVideoElement;
-      if (videoElement) {
+      const foundElement = document.querySelector(selector) as HTMLVideoElement;
+      if (foundElement) {
+        videoElement = foundElement;
         console.log('=== VIDEO ELEMENT FOUND ===');
         console.log('Selector used:', selector);
+        console.log('Video element:', foundElement);
         break;
       }
     }
@@ -29,6 +31,10 @@ export const capturePhotoFromWebcam = (): string | null => {
     if (!videoElement) {
       console.error('=== NO VIDEO ELEMENT FOUND ===');
       console.log('Available video elements:', document.querySelectorAll('video').length);
+      const allVideos = document.querySelectorAll('video');
+      allVideos.forEach((video, index) => {
+        console.log(`Video ${index}:`, video);
+      });
       return null;
     }
 
@@ -37,9 +43,11 @@ export const capturePhotoFromWebcam = (): string | null => {
     console.log('Ready state:', videoElement.readyState);
     console.log('Current time:', videoElement.currentTime);
     console.log('Paused:', videoElement.paused);
+    console.log('Source object:', videoElement.srcObject);
 
     if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
       console.error('=== VIDEO NOT READY - INVALID DIMENSIONS ===');
+      console.log('Video may not be loaded yet or stream not active');
       return null;
     }
 
@@ -73,7 +81,7 @@ export const capturePhotoFromWebcam = (): string | null => {
     
     console.log('=== PHOTO CAPTURED SUCCESSFULLY ===');
     console.log('Image data URL length:', dataURL.length);
-    console.log('Image format:', dataURL.substring(0, 30));
+    console.log('Image format preview:', dataURL.substring(0, 50) + '...');
     
     return dataURL;
   } catch (error) {
@@ -94,22 +102,23 @@ export const isWebcamReady = (): boolean => {
                         document.querySelector('video') as HTMLVideoElement;
     
     if (!videoElement) {
-      console.log('=== WEBCAM CHECK: NO VIDEO ELEMENT ===');
+      console.log('=== WEBCAM CHECK: NO VIDEO ELEMENT FOUND ===');
       return false;
     }
 
-    const isReady = !!(videoElement && 
-            videoElement.videoWidth > 0 && 
-            videoElement.videoHeight > 0 && 
-            videoElement.readyState >= 2 &&
-            !videoElement.paused);
+    const hasValidDimensions = videoElement.videoWidth > 0 && videoElement.videoHeight > 0;
+    const hasGoodReadyState = videoElement.readyState >= 2;
+    const isNotPaused = !videoElement.paused;
+    const hasStream = !!videoElement.srcObject;
+
+    const isReady = hasValidDimensions && hasGoodReadyState && isNotPaused && hasStream;
 
     console.log('=== WEBCAM READINESS RESULT ===');
     console.log('Is ready:', isReady);
-    console.log('Video width:', videoElement.videoWidth);
-    console.log('Video height:', videoElement.videoHeight);
-    console.log('Ready state:', videoElement.readyState);
-    console.log('Is paused:', videoElement.paused);
+    console.log('Has valid dimensions:', hasValidDimensions, `(${videoElement.videoWidth}x${videoElement.videoHeight})`);
+    console.log('Has good ready state:', hasGoodReadyState, `(${videoElement.readyState})`);
+    console.log('Is not paused:', isNotPaused);
+    console.log('Has stream:', hasStream);
 
     return isReady;
   } catch (error) {
@@ -137,6 +146,7 @@ export const debugWebcamStatus = (): void => {
       paused: videoEl.paused,
       currentTime: videoEl.currentTime,
       src: videoEl.src || 'stream',
+      srcObject: !!videoEl.srcObject,
       className: videoEl.className,
       id: videoEl.id
     });
