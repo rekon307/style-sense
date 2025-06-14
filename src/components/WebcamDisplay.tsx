@@ -22,30 +22,46 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
   useImperativeHandle(ref, () => ({
     capturePhoto: () => {
+      console.log('Attempting to capture photo...');
+      console.log('Video ref current:', !!videoRef.current);
+      console.log('Is active:', isActive);
+      
       if (videoRef.current && isActive) {
         try {
           const video = videoRef.current;
           const canvas = canvasRef.current;
-          if (!canvas) return null;
+          if (!canvas) {
+            console.error('Canvas not available');
+            return null;
+          }
           
           const context = canvas.getContext('2d');
-          if (!context) return null;
+          if (!context) {
+            console.error('Canvas context not available');
+            return null;
+          }
 
           // Set canvas size to match video dimensions
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
           
+          console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+          
           // Draw the video frame to canvas
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
           
           // Convert to data URL
-          return canvas.toDataURL('image/png');
+          const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+          console.log('Photo captured successfully, size:', dataURL.length);
+          return dataURL;
         } catch (error) {
           console.error('Error capturing photo:', error);
           return null;
         }
+      } else {
+        console.warn('Cannot capture photo - video not available or not active');
+        return null;
       }
-      return null;
     }
   }));
 
@@ -128,7 +144,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
   const renderOverlay = () => {
     if (isLoading) {
       return (
-        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-lg">
+        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-xl">
           <div>
             <Camera className="h-20 w-20 mx-auto mb-6 opacity-50 animate-pulse" />
             <p className="text-xl font-medium mb-2">Starting camera...</p>
@@ -140,7 +156,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
     if (error) {
       return (
-        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-lg">
+        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-xl">
           <div className="max-w-md px-6">
             <AlertCircle className="h-20 w-20 mx-auto mb-6 text-red-400" />
             <p className="text-xl font-medium text-red-400 mb-4">Camera Error</p>
@@ -152,7 +168,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
     if (!isActive) {
       return (
-        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-lg">
+        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-xl">
           <div>
             <Camera className="h-20 w-20 mx-auto mb-6 opacity-50" />
             <p className="text-xl font-medium mb-2">Camera Stopped</p>
@@ -197,14 +213,13 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 p-4">
-        <div className="h-full bg-gray-900 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-700 overflow-hidden relative">
+        <div className="h-full bg-gray-900 rounded-xl flex items-center justify-center overflow-hidden relative">
           <video
             ref={videoRef}
             autoPlay
             muted
             playsInline
-            className="w-full h-full object-cover rounded-xl transform -scale-x-100"
-            style={{ objectFit: 'cover' }}
+            className="w-full h-full object-cover transform -scale-x-100"
           />
           <canvas ref={canvasRef} className="hidden" />
           {renderOverlay()}

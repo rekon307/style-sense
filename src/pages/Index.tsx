@@ -1,12 +1,11 @@
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
 import ChatHistory from "@/components/ChatHistory";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { PanelLeft, PanelLeftClose } from "lucide-react";
-import { useState } from "react";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -42,32 +41,45 @@ const Index = ({
   const [lastCapturedPhoto, setLastCapturedPhoto] = useState<string | null>(null);
 
   const handleSendMessageWithPhoto = async (message: string) => {
-    console.log('Attempting to send message with photo capture...');
+    console.log('=== PHOTO CAPTURE FLOW START ===');
+    console.log('Attempting to send message with photo capture:', message);
     
     let photoDataURL: string | null = null;
     
-    // Try to capture a new photo
+    // Try to capture a new photo first
     if (webcamRef.current) {
+      console.log('Webcam ref available, attempting capture...');
       photoDataURL = webcamRef.current.capturePhoto();
-      console.log('Photo capture result:', photoDataURL ? 'Success' : 'Failed');
+      console.log('New photo capture result:', photoDataURL ? 'Success' : 'Failed');
+    } else {
+      console.log('Webcam ref not available');
     }
     
-    // If no new photo captured, use the last captured photo
+    // If no new photo captured, use the last captured photo from memory
     if (!photoDataURL && lastCapturedPhoto) {
       photoDataURL = lastCapturedPhoto;
       console.log('Using last captured photo from memory');
     }
     
-    // If we have a photo (new or from memory), set it and store it
-    if (photoDataURL) {
-      setInitialImageURL(photoDataURL);
-      setLastCapturedPhoto(photoDataURL);
-      console.log('Photo set for analysis');
-    } else {
-      console.warn('No photo available for analysis');
+    // If no photo captured and no memory, use the initial image if available
+    if (!photoDataURL && initialImageURL) {
+      photoDataURL = initialImageURL;
+      console.log('Using initial image URL as fallback');
     }
     
-    // Send the message
+    // If we have a photo (new, from memory, or initial), set it and store it
+    if (photoDataURL) {
+      console.log('Setting photo for analysis, size:', photoDataURL.length);
+      setInitialImageURL(photoDataURL);
+      setLastCapturedPhoto(photoDataURL);
+      console.log('Photo set for analysis and stored in memory');
+    } else {
+      console.warn('No photo available for analysis - proceeding without image');
+    }
+    
+    console.log('=== PHOTO CAPTURE FLOW END ===');
+    
+    // Send the message (with or without photo)
     handleSendMessage(message);
   };
 

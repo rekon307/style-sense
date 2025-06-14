@@ -36,15 +36,17 @@ export const useMessageHandler = ({
       return;
     }
 
+    console.log('=== MESSAGE HANDLER START ===');
     console.log('Sending message:', newMessage);
     console.log('Current session ID:', currentSessionId);
     console.log('Visual context available:', !!visualContext);
+    console.log('Current messages count:', messages.length);
 
     try {
       // Create new session if none exists
       let sessionId = currentSessionId;
       if (!sessionId) {
-        console.log('Creating new session...');
+        console.log('Creating new session for message...');
         const { data: userData } = await supabase.auth.getUser();
         
         const { data, error } = await supabase
@@ -155,6 +157,8 @@ export const useMessageHandler = ({
         console.error('No response content in data:', data);
         throw new Error('No response content from AI');
       }
+
+      console.log('=== MESSAGE HANDLER END ===');
     } catch (error) {
       console.error('Failed to send message:', error);
       const errorMessage = {

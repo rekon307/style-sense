@@ -40,8 +40,17 @@ export const useImageAnalysis = ({
         return;
       }
 
+      // Only analyze if we have an image and no existing messages for this session
+      if (messages.length > 0) {
+        console.log('Messages already exist, skipping analysis');
+        return;
+      }
+
       try {
+        console.log('=== STYLE ANALYSIS START ===');
         console.log('Starting style analysis with image...');
+        console.log('Image size:', initialImageURL.length, 'characters');
+        console.log('Selected model:', selectedModel);
         
         // Create new session if none exists
         if (!currentSessionId) {
@@ -74,13 +83,8 @@ export const useImageAnalysis = ({
         }
 
         setIsAnalyzing(true);
-        if (!currentSessionId) {
-          setMessages([]);
-          setVisualContext(null);
-        }
 
         console.log('Sending image for style analysis...');
-        console.log('Image size:', initialImageURL.length, 'characters');
         
         const { data, error } = await supabase.functions.invoke('style-advisor', {
           body: { 
@@ -139,6 +143,8 @@ export const useImageAnalysis = ({
           setVisualContext(data.visualContext);
           console.log('Visual context set from analysis');
         }
+
+        console.log('=== STYLE ANALYSIS END ===');
       } catch (error) {
         console.error('Failed to analyze style:', error);
         const errorMessage = {
@@ -169,5 +175,5 @@ export const useImageAnalysis = ({
     };
 
     analyzeStyle();
-  }, [initialImageURL, selectedModel, currentSessionId, setCurrentSessionId, setMessages, setIsAnalyzing, setVisualContext]);
+  }, [initialImageURL, selectedModel]); // Removed other dependencies to prevent unnecessary re-runs
 };
