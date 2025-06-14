@@ -16,10 +16,13 @@ serve(async (req) => {
   try {
     console.log('Received style analysis request');
     
-    const { messages, visualContext, model = 'gpt-4o-mini' } = await req.json();
+    const { messages, visualContext, capturedImage, model = 'gpt-4o-mini' } = await req.json();
+    
+    // Use capturedImage if provided, otherwise fall back to visualContext
+    const imageData = capturedImage || visualContext;
     
     const requestInfo = {
-      hasCapturedImage: !!visualContext,
+      hasCapturedImage: !!imageData,
       messagesCount: messages?.length || 0,
       hasVisualContext: !!visualContext,
       selectedModel: model
@@ -37,8 +40,18 @@ serve(async (req) => {
     if (!messages || messages.length === 0) {
       console.log('Processing initial image analysis...');
       
-      if (!visualContext) {
-        throw new Error('No image provided for initial analysis');
+      if (!imageData) {
+        console.error('No image provided for initial analysis');
+        return new Response(
+          JSON.stringify({ 
+            error: 'No image provided for analysis. Please ensure your camera is working and try again.',
+            response: 'I need to see your photo first to provide style advice. Please make sure your camera is working and capture a photo.'
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
       }
 
       const systemPrompt = `### Persona
@@ -78,7 +91,7 @@ Analyze this photo and provide personalized style advice. Consider skin tone, fa
             {
               type: "image_url",
               image_url: {
-                url: visualContext
+                url: imageData
               }
             }
           ]
@@ -86,7 +99,6 @@ Analyze this photo and provide personalized style advice. Consider skin tone, fa
       ];
 
       console.log('Sending request to OpenAI API...');
-      console.log('API Messages:', JSON.stringify(apiMessages, null, 2));
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -110,7 +122,6 @@ Analyze this photo and provide personalized style advice. Consider skin tone, fa
 
       console.log('Received response from OpenAI API');
       const data = await response.json();
-      console.log('OpenAI response:', JSON.stringify(data, null, 2));
       console.log('Token usage:', JSON.stringify(data.usage, null, 2));
 
       const rawResponse = data.choices[0].message.content;
@@ -212,6 +223,7 @@ You are a world-class expert in: personal styling, design analysis, color theory
     return new Response(
       JSON.stringify({ 
         error: error.message,
+        response: 'I encountered an error processing your request. Please ensure your camera is working and try again.',
         details: 'Check the function logs for more information'
       }),
       {

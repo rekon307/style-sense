@@ -61,7 +61,7 @@ export const useImageAnalysis = ({
             .from('chat_sessions')
             .insert([{ 
               title: 'Style Analysis',
-              user_id: userData.user?.id || null // Allow null for anonymous users
+              user_id: userData.user?.id || null
             }])
             .select()
             .single();
@@ -95,7 +95,6 @@ export const useImageAnalysis = ({
 
         if (error) {
           console.error('Error calling style-advisor function:', error);
-          console.error('Error details:', JSON.stringify(error, null, 2));
           toast({
             title: "Analysis Error",
             description: `Failed to analyze your style: ${error.message || 'Unknown error'}. Please try again.`,
@@ -108,8 +107,8 @@ export const useImageAnalysis = ({
         console.log('Response data:', data);
         
         // Add the first AI message to the conversation and store visual context
-        if (data && data.reply) {
-          const newMessage = { role: 'assistant' as const, content: data.reply };
+        if (data && data.response) {
+          const newMessage = { role: 'assistant' as const, content: data.response };
           setMessages([newMessage]);
           
           // Save to database if we have a session
@@ -119,7 +118,7 @@ export const useImageAnalysis = ({
               .insert([{
                 session_id: currentSessionId,
                 role: 'assistant',
-                content: data.reply,
+                content: data.response,
                 visual_context: data.visualContext || null
               }]);
 
@@ -135,7 +134,7 @@ export const useImageAnalysis = ({
             description: "Your style analysis is ready!",
           });
         } else {
-          console.error('No reply in response data:', data);
+          console.error('No response in response data:', data);
           throw new Error('No response from AI analysis');
         }
         
@@ -175,5 +174,5 @@ export const useImageAnalysis = ({
     };
 
     analyzeStyle();
-  }, [initialImageURL, selectedModel]); // Removed other dependencies to prevent unnecessary re-runs
+  }, [initialImageURL, selectedModel]);
 };

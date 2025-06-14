@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
@@ -48,10 +47,6 @@ const Index = ({
   const handleSendMessageWithPhoto = async (message: string) => {
     console.log('=== PHOTO CAPTURE FLOW START ===');
     console.log('Attempting to send message with photo capture:', message);
-    console.log('Webcam ref current:', !!webcamRef.current);
-    console.log('Video ref current:', !!videoRef.current);
-    console.log('Last captured photo available:', !!lastCapturedPhoto);
-    console.log('Initial image URL available:', !!initialImageURL);
     
     let photoDataURL: string | null = null;
     
@@ -64,8 +59,6 @@ const Index = ({
       } catch (error) {
         console.error('Error during photo capture:', error);
       }
-    } else {
-      console.log('Webcam ref not available');
     }
     
     // If no new photo captured, use the last captured photo from memory
@@ -87,12 +80,12 @@ const Index = ({
       setLastCapturedPhoto(photoDataURL);
       console.log('Photo set for analysis and stored in memory');
     } else {
-      console.warn('No photo available for analysis - this will likely cause issues');
+      console.warn('No photo available for analysis');
     }
     
     console.log('=== PHOTO CAPTURE FLOW END ===');
     
-    // Send the message (with or without photo)
+    // Send the message (this will now include the user message in the conversation)
     handleSendMessage(message);
   };
 
