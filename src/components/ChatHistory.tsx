@@ -2,8 +2,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, Clock } from "lucide-react";
+import { Plus, MessageSquare, Trash2, Clock, AlertCircle } from "lucide-react";
 import { useChatHistory } from "@/hooks/useChatHistory";
+import { toast } from "@/components/ui/use-toast";
 
 interface ChatHistoryProps {
   onSessionChange: (sessionId: string | null) => void;
@@ -20,39 +21,80 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
   } = useChatHistory();
 
   const handleNewChat = async () => {
-    const newSessionId = await createNewSession();
-    if (newSessionId) {
-      onSessionChange(newSessionId);
+    try {
+      const newSessionId = await createNewSession();
+      if (newSessionId) {
+        onSessionChange(newSessionId);
+        toast({
+          title: "New chat created",
+          description: "Started a fresh conversation.",
+        });
+      }
+    } catch (error) {
+      console.error('Error creating new chat:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create new chat. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleSessionClick = async (sessionId: string) => {
-    switchToSession(sessionId);
-    onSessionChange(sessionId);
+    try {
+      switchToSession(sessionId);
+      onSessionChange(sessionId);
+      console.log('Switched to session:', sessionId);
+    } catch (error) {
+      console.error('Error switching session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load chat session.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteSession = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
-    await deleteSession(sessionId);
-    if (currentSessionId === sessionId) {
-      onSessionChange(null);
+    try {
+      await deleteSession(sessionId);
+      if (currentSessionId === sessionId) {
+        onSessionChange(null);
+      }
+      toast({
+        title: "Chat deleted",
+        description: "The conversation has been removed.",
+      });
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete chat. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) return 'Today';
-    if (diffDays === 2) return 'Yesterday';
-    if (diffDays <= 7) return `${diffDays - 1} days ago`;
-    return date.toLocaleDateString();
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - date.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) return 'Today';
+      if (diffDays === 2) return 'Yesterday';
+      if (diffDays <= 7) return `${diffDays - 1} days ago`;
+      return date.toLocaleDateString();
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Unknown date';
+    }
   };
 
   return (
-    <Card className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-lg">
+    <Card className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-lg transition-all duration-300">
       <CardHeader className="pb-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-700/50">
         <CardTitle className="flex items-center justify-between text-slate-800 dark:text-slate-200">
           <span className="flex items-center gap-3">
@@ -76,7 +118,12 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
       <CardContent className="flex-1 p-0">
         <ScrollArea className="h-full px-4">
           <div className="space-y-3 py-4">
-            {sessions.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-slate-600 dark:text-slate-400">Loading chats...</p>
+              </div>
+            ) : sessions.length === 0 ? (
               <div className="text-center py-12">
                 <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
                   <MessageSquare className="h-8 w-8 text-slate-400" />

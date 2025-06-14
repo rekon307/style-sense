@@ -1,6 +1,7 @@
 
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -32,35 +33,55 @@ export const useImageAnalysis = ({
     const analyzeStyle = async () => {
       if (!initialImageURL) {
         if (!currentSessionId) {
+          console.log('No image and no session - clearing state');
           setMessages([]);
           setVisualContext(null);
         }
         return;
       }
 
-      // Create new session if none exists
-      if (!currentSessionId) {
-        const { data, error } = await supabase
-          .from('chat_sessions')
-          .insert([{ 
-            title: 'Style Analysis',
-            user_id: (await supabase.auth.getUser()).data.user?.id 
-          }])
-          .select()
-          .single();
-
-        if (!error && data) {
-          setCurrentSessionId(data.id);
-        }
-      }
-
-      setIsAnalyzing(true);
-      if (!currentSessionId) {
-        setMessages([]);
-        setVisualContext(null);
-      }
-
       try {
+        // Create new session if none exists
+        if (!currentSessionId) {
+          console.log('Creating new session for image analysis...');
+          const { data: userData } = await supabase.auth.getUser();
+          
+          const { data, error } = await supabase
+            .from('chat_sessions')
+            .insert([{ 
+              title: 'Style Analysis',
+              user_id: userData.user?.id 
+            }])
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Error creating session:', error);
+            toast({
+              title: "Session Error",
+              description: "Failed to create analysis session. Please try again.",
+              variant: "destructive",
+            });
+            throw error;
+          }
+
+          if (data) {
+            setCurrentSessionId(data.id);
+            console.log('Analysis session created:', data.id);
+          }
+        }
+
+        setIsAnalyzing(true);
+        if (!currentSessionId) {
+          setMessages([]);
+          setVisualContext(null);
+        }
+
+        toast({
+          title: "Analyzing your style",
+          description: "Please wait while I analyze your image...",
+        });
+
         console.log('Sending image for style analysis...');
         const { data, error } = await supabase.functions.invoke('style-advisor', {
           body: { 
@@ -71,10 +92,15 @@ export const useImageAnalysis = ({
 
         if (error) {
           console.error('Error calling style-advisor function:', error);
+          toast({
+            title: "Analysis Error",
+            description: "Failed to analyze your style. Please try again.",
+            variant: "destructive",
+          });
           throw error;
         }
 
-        console.log('Received style advice:', data);
+        console.log('Style analysis completed');
         
         // Add the first AI message to the conversation and store visual context
         if (data && data.reply) {
@@ -83,7 +109,7 @@ export const useImageAnalysis = ({
           
           // Save to database if we have a session
           if (currentSessionId) {
-            await supabase
+            const { error: saveError } = await supabase
               .from('chat_messages')
               .insert([{
                 session_id: currentSessionId,
@@ -91,17 +117,27 @@ export const useImageAnalysis = ({
                 content: data.reply,
                 visual_context: data.visualContext || null
               }]);
+
+            if (saveError) {
+              console.error('Error saving analysis message:', saveError);
+            }
           }
+
+          toast({
+            title: "Analysis complete",
+            description: "Your style analysis is ready!",
+          });
         }
         
         if (data && data.visualContext) {
           setVisualContext(data.visualContext);
+          console.log('Visual context set from analysis');
         }
       } catch (error) {
-        console.error('Failed to get style advice:', error);
+        console.error('Failed to analyze style:', error);
         const errorMessage = {
           role: 'assistant' as const,
-          content: 'Failed to analyze your style. Please try again.'
+          content: 'Failed to analyze your style. Please try uploading the image again or check your connection.'
         };
         setMessages([errorMessage]);
         
@@ -121,5 +157,5 @@ export const useImageAnalysis = ({
     };
 
     analyzeStyle();
-  }, [initialImageURL, selectedModel, currentSessionId]);
+  }, [initialImageURL, selectedModel, currentSessionId, setCurrentSessionId, setMessages, setIsAnalyzing, setVisualContext]);
 };

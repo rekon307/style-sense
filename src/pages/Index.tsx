@@ -4,6 +4,7 @@ import WebcamDisplay from "@/components/WebcamDisplay";
 import Controls from "@/components/Controls";
 import StyleAdvice from "@/components/StyleAdvice";
 import ChatHistory from "@/components/ChatHistory";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -36,8 +37,13 @@ const Index = ({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
       <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-700/25 bg-[size:32px_32px] opacity-50"></div>
+      
+      {/* Theme Toggle - Fixed Position */}
+      <div className="fixed top-6 right-6 z-50">
+        <ThemeToggle />
+      </div>
       
       <div className="relative max-w-7xl mx-auto p-6">
         <header className="mb-8 text-center">
@@ -49,10 +55,10 @@ const Index = ({
               </svg>
             </div>
           </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-purple-900 dark:from-slate-100 dark:via-blue-100 dark:to-purple-100 bg-clip-text text-transparent mb-3">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-slate-900 via-blue-900 to-purple-900 dark:from-slate-100 dark:via-blue-100 dark:to-purple-100 bg-clip-text text-transparent mb-3 transition-colors duration-300">
             AI Style Advisor
           </h1>
-          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed transition-colors duration-300">
             Discover your perfect style with AI-powered fashion insights and personalized recommendations
           </p>
         </header>
@@ -65,10 +71,10 @@ const Index = ({
           
           {/* Middle column - Webcam and Controls */}
           <div className="lg:col-span-2 space-y-8 order-1 lg:order-2">
-            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl p-6">
+            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl p-6 transition-all duration-300">
               <WebcamDisplay videoRef={videoRef} />
             </div>
-            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl p-6">
+            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl p-6 transition-all duration-300">
               <Controls 
                 videoRef={videoRef} 
                 capturedImage={initialImageURL} 
