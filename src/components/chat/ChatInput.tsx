@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Mic, MicOff, Square } from "lucide-react";
+import { Send, Mic, Square } from "lucide-react";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
 interface ChatInputProps {
@@ -15,19 +15,16 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const {
-    isRecording,
-    isProcessing,
-    transcript,
+    isListening,
+    liveTranscript,
     audioLevel,
-    recordingDuration,
-    startRecording,
-    stopRecording,
+    startListening,
+    stopListening,
     isSupported
   } = useVoiceRecording();
 
   const capturePhotoFromWebcam = (): string | null => {
     try {
-      // Find the video element from the webcam
       const videoElement = document.querySelector('video') as HTMLVideoElement;
       
       if (!videoElement || videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
@@ -35,7 +32,6 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
         return null;
       }
 
-      // Create a canvas to capture the frame
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
       
@@ -44,14 +40,10 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
         return null;
       }
 
-      // Set canvas dimensions to match video
       canvas.width = videoElement.videoWidth;
       canvas.height = videoElement.videoHeight;
-      
-      // Draw the current video frame to canvas
       context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
       
-      // Convert to data URL
       const dataURL = canvas.toDataURL('image/jpeg', 0.8);
       console.log('Photo captured from webcam for Alex analysis');
       return dataURL;
@@ -61,22 +53,24 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
     }
   };
 
+  const handleAutomaticSend = (finalTranscript: string) => {
+    console.log('Auto-sending voice message:', finalTranscript);
+    
+    const capturedPhoto = capturePhotoFromWebcam();
+    onSendMessage(finalTranscript, capturedPhoto);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const messageToSend = message.trim() || transcript.trim();
+    const messageToSend = message.trim();
     if (!messageToSend) return;
 
-    // Capture photo from webcam before sending message
     const capturedPhoto = capturePhotoFromWebcam();
-    
-    // Send message with captured photo
     onSendMessage(messageToSend, capturedPhoto);
     
-    // Reset form
     setMessage("");
     
-    // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
@@ -92,22 +86,22 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
     
-    // Auto-resize textarea
     const textarea = e.target;
     textarea.style.height = 'auto';
     textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
   };
 
-  const toggleRecording = () => {
-    if (isRecording) {
-      stopRecording();
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening();
     } else {
-      startRecording();
+      startListening(handleAutomaticSend);
     }
   };
 
-  // Use transcript if available, otherwise use typed message
-  const currentMessage = transcript.trim() || message;
+  // Use live transcript when listening, otherwise use typed message
+  const currentMessage = isListening ? liveTranscript : message;
+  const isInputDisabled = isAnalyzing || isListening;
 
   return (
     <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
@@ -119,22 +113,28 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
             onChange={handleTextareaChange}
             onKeyPress={handleKeyPress}
             placeholder={
-              isRecording 
-                ? `Înregistrez... ${recordingDuration}` 
-                : isProcessing 
-                ? "Procesez înregistrarea..." 
+              isListening 
+                ? "Alex ascultă... vorbește natural" 
+                : isAnalyzing 
+                ? "Alex analizează..." 
                 : "Întreabă pe Alex despre stilul tău..."
             }
-            disabled={isAnalyzing || isRecording || isProcessing}
-            className="min-h-[44px] max-h-[120px] resize-none pr-16 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
+            disabled={isInputDisabled}
+            className={`min-h-[44px] max-h-[120px] resize-none pr-16 transition-colors ${
+              isListening 
+                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600' 
+                : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
+            } ${
+              isListening ? 'focus:border-blue-500 dark:focus:border-blue-400' : 'focus:border-blue-500 dark:focus:border-blue-400'
+            }`}
             style={{ height: 'auto' }}
           />
           
           {/* Audio level indicator */}
-          {isRecording && (
+          {isListening && (
             <div className="absolute right-12 top-3 w-2 bg-slate-200 dark:bg-slate-700 rounded-full h-8 overflow-hidden">
               <div 
-                className="bg-gradient-to-t from-green-500 to-red-500 w-full transition-all duration-100 rounded-full"
+                className="bg-gradient-to-t from-green-400 via-yellow-400 to-red-400 w-full transition-all duration-100 rounded-full"
                 style={{ 
                   height: `${audioLevel}%`,
                   transform: 'translateY(' + (100 - audioLevel) + '%)'
@@ -148,20 +148,19 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={toggleRecording}
-              disabled={isAnalyzing || isProcessing}
-              className={`absolute right-2 top-2 h-7 w-7 p-0 ${
-                isRecording 
-                  ? 'text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 animate-pulse' 
-                  : isProcessing
-                  ? 'text-orange-500 animate-spin'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              onClick={toggleListening}
+              disabled={isAnalyzing}
+              className={`absolute right-2 top-2 h-7 w-7 p-0 transition-all ${
+                isListening 
+                  ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30 shadow-lg' 
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
-              {isRecording ? (
-                <Square className="h-3 w-3 fill-current" />
-              ) : isProcessing ? (
-                <div className="h-3 w-3 border border-current border-t-transparent rounded-full animate-spin" />
+              {isListening ? (
+                <div className="relative">
+                  <Mic className="h-4 w-4" />
+                  <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-20"></div>
+                </div>
               ) : (
                 <Mic className="h-4 w-4" />
               )}
@@ -171,8 +170,8 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
         
         <Button 
           type="submit" 
-          disabled={isAnalyzing || isRecording || isProcessing || (!currentMessage.trim())}
-          className="h-11 px-4 bg-blue-600 hover:bg-blue-700 text-white"
+          disabled={isAnalyzing || isListening || (!currentMessage.trim())}
+          className="h-11 px-4 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
         >
           {isAnalyzing ? (
             <div className="flex items-center gap-2">
