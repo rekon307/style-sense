@@ -1,4 +1,3 @@
-
 import { Camera, AlertCircle, Video } from "lucide-react";
 import { useEffect, useState, RefObject, useRef, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
@@ -248,21 +247,30 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header - 3 columns layout */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-200/50 dark:border-slate-700/50">
+      {/* Header - 2 columns layout */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/50 dark:border-slate-700/50">
         {/* Left Column - Camera Icon + Title */}
-        <div className="flex items-center gap-2 flex-1">
-          <div className="w-7 h-7 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg flex items-center justify-center">
             <Camera className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Webcam View</h2>
+            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Webcam View</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">Live camera feed</p>
           </div>
         </div>
         
-        {/* Center Column - Stop Button */}
-        <div className="flex justify-center flex-1">
+        {/* Right Column - Status and Stop Button on same row */}
+        <div className="flex items-center gap-3">
+          {/* Status */}
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} ${isActive ? 'animate-pulse' : ''}`}></div>
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+              {isActive ? 'Active' : 'Inactive'}
+            </span>
+          </div>
+          
+          {/* Stop Button */}
           <Button
             onClick={handleToggleWebcam}
             variant="outline"
@@ -272,16 +280,6 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
           >
             {isActive ? "Stop" : "Start"}
           </Button>
-        </div>
-        
-        {/* Right Column - Status */}
-        <div className="flex justify-end flex-1">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-lg backdrop-blur-sm">
-            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} ${isActive ? 'animate-pulse' : ''}`}></div>
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-              {isActive ? 'Active' : 'Inactive'}
-            </span>
-          </div>
         </div>
       </div>
       
