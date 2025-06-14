@@ -1,151 +1,158 @@
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Send, Plus, Mic, MicOff } from "lucide-react";
 import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Send, Mic, MicOff } from "lucide-react";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
 interface ChatInputProps {
   isAnalyzing: boolean;
-  onSendMessage: (message: string, uploadedImage?: string | null) => void;
+  onSendMessage: (message: string, capturedPhoto?: string | null) => void;
 }
 
 const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
-  const [inputValue, setInputValue] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
+  const [message, setMessage] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
   const {
     isRecording,
+    transcript,
     startRecording,
     stopRecording,
-    isProcessing
-  } = useVoiceRecording({
-    onTranscript: (transcript) => {
-      setInputValue(transcript);
-    },
-    onError: (error) => {
-      console.error('Voice recording error:', error);
-    },
-    onAutoSend: (transcript) => {
-      // Auto-send functionality like Siri/Gemini
-      onSendMessage(transcript.trim());
-      setInputValue(""); // Clear input after auto-send
+    isSupported
+  } = useVoiceRecording();
+
+  const capturePhotoFromWebcam = (): string | null => {
+    try {
+      // Find the video element from the webcam
+      const videoElement = document.querySelector('video') as HTMLVideoElement;
+      
+      if (!videoElement || videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+        console.log('Video element not available or not ready');
+        return null;
+      }
+
+      // Create a canvas to capture the frame
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      
+      if (!context) {
+        console.log('Canvas context not available');
+        return null;
+      }
+
+      // Set canvas dimensions to match video
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
+      
+      // Draw the current video frame to canvas
+      context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+      
+      // Convert to data URL
+      const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+      console.log('Photo captured from webcam for Alex analysis');
+      return dataURL;
+    } catch (error) {
+      console.error('Error capturing photo from webcam:', error);
+      return null;
     }
-  });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim() && !isAnalyzing) {
-      onSendMessage(inputValue.trim());
-      setInputValue("");
+    
+    const messageToSend = message.trim() || transcript.trim();
+    if (!messageToSend) return;
+
+    // Capture photo from webcam before sending message
+    const capturedPhoto = capturePhotoFromWebcam();
+    
+    // Send message with captured photo
+    onSendMessage(messageToSend, capturedPhoto);
+    
+    // Reset form
+    setMessage("");
+    
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        if (result) {
-          console.log('Image uploaded, size:', result.length);
-          const message = inputValue.trim() || "Analizează această imagine și dă-mi sfaturi de stil.";
-          onSendMessage(message, result);
-          setInputValue("");
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
     }
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+    
+    // Auto-resize textarea
+    const textarea = e.target;
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
   };
 
-  const handleMicClick = () => {
+  const toggleRecording = () => {
     if (isRecording) {
-      stopRecording(); // Manual stop, will not auto-send
+      stopRecording();
     } else {
       startRecording();
     }
   };
 
-  const getPlaceholderText = () => {
-    if (isRecording) return "Listening... (I'll auto-send when you stop talking)";
-    if (isProcessing) return "Processing speech...";
-    if (isAnalyzing) return "Alex is analyzing...";
-    return "Ask Alex about style, trends, or fashion advice...";
-  };
+  // Use transcript if available, otherwise use typed message
+  const currentMessage = transcript.trim() || message;
 
   return (
-    <div className="border-t border-slate-200/50 dark:border-slate-700/50 px-4 py-4">
-      <form onSubmit={handleSubmit} className="flex items-center gap-3">
-        {/* Left Action Buttons Group */}
-        <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            onClick={handleUploadClick}
-            size="sm"
-            variant="ghost"
+    <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+      <form onSubmit={handleSubmit} className="flex gap-3 p-4">
+        <div className="flex-1 relative">
+          <Textarea
+            ref={textareaRef}
+            value={currentMessage}
+            onChange={handleTextareaChange}
+            onKeyPress={handleKeyPress}
+            placeholder={isRecording ? "Listening..." : "Ask Alex about your style..."}
             disabled={isAnalyzing || isRecording}
-            className="h-10 w-10 p-0 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all duration-200"
-            title="Upload image"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-
-          <Button
-            type="button"
-            onClick={handleMicClick}
-            size="sm"
-            variant="ghost"
-            disabled={isAnalyzing || isProcessing}
-            className={`h-10 w-10 p-0 rounded-xl transition-all duration-200 ${isRecording 
-              ? 'text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30' 
-              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
-            } ${isRecording ? 'animate-pulse' : ''}`}
-            title={isRecording ? "Stop recording (or I'll auto-stop when you finish)" : "Start voice recording"}
-          >
-            {isProcessing ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-            ) : isRecording ? (
-              <MicOff className="h-4 w-4" />
-            ) : (
-              <Mic className="h-4 w-4" />
-            )}
-          </Button>
+            className="min-h-[44px] max-h-[120px] resize-none pr-12 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
+            style={{ height: 'auto' }}
+          />
+          
+          {isSupported && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={toggleRecording}
+              disabled={isAnalyzing}
+              className={`absolute right-2 top-2 h-7 w-7 p-0 ${
+                isRecording 
+                  ? 'text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' 
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+              }`}
+            >
+              {isRecording ? (
+                <MicOff className="h-4 w-4" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+            </Button>
+          )}
         </div>
         
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/svg+xml"
-          onChange={handleFileUpload}
-          className="hidden"
-        />
-        
-        {/* Main Input */}
-        <Input
-          type="text"
-          placeholder={getPlaceholderText()}
-          className="flex-1 h-10 bg-white/50 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-600/50 focus:border-blue-500 dark:focus:border-blue-400 text-sm rounded-xl transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          disabled={isAnalyzing || isRecording}
-        />
-
-        {/* Send Button */}
         <Button 
           type="submit" 
-          size="sm"
-          disabled={isAnalyzing || !inputValue.trim() || isRecording || isProcessing}
-          className="h-10 w-10 p-0 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shrink-0 rounded-xl transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
+          disabled={isAnalyzing || (!currentMessage.trim())}
+          className="h-11 px-4 bg-blue-600 hover:bg-blue-700 text-white"
         >
           {isAnalyzing ? (
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              <span className="text-sm">Analyzing...</span>
+            </div>
           ) : (
             <Send className="h-4 w-4" />
           )}
