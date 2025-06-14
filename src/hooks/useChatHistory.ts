@@ -74,7 +74,12 @@ export const useChatHistory = () => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      
+      // Type cast the role field to ensure TypeScript compatibility
+      return (data || []).map(msg => ({
+        ...msg,
+        role: msg.role as 'user' | 'assistant'
+      }));
     } catch (error) {
       console.error('Error loading messages:', error);
       return [];
