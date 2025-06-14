@@ -36,6 +36,10 @@ export const useMessageHandler = ({
       return;
     }
 
+    console.log('Sending message:', newMessage);
+    console.log('Current session ID:', currentSessionId);
+    console.log('Visual context available:', !!visualContext);
+
     try {
       // Create new session if none exists
       let sessionId = currentSessionId;
@@ -88,10 +92,18 @@ export const useMessageHandler = ({
 
         if (saveError) {
           console.error('Error saving user message:', saveError);
+        } else {
+          console.log('User message saved to database');
         }
       }
 
       console.log('Sending message to style-advisor function...');
+      console.log('Payload:', { 
+        messagesCount: updatedMessages.length,
+        hasVisualContext: !!visualContext,
+        selectedModel
+      });
+
       const { data, error } = await supabase.functions.invoke('style-advisor', {
         body: { 
           messages: updatedMessages,
@@ -102,15 +114,16 @@ export const useMessageHandler = ({
 
       if (error) {
         console.error('Error calling style-advisor function:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
         toast({
           title: "AI Service Error",
-          description: "Failed to get AI response. Please try again.",
+          description: `Failed to get AI response: ${error.message || 'Unknown error'}. Please try again.`,
           variant: "destructive",
         });
         throw error;
       }
 
-      console.log('Received AI response');
+      console.log('Received AI response:', data);
       
       // Add AI response to messages
       if (data && data.response) {
@@ -129,6 +142,8 @@ export const useMessageHandler = ({
 
           if (saveError) {
             console.error('Error saving assistant message:', saveError);
+          } else {
+            console.log('Assistant message saved to database');
           }
         }
 
@@ -136,12 +151,15 @@ export const useMessageHandler = ({
           title: "Response received",
           description: "AI style advisor has responded to your message.",
         });
+      } else {
+        console.error('No response content in data:', data);
+        throw new Error('No response content from AI');
       }
     } catch (error) {
       console.error('Failed to send message:', error);
       const errorMessage = {
         role: 'assistant' as const,
-        content: 'Sorry, I encountered an error processing your request. Please try again.'
+        content: 'Sorry, I encountered an error processing your request. Please ensure your camera is working and try again.'
       };
       setMessages(prev => [...prev, errorMessage]);
       
@@ -155,6 +173,12 @@ export const useMessageHandler = ({
             content: errorMessage.content
           }]);
       }
+      
+      toast({
+        title: "Message Failed",
+        description: "Unable to process your message. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsAnalyzing(false);
     }

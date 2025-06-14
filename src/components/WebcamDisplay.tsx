@@ -2,18 +2,52 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, AlertCircle, Play, Square } from "lucide-react";
-import { useEffect, useState, RefObject, useRef } from "react";
+import { useEffect, useState, RefObject, useRef, forwardRef, useImperativeHandle } from "react";
 
 interface WebcamDisplayProps {
   videoRef: RefObject<HTMLVideoElement>;
 }
 
-const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
+export interface WebcamDisplayRef {
+  capturePhoto: () => string | null;
+}
+
+const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoRef }, ref) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    capturePhoto: () => {
+      if (videoRef.current && isActive) {
+        try {
+          const video = videoRef.current;
+          const canvas = canvasRef.current;
+          if (!canvas) return null;
+          
+          const context = canvas.getContext('2d');
+          if (!context) return null;
+
+          // Set canvas size to match video dimensions
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          
+          // Draw the video frame to canvas
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          // Convert to data URL
+          return canvas.toDataURL('image/png');
+        } catch (error) {
+          console.error('Error capturing photo:', error);
+          return null;
+        }
+      }
+      return null;
+    }
+  }));
 
   const startWebcam = async () => {
     try {
@@ -34,11 +68,12 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        videoRef.current.play().catch(console.error);
+        await videoRef.current.play();
       }
       
       setIsActive(true);
       setIsLoading(false);
+      console.log('Webcam started successfully');
     } catch (err) {
       console.error('Error accessing webcam:', err);
       setIsLoading(false);
@@ -68,6 +103,7 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
     }
     setIsActive(false);
     setError(null);
+    console.log('Webcam stopped');
   };
 
   useEffect(() => {
@@ -168,12 +204,16 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
             muted
             playsInline
             className="w-full h-full object-cover rounded-xl transform -scale-x-100"
+            style={{ objectFit: 'cover' }}
           />
+          <canvas ref={canvasRef} className="hidden" />
           {renderOverlay()}
         </div>
       </CardContent>
     </Card>
   );
-};
+});
+
+WebcamDisplay.displayName = "WebcamDisplay";
 
 export default WebcamDisplay;

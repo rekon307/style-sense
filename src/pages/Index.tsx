@@ -1,6 +1,6 @@
 
 import { useRef } from "react";
-import WebcamDisplay from "@/components/WebcamDisplay";
+import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
 import ChatHistory from "@/components/ChatHistory";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -37,22 +37,34 @@ const Index = ({
   onSessionChange
 }: IndexProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [showChatHistory, setShowChatHistory] = useState(true); // Open by default
+  const webcamRef = useRef<WebcamDisplayRef>(null);
+  const [showChatHistory, setShowChatHistory] = useState(true);
+  const [lastCapturedPhoto, setLastCapturedPhoto] = useState<string | null>(null);
 
   const handleSendMessageWithPhoto = async (message: string) => {
-    // Capture photo automatically when sending a message
-    if (videoRef.current) {
-      const video = videoRef.current;
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-
-      if (context) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const dataURL = canvas.toDataURL('image/png');
-        setInitialImageURL(dataURL);
-      }
+    console.log('Attempting to send message with photo capture...');
+    
+    let photoDataURL: string | null = null;
+    
+    // Try to capture a new photo
+    if (webcamRef.current) {
+      photoDataURL = webcamRef.current.capturePhoto();
+      console.log('Photo capture result:', photoDataURL ? 'Success' : 'Failed');
+    }
+    
+    // If no new photo captured, use the last captured photo
+    if (!photoDataURL && lastCapturedPhoto) {
+      photoDataURL = lastCapturedPhoto;
+      console.log('Using last captured photo from memory');
+    }
+    
+    // If we have a photo (new or from memory), set it and store it
+    if (photoDataURL) {
+      setInitialImageURL(photoDataURL);
+      setLastCapturedPhoto(photoDataURL);
+      console.log('Photo set for analysis');
+    } else {
+      console.warn('No photo available for analysis');
     }
     
     // Send the message
@@ -114,7 +126,7 @@ const Index = ({
           {/* Webcam Section - Larger */}
           <div className="flex-1 p-6">
             <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl h-full">
-              <WebcamDisplay videoRef={videoRef} />
+              <WebcamDisplay ref={webcamRef} videoRef={videoRef} />
             </div>
           </div>
           

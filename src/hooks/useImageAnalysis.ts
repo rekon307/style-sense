@@ -41,6 +41,8 @@ export const useImageAnalysis = ({
       }
 
       try {
+        console.log('Starting style analysis with image...');
+        
         // Create new session if none exists
         if (!currentSessionId) {
           console.log('Creating new session for image analysis...');
@@ -77,12 +79,9 @@ export const useImageAnalysis = ({
           setVisualContext(null);
         }
 
-        toast({
-          title: "Analyzing your style",
-          description: "Please wait while I analyze your image...",
-        });
-
         console.log('Sending image for style analysis...');
+        console.log('Image size:', initialImageURL.length, 'characters');
+        
         const { data, error } = await supabase.functions.invoke('style-advisor', {
           body: { 
             capturedImage: initialImageURL,
@@ -92,15 +91,17 @@ export const useImageAnalysis = ({
 
         if (error) {
           console.error('Error calling style-advisor function:', error);
+          console.error('Error details:', JSON.stringify(error, null, 2));
           toast({
             title: "Analysis Error",
-            description: "Failed to analyze your style. Please try again.",
+            description: `Failed to analyze your style: ${error.message || 'Unknown error'}. Please try again.`,
             variant: "destructive",
           });
           throw error;
         }
 
-        console.log('Style analysis completed');
+        console.log('Style analysis completed successfully');
+        console.log('Response data:', data);
         
         // Add the first AI message to the conversation and store visual context
         if (data && data.reply) {
@@ -120,6 +121,8 @@ export const useImageAnalysis = ({
 
             if (saveError) {
               console.error('Error saving analysis message:', saveError);
+            } else {
+              console.log('Analysis message saved to database');
             }
           }
 
@@ -127,6 +130,9 @@ export const useImageAnalysis = ({
             title: "Analysis complete",
             description: "Your style analysis is ready!",
           });
+        } else {
+          console.error('No reply in response data:', data);
+          throw new Error('No response from AI analysis');
         }
         
         if (data && data.visualContext) {
@@ -137,7 +143,7 @@ export const useImageAnalysis = ({
         console.error('Failed to analyze style:', error);
         const errorMessage = {
           role: 'assistant' as const,
-          content: 'Failed to analyze your style. Please try uploading the image again or check your connection.'
+          content: 'Failed to analyze your style. Please ensure your camera is working and try again, or check your connection.'
         };
         setMessages([errorMessage]);
         
@@ -151,6 +157,12 @@ export const useImageAnalysis = ({
               content: errorMessage.content
             }]);
         }
+        
+        toast({
+          title: "Analysis Failed",
+          description: "Unable to analyze your style. Please check your camera and try again.",
+          variant: "destructive",
+        });
       } finally {
         setIsAnalyzing(false);
       }
