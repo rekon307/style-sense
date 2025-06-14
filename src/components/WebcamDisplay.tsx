@@ -287,9 +287,11 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             playsInline
             webkit-playsinline="true"
             controls={false}
-            controlsList="nodownload nofullscreen noremoteplayback"
+            controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
             disablePictureInPicture
-            className="w-full h-full object-cover rounded-xl"
+            disableRemotePlayback
+            preload="none"
+            className="w-full h-full object-cover rounded-xl [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-panel]:hidden [&::-webkit-media-controls-play-button]:hidden [&::-webkit-media-controls-start-playback-button]:hidden"
             style={{ 
               transform: 'scaleX(-1)',
               maxWidth: '100%',
