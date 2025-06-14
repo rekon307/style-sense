@@ -67,10 +67,17 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
 
   const handleMicClick = () => {
     if (isRecording) {
-      stopRecording(false); // Manual stop, no auto-send
+      stopRecording(); // Manual stop, will not auto-send
     } else {
       startRecording();
     }
+  };
+
+  const getPlaceholderText = () => {
+    if (isRecording) return "Listening... (I'll auto-send when you stop talking)";
+    if (isProcessing) return "Processing speech...";
+    if (isAnalyzing) return "Alex is analyzing...";
+    return "Ask Alex about style, trends, or fashion advice...";
   };
 
   return (
@@ -123,12 +130,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
         {/* Main Input */}
         <Input
           type="text"
-          placeholder={
-            isRecording ? "Listening... (I'll auto-send when you stop talking)" : 
-            isProcessing ? "Processing speech..." :
-            isAnalyzing ? "Alex is analyzing..." : 
-            "Ask Alex about style, trends, or fashion advice..."
-          }
+          placeholder={getPlaceholderText()}
           className="flex-1 h-10 bg-white/50 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-600/50 focus:border-blue-500 dark:focus:border-blue-400 text-sm rounded-xl transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}

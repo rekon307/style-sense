@@ -6,7 +6,7 @@ import { toast } from '@/components/ui/use-toast';
 interface UseVoiceRecordingProps {
   onTranscript: (transcript: string) => void;
   onError: (error: string) => void;
-  onAutoSend?: (transcript: string) => void; // New: auto-send callback
+  onAutoSend?: (transcript: string) => void;
 }
 
 export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoiceRecordingProps) => {
@@ -19,6 +19,7 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const autoStopRef = useRef<boolean>(false); // Fixed: Use ref instead of DOM property
 
   // Voice Activity Detection - detects when user stops speaking
   const startVoiceActivityDetection = useCallback(() => {
@@ -38,7 +39,8 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
         if (!silenceTimerRef.current) {
           silenceTimerRef.current = setTimeout(() => {
             console.log('Auto-stopping recording due to silence');
-            stopRecording(true); // Auto-stop with auto-send
+            autoStopRef.current = true; // Mark as auto-stop
+            stopRecording();
           }, 2000); // 2 seconds of silence triggers auto-stop
         }
       } else {
@@ -59,6 +61,8 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
 
   const startRecording = useCallback(async () => {
     try {
+      autoStopRef.current = false; // Reset auto-stop flag
+      
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           sampleRate: 16000,
@@ -94,18 +98,7 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
         await processAudio(audioBlob);
-        
-        // Stop all tracks to release microphone
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop());
-          streamRef.current = null;
-        }
-
-        // Clean up audio context
-        if (audioContextRef.current) {
-          audioContextRef.current.close();
-          audioContextRef.current = null;
-        }
+        cleanupRecording();
       };
 
       mediaRecorderRef.current = mediaRecorder;
@@ -133,7 +126,7 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
     }
   }, [onError, startVoiceActivityDetection]);
 
-  const stopRecording = useCallback((autoStop = false) => {
+  const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
       // Clear any pending silence timer
       if (silenceTimerRef.current) {
@@ -143,11 +136,22 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
 
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-
-      // Store auto-stop state for use in processAudio
-      mediaRecorderRef.current.autoStop = autoStop;
     }
   }, [isRecording]);
+
+  const cleanupRecording = () => {
+    // Stop all tracks to release microphone
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    // Clean up audio context
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+  };
 
   const processAudio = async (audioBlob: Blob) => {
     setIsProcessing(true);
@@ -175,7 +179,7 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
         onTranscript(data.text);
         
         // Check if this was an auto-stop (voice activity detection triggered)
-        const wasAutoStop = mediaRecorderRef.current?.autoStop;
+        const wasAutoStop = autoStopRef.current;
         
         if (wasAutoStop && onAutoSend) {
           // Auto-send the message like Siri/Gemini
@@ -208,10 +212,7 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
       });
     } finally {
       setIsProcessing(false);
-      // Clean up auto-stop flag
-      if (mediaRecorderRef.current) {
-        delete mediaRecorderRef.current.autoStop;
-      }
+      autoStopRef.current = false; // Reset auto-stop flag
     }
   };
 
