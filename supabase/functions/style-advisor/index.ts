@@ -14,47 +14,108 @@ serve(async (req) => {
   }
 
   try {
+    const apiKey = Deno.env.get('DEEPSEEK_API_KEY');
+    
+    if (!apiKey) {
+      throw new Error('DEEPSEEK_API_KEY is not configured');
+    }
+
     const body = await req.json();
     const { capturedImage, messages } = body;
     
     console.log('Received style analysis request');
     
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    let apiMessages = [];
+    
+    // System prompt for style advice
+    const systemPrompt = {
+      role: "system",
+      content: "You are a professional fashion stylist and image consultant. Provide personalized style advice based on what you observe in photos or respond to follow-up questions about fashion and styling. Be specific, practical, and encouraging in your recommendations."
+    };
+    
+    apiMessages.push(systemPrompt);
     
     // Handle initial request with captured image
     if (capturedImage) {
       console.log('Processing initial image analysis...');
       
-      // Mock style advice response for initial analysis
-      const mockAdvice = {
-        analysis: "Based on your photo, I can see you have a warm skin tone and natural features that would work well with earthy colors. Try incorporating warm colors like burgundy, olive green, or burnt orange into your wardrobe. Consider accessories in gold tones rather than silver to complement your warm undertones."
+      const userMessage = {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "Please analyze this photo and provide personalized style advice. Consider skin tone, face shape, current style, and suggest specific improvements for clothing, colors, and accessories."
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: capturedImage
+            }
+          }
+        ]
       };
-
-      return new Response(JSON.stringify(mockAdvice), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      
+      apiMessages.push(userMessage);
     }
     
     // Handle follow-up conversation with messages array
-    if (messages && Array.isArray(messages)) {
+    else if (messages && Array.isArray(messages)) {
       console.log('Processing follow-up conversation...', messages);
       
-      // Mock follow-up response
-      const mockFollowUpResponse = {
-        response: "That's a great question! A red jacket would add a bold pop of color and create a very confident look. It would pair nicely with the other elements we discussed earlier and really make your warm undertones shine."
-      };
-
-      return new Response(JSON.stringify(mockFollowUpResponse), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      // Add all previous messages to maintain conversation context
+      apiMessages.push(...messages);
     }
     
     // If neither capturedImage nor messages is provided
-    return new Response(JSON.stringify({ error: 'Invalid request format' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    else {
+      return new Response(JSON.stringify({ error: 'Invalid request format' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Make API call to Deepseek
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "deepseek-vl-chat",
+        messages: apiMessages,
+        max_tokens: 1000,
+        temperature: 0.7
+      }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Deepseek API error:', response.status, errorText);
+      throw new Error(`Deepseek API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Received response from Deepseek API');
+    
+    const aiResponse = data.choices?.[0]?.message?.content;
+    
+    if (!aiResponse) {
+      throw new Error('No response content from Deepseek API');
+    }
+
+    // Format response based on request type
+    if (capturedImage) {
+      // Initial analysis response
+      return new Response(JSON.stringify({ analysis: aiResponse }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } else {
+      // Follow-up conversation response
+      return new Response(JSON.stringify({ response: aiResponse }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
   } catch (error) {
     console.error('Error in style-advisor function:', error);
