@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, AlertCircle, Play, Square } from "lucide-react";
@@ -163,7 +162,7 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
             autoPlay
             muted
             playsInline
-            className={`w-full h-full object-cover rounded-lg ${!isActive ? 'hidden' : ''}`}
+            className="w-full h-full object-cover rounded-lg transform -scale-x-100"
           />
           {renderOverlay()}
         </div>
