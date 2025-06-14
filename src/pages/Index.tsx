@@ -158,8 +158,8 @@ const Index = ({
             </div>
           </div>
           
-          {/* Style Advice Panel */}
-          <div className="w-96 p-6 border-l border-slate-200/50 dark:border-slate-700/50 flex-shrink-0">
+          {/* Style Advice Panel - increased width */}
+          <div className="w-[450px] p-6 border-l border-slate-200/50 dark:border-slate-700/50 flex-shrink-0">
             <StyleAdvice 
               messages={messages} 
               isAnalyzing={isAnalyzing}
