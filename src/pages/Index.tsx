@@ -3,6 +3,7 @@ import { useRef } from "react";
 import WebcamDisplay from "@/components/WebcamDisplay";
 import Controls from "@/components/Controls";
 import StyleAdvice from "@/components/StyleAdvice";
+import ChatHistory from "@/components/ChatHistory";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -17,6 +18,8 @@ interface IndexProps {
   handleSendMessage: (message: string) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
+  currentSessionId: string | null;
+  onSessionChange: (sessionId: string | null) => void;
 }
 
 const Index = ({ 
@@ -26,7 +29,9 @@ const Index = ({
   isAnalyzing, 
   handleSendMessage,
   selectedModel,
-  onModelChange
+  onModelChange,
+  currentSessionId,
+  onSessionChange
 }: IndexProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -42,8 +47,13 @@ const Index = ({
           </p>
         </header>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left column - Webcam and Controls */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left column - Chat History */}
+          <div className="lg:col-span-1">
+            <ChatHistory onSessionChange={onSessionChange} />
+          </div>
+          
+          {/* Middle column - Webcam and Controls */}
           <div className="lg:col-span-2 space-y-6">
             <WebcamDisplay videoRef={videoRef} />
             <Controls 

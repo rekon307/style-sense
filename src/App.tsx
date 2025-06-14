@@ -22,18 +22,82 @@ const App = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [visualContext, setVisualContext] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+
+  // Clear messages when starting a new session or no session is selected
+  useEffect(() => {
+    if (!currentSessionId) {
+      setMessages([]);
+      setVisualContext(null);
+      setInitialImageURL(null);
+    }
+  }, [currentSessionId]);
+
+  // Load messages when switching sessions
+  useEffect(() => {
+    const loadSessionMessages = async () => {
+      if (!currentSessionId) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .eq('session_id', currentSessionId)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        
+        const sessionMessages = data?.map(msg => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content
+        })) || [];
+        
+        setMessages(sessionMessages);
+        
+        // Set visual context from the first message that has it
+        const messageWithContext = data?.find(msg => msg.visual_context);
+        if (messageWithContext) {
+          setVisualContext(messageWithContext.visual_context);
+        }
+      } catch (error) {
+        console.error('Error loading session messages:', error);
+      }
+    };
+
+    loadSessionMessages();
+  }, [currentSessionId]);
 
   useEffect(() => {
     const analyzeStyle = async () => {
       if (!initialImageURL) {
-        setMessages([]);
-        setVisualContext(null);
+        if (!currentSessionId) {
+          setMessages([]);
+          setVisualContext(null);
+        }
         return;
       }
 
+      // Create new session if none exists
+      if (!currentSessionId) {
+        const { data, error } = await supabase
+          .from('chat_sessions')
+          .insert([{ 
+            title: 'Style Analysis',
+            user_id: (await supabase.auth.getUser()).data.user?.id 
+          }])
+          .select()
+          .single();
+
+        if (!error && data) {
+          setCurrentSessionId(data.id);
+        }
+      }
+
       setIsAnalyzing(true);
-      setMessages([]);
-      setVisualContext(null);
+      if (!currentSessionId) {
+        setMessages([]);
+        setVisualContext(null);
+      }
 
       try {
         console.log('Sending image for style analysis...');
@@ -53,7 +117,20 @@ const App = () => {
         
         // Add the first AI message to the conversation and store visual context
         if (data && data.reply) {
-          setMessages([{ role: 'assistant' as const, content: data.reply }]);
+          const newMessage = { role: 'assistant' as const, content: data.reply };
+          setMessages([newMessage]);
+          
+          // Save to database if we have a session
+          if (currentSessionId) {
+            await supabase
+              .from('chat_messages')
+              .insert([{
+                session_id: currentSessionId,
+                role: 'assistant',
+                content: data.reply,
+                visual_context: data.visualContext || null
+              }]);
+          }
         }
         
         if (data && data.visualContext) {
@@ -61,25 +138,66 @@ const App = () => {
         }
       } catch (error) {
         console.error('Failed to get style advice:', error);
-        setMessages([{
+        const errorMessage = {
           role: 'assistant' as const,
           content: 'Failed to analyze your style. Please try again.'
-        }]);
+        };
+        setMessages([errorMessage]);
+        
+        // Save error message to database if we have a session
+        if (currentSessionId) {
+          await supabase
+            .from('chat_messages')
+            .insert([{
+              session_id: currentSessionId,
+              role: 'assistant',
+              content: errorMessage.content
+            }]);
+        }
       } finally {
         setIsAnalyzing(false);
       }
     };
 
     analyzeStyle();
-  }, [initialImageURL, selectedModel]);
+  }, [initialImageURL, selectedModel, currentSessionId]);
 
   const handleSendMessage = async (newMessage: string) => {
+    // Create new session if none exists
+    let sessionId = currentSessionId;
+    if (!sessionId) {
+      const { data, error } = await supabase
+        .from('chat_sessions')
+        .insert([{ 
+          title: 'Chat Session',
+          user_id: (await supabase.auth.getUser()).data.user?.id 
+        }])
+        .select()
+        .single();
+
+      if (!error && data) {
+        sessionId = data.id;
+        setCurrentSessionId(sessionId);
+      }
+    }
+
     // Create updated messages array with user's new message
     const updatedMessages: Message[] = [...messages, { role: 'user' as const, content: newMessage }];
     
     // Update state immediately to show user's message
     setMessages(updatedMessages);
     setIsAnalyzing(true);
+
+    // Save user message to database
+    if (sessionId) {
+      await supabase
+        .from('chat_messages')
+        .insert([{
+          session_id: sessionId,
+          role: 'user',
+          content: newMessage
+        }]);
+    }
 
     try {
       console.log('Sending follow-up message...');
@@ -100,17 +218,45 @@ const App = () => {
       
       // Add AI response to messages
       if (data && data.response) {
-        setMessages(prev => [...prev, { role: 'assistant' as const, content: data.response }]);
+        const assistantMessage = { role: 'assistant' as const, content: data.response };
+        setMessages(prev => [...prev, assistantMessage]);
+        
+        // Save assistant message to database
+        if (sessionId) {
+          await supabase
+            .from('chat_messages')
+            .insert([{
+              session_id: sessionId,
+              role: 'assistant',
+              content: data.response
+            }]);
+        }
       }
     } catch (error) {
       console.error('Failed to send message:', error);
-      setMessages(prev => [...prev, {
+      const errorMessage = {
         role: 'assistant' as const,
         content: 'Sorry, I encountered an error. Please try again.'
-      }]);
+      };
+      setMessages(prev => [...prev, errorMessage]);
+      
+      // Save error message to database
+      if (sessionId) {
+        await supabase
+          .from('chat_messages')
+          .insert([{
+            session_id: sessionId,
+            role: 'assistant',
+            content: errorMessage.content
+          }]);
+      }
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleSessionChange = (sessionId: string | null) => {
+    setCurrentSessionId(sessionId);
   };
 
   return (
@@ -131,6 +277,8 @@ const App = () => {
                   handleSendMessage={handleSendMessage}
                   selectedModel={selectedModel}
                   onModelChange={setSelectedModel}
+                  currentSessionId={currentSessionId}
+                  onSessionChange={handleSessionChange}
                 />
               } 
             />
