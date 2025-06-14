@@ -1,10 +1,9 @@
-
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Mic, Square } from "lucide-react";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
-import { capturePhotoFromWebcam, isWebcamReady } from "@/utils/imageCapture";
+import { capturePhotoFromWebcam, isWebcamReady, debugWebcamStatus } from "@/utils/imageCapture";
 
 interface ChatInputProps {
   isAnalyzing: boolean;
@@ -25,17 +24,20 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
   } = useVoiceRecording();
 
   const handleCognitiveAutoSend = (finalTranscript: string) => {
-    console.log('Alex cognitive auto-send:', finalTranscript);
+    console.log('=== COGNITIVE AUTO-SEND ===');
+    console.log('Transcript:', finalTranscript);
     
     if (!finalTranscript.trim()) {
-      console.warn('Empty transcript, skipping auto-send');
+      console.warn('=== EMPTY TRANSCRIPT - SKIPPING ===');
       return;
     }
 
+    // Debug webcam status before capture
+    debugWebcamStatus();
+    
     const capturedPhoto = isWebcamReady() ? capturePhotoFromWebcam() : null;
-    if (!capturedPhoto) {
-      console.warn('Could not capture photo for cognitive auto-send');
-    }
+    console.log('=== AUTO-SEND PHOTO RESULT ===');
+    console.log('Photo captured:', !!capturedPhoto);
     
     onSendMessage(finalTranscript, capturedPhoto, temperature);
     setMessage("");
@@ -47,10 +49,15 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
     const messageToSend = message.trim();
     if (!messageToSend) return;
 
+    console.log('=== MANUAL SUBMIT ===');
+    console.log('Message:', messageToSend);
+    
+    // Debug webcam status before capture
+    debugWebcamStatus();
+    
     const capturedPhoto = isWebcamReady() ? capturePhotoFromWebcam() : null;
-    if (!capturedPhoto) {
-      console.warn('Could not capture photo for message submission');
-    }
+    console.log('=== SUBMIT PHOTO RESULT ===');
+    console.log('Photo captured:', !!capturedPhoto);
     
     onSendMessage(messageToSend, capturedPhoto, temperature);
     setMessage("");

@@ -32,9 +32,10 @@ export const useMessageHandler = ({
       return;
     }
 
-    console.log('=== ALEX MESSAGE HANDLER ===');
+    console.log('=== MESSAGE HANDLER START ===');
     console.log('Message:', message);
     console.log('Has image:', !!image);
+    console.log('Image data length:', image ? image.length : 0);
     console.log('Temperature:', temperature);
 
     // Add user message immediately
@@ -76,7 +77,7 @@ export const useMessageHandler = ({
           }]);
       }
 
-      // Prepare request body with image support - CRITICAL: ensure image is passed
+      // Prepare request with enhanced image debugging
       const requestBody: {
         messages: Message[];
         temperature: number;
@@ -88,14 +89,18 @@ export const useMessageHandler = ({
         model: 'gpt-4o-mini'
       };
 
-      // CRITICAL FIX: Always include image if available
+      // CRITICAL: Always include image if provided
       if (image) {
         requestBody.image = image;
-        console.log('=== IMAGE INCLUDED IN REQUEST ===');
-        console.log('Image data length:', image.length);
+        console.log('=== IMAGE ATTACHED TO REQUEST ===');
+        console.log('Image format:', image.substring(0, 30));
+        console.log('Image size (bytes):', image.length);
       } else {
-        console.warn('=== NO IMAGE PROVIDED ===');
+        console.warn('=== NO IMAGE IN REQUEST ===');
       }
+
+      console.log('=== SENDING REQUEST TO EDGE FUNCTION ===');
+      console.log('Request body keys:', Object.keys(requestBody));
 
       // Make streaming request
       const response = await fetch(`https://rqubwaskrqvlsjcnsihy.supabase.co/functions/v1/style-advisor`, {
@@ -108,12 +113,16 @@ export const useMessageHandler = ({
       });
 
       if (!response.ok) {
+        console.error('=== EDGE FUNCTION ERROR ===');
+        console.error('Status:', response.status);
         throw new Error(`API error: ${response.status}`);
       }
 
       if (!response.body) {
         throw new Error('No response body');
       }
+
+      console.log('=== STARTING STREAM PROCESSING ===');
 
       // Handle streaming response
       const reader = response.body.getReader();
@@ -164,6 +173,9 @@ export const useMessageHandler = ({
         }
       }
 
+      console.log('=== STREAM COMPLETED ===');
+      console.log('Final response length:', assistantContent.length);
+
       // Save assistant response
       if (sessionId && assistantContent) {
         await supabase
@@ -177,11 +189,12 @@ export const useMessageHandler = ({
 
       toast({
         title: "Response received",
-        description: "Alex has responded to your message.",
+        description: "Alex has analyzed your image and responded.",
       });
 
     } catch (error) {
-      console.error('Message handler error:', error);
+      console.error('=== MESSAGE HANDLER ERROR ===');
+      console.error('Error details:', error);
       const errorMessage = {
         role: 'assistant' as const,
         content: 'Sorry, I encountered an error. Please try again.'

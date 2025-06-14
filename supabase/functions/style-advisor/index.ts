@@ -82,7 +82,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Alex AI request received with cognitive architecture');
+    console.log('=== ALEX AI REQUEST RECEIVED ===');
     const requestBody = await req.json();
     
     const model = requestBody.model || 'gpt-4o-mini';
@@ -90,18 +90,18 @@ serve(async (req) => {
     const userMessages = requestBody.messages || [];
     const currentImage = requestBody.image;
 
+    console.log('=== REQUEST ANALYSIS ===');
+    console.log('Model:', model);
+    console.log('Temperature:', temperature);
+    console.log('Messages count:', userMessages.length);
+    console.log('Has current image:', !!currentImage);
+    console.log('Image data preview:', currentImage ? currentImage.substring(0, 50) + '...' : 'none');
+
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Processing request with cognitive architecture:', {
-      model,
-      temperature,
-      messagesCount: userMessages.length,
-      hasImage: !!currentImage
-    });
-
-    // HISTORY CLEANING & COGNITIVE PREPARATION
+    // ENHANCED MESSAGE PREPARATION WITH IMAGE DEBUGGING
     const messagesForOpenAI: any[] = [];
 
     // Step 1: Always start with Alex's Cognitive Constitution
@@ -110,7 +110,7 @@ serve(async (req) => {
       content: ALEX_COGNITIVE_CONSTITUTION
     });
 
-    // Step 2: Add cleaned text-only history (excluding the last message)
+    // Step 2: Add conversation history (text-only for previous messages)
     if (userMessages.length > 1) {
       for (let i = 0; i < userMessages.length - 1; i++) {
         const message = userMessages[i];
@@ -121,12 +121,16 @@ serve(async (req) => {
       }
     }
 
-    // Step 3: Handle the last message - enhance with image if available
+    // Step 3: Handle the CURRENT message with image support
     if (userMessages.length > 0) {
       const lastMessage = userMessages[userMessages.length - 1];
       
       if (currentImage && lastMessage.role === 'user') {
-        // Create multimodal message with both text and image for cognitive analysis
+        console.log('=== CREATING MULTIMODAL MESSAGE ===');
+        console.log('Text:', extractTextContent(lastMessage.content));
+        console.log('Image length:', currentImage.length);
+        
+        // Create enhanced multimodal message
         messagesForOpenAI.push({
           role: "user",
           content: [
@@ -143,21 +147,23 @@ serve(async (req) => {
             }
           ]
         });
+        
+        console.log('=== MULTIMODAL MESSAGE CREATED SUCCESSFULLY ===');
       } else {
-        // Text-only message
+        console.log('=== CREATING TEXT-ONLY MESSAGE ===');
         messagesForOpenAI.push({
           role: lastMessage.role,
           content: extractTextContent(lastMessage.content)
         });
       }
     } else if (currentImage) {
-      // No messages but image provided - create initial cognitive analysis
+      console.log('=== NO MESSAGES BUT IMAGE PROVIDED ===');
       messagesForOpenAI.push({
         role: "user",
         content: [
           {
             type: "text",
-            text: "Please analyze my style using your cognitive framework and provide your expert guidance."
+            text: "Te rog să analizezi imaginea mea folosind cunoștințele tale de stil și să îmi oferi sfaturi personalizate."
           },
           {
             type: "image_url",
@@ -170,12 +176,15 @@ serve(async (req) => {
       });
     }
 
-    console.log('Sending to OpenAI with cognitive architecture and', messagesForOpenAI.length, 'messages');
+    console.log('=== FINAL MESSAGE COUNT FOR OPENAI ===');
+    console.log('Total messages:', messagesForOpenAI.length);
+    console.log('Last message type:', typeof messagesForOpenAI[messagesForOpenAI.length - 1]?.content);
 
-    // Create streaming response with cognitive processing
+    // Create streaming response
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          console.log('=== CALLING OPENAI API ===');
           const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -193,10 +202,13 @@ serve(async (req) => {
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('OpenAI API error:', response.status, errorText);
+            console.error('=== OPENAI API ERROR ===');
+            console.error('Status:', response.status);
+            console.error('Error:', errorText);
             throw new Error(`OpenAI API error: ${response.status}`);
           }
 
+          console.log('=== OPENAI RESPONSE OK - STARTING STREAM ===');
           const reader = response.body?.getReader();
           if (!reader) {
             throw new Error('Unable to read response stream');
@@ -238,9 +250,11 @@ serve(async (req) => {
             }
           }
 
+          console.log('=== STREAM COMPLETED SUCCESSFULLY ===');
           controller.close();
         } catch (error) {
-          console.error('Cognitive streaming error:', error);
+          console.error('=== STREAMING ERROR ===');
+          console.error('Error details:', error);
           const errorChunk = new TextEncoder().encode(`data: ${JSON.stringify({ error: error.message })}\n\n`);
           controller.enqueue(errorChunk);
           controller.close();
@@ -258,7 +272,8 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in Alex cognitive function:', error);
+    console.error('=== FUNCTION ERROR ===');
+    console.error('Error details:', error);
     return new Response(JSON.stringify({ 
       error: error.message 
     }), {
