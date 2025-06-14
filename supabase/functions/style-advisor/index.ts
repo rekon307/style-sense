@@ -9,237 +9,185 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Master Stylist System Prompt - Applied to every request for stateless operation
+const MASTER_STYLIST_SYSTEM_PROMPT = `Core Identity: You are "Alex," an elite AI stylist. Your intellect and style philosophy are modeled after the great masters of fashion. You are not just a trend follower; you are a connoisseur of form, function, and personal expression. Your personality is that of "Jarvis" from Iron Man: sophisticated, precise, witty, and profoundly insightful.
+
+Guiding Philosophy: You view style as architecture for the body and a form of non-verbal communication. Your advice aims to build a cohesive, confident, and intelligent personal style for the user, not just to pick an outfit.
+
+The Master Stylist's Analytical Framework (Your Mental Model):
+When you receive an image and a query, you will analyze them through these five lenses, in this order of priority:
+
+1. Context & Intent: This is paramount. What is the occasion (e.g., business meeting, wedding, casual weekend)? What is the user's goal (e.g., to look authoritative, creative, approachable)? Without this, any advice is meaningless.
+
+2. Silhouette & Proportion: This is the architectural foundation. Analyze the fit, cut, and length of the garments. Do they create a balanced and flattering line for the user's body shape? How do the proportions of the top, bottom, and accessories interact?
+
+3. Color Theory & Psychology: Go beyond simple matching. What is the story told by the color palette? Is it monochromatic, analogous, complementary? What mood or message do these colors convey (e.g., power, tranquility, energy)? Assess how they work with the user's visible features.
+
+4. Fabric, Texture, & Drape: The "feel" of an outfit. Are the materials appropriate for the context and season? How do the textures (e.g., smooth cotton vs. rugged denim) add depth? How does the fabric drape and move with the body?
+
+5. The Art of the Detail: Focus on the elements that elevate an outfit from good to great. Analyze the accessories (glasses, watch, belt, shoes), the quality of the finish (if visible), and the subtle choices that signal intention and sophistication.
+
+Rules of Engagement (Your Interaction Protocol):
+
+Language Mastery: You MUST auto-detect the user's language from their last message and ALWAYS respond flawlessly in that same language.
+
+Implicit Visual Context: You will receive an image with the user's prompt. NEVER explicitly state what you see (e.g., "I see a blue shirt"). Instead, your response must inherently prove you have analyzed the visual data. Use your analysis of the fit, color, and fabric to answer the user's question directly.
+
+The Socratic Method for Vague Queries: If a user's query is generic (e.g., "How do I look?"), your immediate response is to seek the most critical missing piece of information: context. Ask clarifying questions. Example: "The foundation is solid. To tailor the advice perfectly, could you tell me the setting you have in mind for this outfit?"
+
+Graceful Error Handling (No Person Detected): If the provided image does not appear to contain a person, you must inform the user clearly and politely in their detected language. Example: "My analysis requires a person in the frame. Please adjust the camera and try again."`;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Received style analysis request');
+    console.log('Master Stylist AI request received');
     const requestBody = await req.json();
     
-    console.log('Request body:', {
-      hasCapturedImage: !!requestBody.capturedImage,
+    console.log('Request analysis:', {
       hasCurrentImage: !!requestBody.currentImage,
+      hasCapturedImage: !!requestBody.capturedImage,
       messagesCount: requestBody.messages?.length || 0,
-      hasVisualContext: !!requestBody.visualContext,
-      selectedModel: requestBody.model
+      selectedModel: requestBody.model || 'gpt-4o-mini'
     });
 
     const model = requestBody.model || 'gpt-4o-mini';
-    console.log('Using model:', model);
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Handle initial image analysis
-    if (requestBody.capturedImage && (!requestBody.messages || requestBody.messages.length === 0)) {
-      console.log('Processing initial image analysis...');
-      
-      const imageAnalysisMessages = [
-        {
-          role: "system",
-          content: `Ești Alex, un consultant de stil personal profesional și prietenos cu expertiză în modă, styling personal și tendințe actuale.
+    // Extract and validate the messages array
+    const userMessages = requestBody.messages || [];
+    
+    // Determine which image to use (prioritize currentImage over capturedImage)
+    const imageToAnalyze = requestBody.currentImage || requestBody.capturedImage;
+    
+    if (!imageToAnalyze && userMessages.length === 0) {
+      throw new Error('No image or messages provided for analysis');
+    }
 
-FOARTE IMPORTANT - ANALIZA IMAGINILOR:
-- Când primești o imagine, ÎNCEPE ÎNTOTDEAUNA cu confirmarea că poți vedea imaginea
-- Fii EXTREM DE SPECIFIC despre ce observi în imagine (haine, culori, accesorii, ochelari, etc.)
-- Analizează TOATE detaliile vizibile: culoarea și tipul hainelor, accesoriile, coafura, ochelarii dacă există, fundalul, etc.
-- Descrie EXACT ce vezi înainte de a da sfaturi
+    console.log('Processing with unified logic:', {
+      imageProvided: !!imageToAnalyze,
+      messagesProvided: userMessages.length,
+      model: model
+    });
 
-Rolul tău este să:
-- Analizezi îmbrăcămintea, accesoriile și stilul general din fotografii
-- Să dai sfaturi specifice și aplicabile în modă
-- Să sugerezi îmbunătățiri pentru croială, coordonarea culorilor și styling
-- Să recomanzi tendințe și piese care ar îmbunătăți look-ul utilizatorului
-- Să fii încurajator dar să dai feedback onest și constructiv
-- Să pui întrebări de follow-up pentru a înțelege mai bine obiectivele de stil
+    // Build the conversation for OpenAI - ALWAYS start with Master Stylist system prompt
+    const conversationMessages = [
+      {
+        role: "system",
+        content: MASTER_STYLIST_SYSTEM_PROMPT
+      }
+    ];
 
-Răspunde întotdeauna într-un ton conversațional și util. Concentrează-te pe sfaturi practice pe care le pot implementa imediat.`
-        },
-        {
+    // Process user messages and enhance the last one with image if available
+    if (userMessages.length > 0) {
+      // Add all user messages except the last one
+      for (let i = 0; i < userMessages.length - 1; i++) {
+        conversationMessages.push({
+          role: userMessages[i].role,
+          content: userMessages[i].content
+        });
+      }
+
+      // Handle the last user message - enhance with image if available
+      const lastMessage = userMessages[userMessages.length - 1];
+      if (imageToAnalyze && lastMessage.role === 'user') {
+        conversationMessages.push({
           role: "user",
           content: [
             {
               type: "text",
-              text: "Te rog analizează stilul și ținuta mea actuală. Dă-mi feedback specific despre ce funcționează bine și ce ar putea fi îmbunătățit. De asemenea, oferă-mi sugestii de styling."
+              text: lastMessage.content
             },
             {
               type: "image_url",
               image_url: {
-                url: requestBody.capturedImage
+                url: imageToAnalyze
               }
             }
           ]
-        }
-      ];
-
-      console.log('Sending request to OpenAI API for initial analysis...');
-      
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: imageAnalysisMessages,
-          max_tokens: 1200,
-          temperature: 0.3
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenAI API error:', response.status, errorText);
-        throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
-      }
-
-      const data = await response.json();
-      console.log('Received response from OpenAI API');
-      console.log('Token usage:', JSON.stringify(data.usage, null, 2));
-
-      const assistantResponse = data.choices[0].message.content;
-
-      // Extract visual context for future reference
-      const visualContext = {
-        clothing: "analyzed outfit",
-        timestamp: new Date().toISOString()
-      };
-
-      console.log('Raw response:', assistantResponse);
-
-      return new Response(JSON.stringify({
-        response: assistantResponse,
-        visualContext: JSON.stringify(visualContext)
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Handle conversation messages
-    if (requestBody.messages && requestBody.messages.length > 0) {
-      console.log('Processing conversation message...');
-      
-      // Build the conversation messages for OpenAI
-      const conversationMessages = [
-        {
-          role: "system",
-          content: `Ești Alex, un consultant de stil personal profesional și prietenos cu expertiză în modă, styling personal și tendințe actuale.
-
-REGULI CRITICE PENTRU ANALIZA IMAGINILOR ȘI RĂSPUNSURI:
-- Când vezi o imagine, ÎNCEPE ÎNTOTDEAUNA cu: "Văd în imagine că..." sau "Din fotografie observ că..."
-- Pentru întrebări DIRECTE (ex: "port ochelari?", "ce culoare are camasa?"), răspunde DIRECT și SPECIFIC
-- Pentru întrebări complexe (ex: "merg bine pantalonii cu camasa pentru salsa?"), analizează fiecare element vizibil și dă sfaturi concrete
-- Fii EXTREM DE PRECIS în descrierile tale - menționează culori exacte, tipuri de haine, accesorii vizibile
-- Nu evita întrebările directe cu răspunsuri generice
-- Când nu poți vedea ceva specific, spune clar "Nu pot vedea clar..." dar analizează ce poți vedea
-
-INSTRUCȚIUNI PENTRU ÎNTREBĂRI SPECIFICE:
-- "port ochelari?" → "Da, văd că porți ochelari cu ramă [descrie]" SAU "Nu, în imagine nu văd să porți ochelari"
-- "ce culoare are...?" → "Culoarea este [culoare exactă]"
-- "merg bine [piesa 1] cu [piesa 2]?" → Analizează combinația vizibilă și dă feedback specific
-
-Personalitatea ta:
-- Profesional dar accesibil și conversațional
-- Expert în tendințele actuale de modă și principiile stilului atemporale
-- Încurajator și suportiv oferind feedback onest
-- Concentrat pe sfaturi practice și aplicabile
-
-Pentru răspunsuri:
-- Păstrează răspunsurile concise și focalizate (2-3 paragrafe maxim pentru întrebări simple)
-- Oferă sfaturi specifice și aplicabile
-- Referă-te la tendințele actuale când este relevant
-- Pune întrebări de follow-up pentru a înțelege mai bine nevoile lor
-- Fii încurajator și pozitiv
-- RĂSPUNDE DIRECT la întrebări specifice
-- Bazează-te pe ce vezi în imagine pentru a da sfaturi
-
-${requestBody.visualContext ? `Context vizual anterior: ${requestBody.visualContext}` : 'Nu este disponibil context vizual anterior.'}`
-        }
-      ];
-
-      // Add all the conversation messages
-      requestBody.messages.forEach((msg: any) => {
-        conversationMessages.push({
-          role: msg.role,
-          content: msg.content
         });
-      });
-
-      // If we have a current image, modify the last user message to include the image
-      if (requestBody.currentImage) {
-        console.log('Adding current image to conversation');
-        
-        // Find the last user message and enhance it with the image
-        for (let i = conversationMessages.length - 1; i >= 0; i--) {
-          if (conversationMessages[i].role === 'user') {
-            // Store the original text content
-            const originalContent = conversationMessages[i].content;
-            
-            // Replace with multimodal content
-            conversationMessages[i].content = [
-              {
-                type: "text",
-                text: originalContent
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: requestBody.currentImage
-                }
-              }
-            ];
-            console.log('Successfully added image to user message');
-            break;
+        console.log('Enhanced last user message with image');
+      } else {
+        conversationMessages.push({
+          role: lastMessage.role,
+          content: lastMessage.content
+        });
+      }
+    } else if (imageToAnalyze) {
+      // No messages but image provided - create initial analysis request
+      conversationMessages.push({
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: "Please analyze my style and provide your expert guidance."
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: imageToAnalyze
+            }
           }
-        }
-      }
-
-      console.log('Sending conversation to OpenAI with', conversationMessages.length, 'messages...');
-      console.log('Last message has image:', requestBody.currentImage ? 'Yes' : 'No');
-      
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: conversationMessages,
-          max_tokens: 1000,
-          temperature: 0.2
-        }),
+        ]
       });
+      console.log('Created initial style analysis request with image');
+    }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenAI API error:', response.status, errorText);
-        throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
-      }
+    console.log('Sending unified request to OpenAI with', conversationMessages.length, 'messages');
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: conversationMessages,
+        max_tokens: 1200,
+        temperature: 0.2
+      }),
+    });
 
-      const data = await response.json();
-      console.log('Token usage:', JSON.stringify(data.usage, null, 2));
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
+    }
 
-      const assistantResponse = data.choices[0].message.content;
+    const data = await response.json();
+    console.log('Master Stylist response received');
+    console.log('Token usage:', JSON.stringify(data.usage, null, 2));
 
-      return new Response(JSON.stringify({
-        response: assistantResponse
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    const assistantResponse = data.choices[0].message.content;
+
+    // Create visual context for future reference if this was an image analysis
+    const responseData: any = {
+      response: assistantResponse
+    };
+
+    if (imageToAnalyze) {
+      responseData.visualContext = JSON.stringify({
+        analyzed: true,
+        timestamp: new Date().toISOString(),
+        type: "master_stylist_analysis"
       });
     }
 
-    throw new Error('No valid request type found');
+    return new Response(JSON.stringify(responseData), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
-    console.error('Error in style-advisor function:', error);
+    console.error('Error in Master Stylist function:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
-      details: 'Check function logs for more information'
+      details: 'Master Stylist analysis failed - check function logs'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
