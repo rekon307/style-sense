@@ -76,7 +76,7 @@ export const useMessageHandler = ({
           }]);
       }
 
-      // Prepare request body with image support
+      // Prepare request body with image support - CRITICAL: ensure image is passed
       const requestBody: {
         messages: Message[];
         temperature: number;
@@ -88,8 +88,13 @@ export const useMessageHandler = ({
         model: 'gpt-4o-mini'
       };
 
+      // CRITICAL FIX: Always include image if available
       if (image) {
         requestBody.image = image;
+        console.log('=== IMAGE INCLUDED IN REQUEST ===');
+        console.log('Image data length:', image.length);
+      } else {
+        console.warn('=== NO IMAGE PROVIDED ===');
       }
 
       // Make streaming request

@@ -2,13 +2,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
-
 export const useVoiceRecording = () => {
   const [isListening, setIsListening] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
@@ -76,7 +69,6 @@ export const useVoiceRecording = () => {
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'ro-RO';
-      recognition.maxAlternatives = 1;
 
       recognition.onstart = () => {
         console.log('Alex is listening - real-time cognitive mode');
