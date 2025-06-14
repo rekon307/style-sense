@@ -46,13 +46,24 @@ serve(async (req) => {
     console.log('Master Stylist AI request received');
     const requestBody = await req.json();
     
-    console.log('Request analysis:', {
+    // DEBUGGING LOG - Critical for tracking image data transmission
+    console.log('=== DEBUG: INCOMING REQUEST ANALYSIS ===');
+    console.log('Received request body structure:', {
+      hasMessages: !!requestBody.messages,
+      messagesCount: requestBody.messages?.length || 0,
       hasCurrentImage: !!requestBody.currentImage,
       hasCapturedImage: !!requestBody.capturedImage,
-      messagesCount: requestBody.messages?.length || 0,
-      selectedModel: requestBody.model || 'gpt-4o-mini'
+      hasVisualContext: !!requestBody.visualContext,
+      selectedModel: requestBody.model || 'not specified',
+      imagePreview: requestBody.currentImage ? requestBody.currentImage.substring(0, 100) + '...' : 'No currentImage',
+      capturedImagePreview: requestBody.capturedImage ? requestBody.capturedImage.substring(0, 100) + '...' : 'No capturedImage'
     });
-
+    
+    if (requestBody.messages && requestBody.messages.length > 0) {
+      console.log('Last message content:', requestBody.messages[requestBody.messages.length - 1].content);
+    }
+    console.log('=== END DEBUG ANALYSIS ===');
+    
     const model = requestBody.model || 'gpt-4o-mini';
 
     if (!openAIApiKey) {
