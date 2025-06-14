@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, AlertCircle, Play, Square } from "lucide-react";
-import { useEffect, useState, RefObject } from "react";
+import { useEffect, useState, RefObject, useRef } from "react";
 
 interface WebcamDisplayProps {
   videoRef: RefObject<HTMLVideoElement>;
@@ -13,6 +13,7 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isActive, setIsActive] = useState(false);
+  const streamRef = useRef<MediaStream | null>(null);
 
   const startWebcam = async () => {
     try {
@@ -25,6 +26,7 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
       });
       
       setStream(mediaStream);
+      streamRef.current = mediaStream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
@@ -52,8 +54,9 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
   };
 
   const stopWebcam = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
       setStream(null);
       if (videoRef.current) {
         videoRef.current.srcObject = null;
@@ -67,10 +70,11 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
     // Auto-start webcam on component mount
     startWebcam();
 
-    // Cleanup function to stop the webcam stream
+    // Cleanup function to stop the webcam stream using streamRef
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
     };
   }, []);
@@ -83,46 +87,44 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
     }
   };
 
-  const renderContent = () => {
+  const renderOverlay = () => {
     if (isLoading) {
       return (
-        <div className="text-center text-gray-400">
-          <Camera className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
-          <p className="text-lg font-medium">Starting camera...</p>
-          <p className="text-sm mt-2">Please allow camera access when prompted</p>
+        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-center text-gray-400 rounded-lg">
+          <div>
+            <Camera className="h-16 w-16 mx-auto mb-4 opacity-50 animate-pulse" />
+            <p className="text-lg font-medium">Starting camera...</p>
+            <p className="text-sm mt-2">Please allow camera access when prompted</p>
+          </div>
         </div>
       );
     }
 
     if (error) {
       return (
-        <div className="text-center text-gray-400">
-          <AlertCircle className="h-16 w-16 mx-auto mb-4 text-red-400" />
-          <p className="text-lg font-medium text-red-400">Camera Error</p>
-          <p className="text-sm mt-2">{error}</p>
+        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-center text-gray-400 rounded-lg">
+          <div>
+            <AlertCircle className="h-16 w-16 mx-auto mb-4 text-red-400" />
+            <p className="text-lg font-medium text-red-400">Camera Error</p>
+            <p className="text-sm mt-2">{error}</p>
+          </div>
         </div>
       );
     }
 
     if (!isActive) {
       return (
-        <div className="text-center text-gray-400">
-          <Camera className="h-16 w-16 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium">Camera Stopped</p>
-          <p className="text-sm mt-2">Click "Start Camera" to begin</p>
+        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center text-center text-gray-400 rounded-lg">
+          <div>
+            <Camera className="h-16 w-16 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">Camera Stopped</p>
+            <p className="text-sm mt-2">Click "Start Camera" to begin</p>
+          </div>
         </div>
       );
     }
 
-    return (
-      <video
-        ref={videoRef}
-        autoPlay
-        muted
-        playsInline
-        className="w-full h-full object-cover rounded-lg"
-      />
-    );
+    return null;
   };
 
   return (
@@ -155,8 +157,15 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-700 overflow-hidden">
-          {renderContent()}
+        <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-700 overflow-hidden relative">
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className={`w-full h-full object-cover rounded-lg ${!isActive ? 'hidden' : ''}`}
+          />
+          {renderOverlay()}
         </div>
       </CardContent>
     </Card>
