@@ -5,11 +5,7 @@ import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Brain, Cpu } from "lucide-react";
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
+import { Message } from "@/types/chat";
 
 interface StyleAdviceProps {
   messages: Message[];
@@ -36,7 +32,6 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         onModelChange={onModelChange}
       />
       
-      {/* Simplified Cognitive Mode Control */}
       <div className="border-b border-slate-200/50 dark:border-slate-700/50 p-3 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">

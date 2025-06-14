@@ -2,18 +2,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
+import { Message } from '@/types/chat';
 
 export const useMessages = (currentSessionId: string | null) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Clear messages when starting a new session or no session is selected
   useEffect(() => {
     if (!currentSessionId) {
       console.log('Clearing messages - no current session');
@@ -21,7 +16,6 @@ export const useMessages = (currentSessionId: string | null) => {
     }
   }, [currentSessionId]);
 
-  // Load messages when switching sessions
   useEffect(() => {
     const loadSessionMessages = async () => {
       if (!currentSessionId) return;
@@ -31,7 +25,7 @@ export const useMessages = (currentSessionId: string | null) => {
         console.log('Loading messages for session:', currentSessionId);
         const { data, error } = await supabase
           .from('chat_messages')
-          .select('*')
+          .select('id, role, content, visual_context, created_at')
           .eq('session_id', currentSessionId)
           .order('created_at', { ascending: true });
 
@@ -45,9 +39,12 @@ export const useMessages = (currentSessionId: string | null) => {
           throw error;
         }
         
-        const sessionMessages = data?.map(msg => ({
+        const sessionMessages: Message[] = data?.map(msg => ({
+          id: msg.id,
           role: msg.role as 'user' | 'assistant',
-          content: msg.content
+          content: msg.content,
+          visual_context: msg.visual_context,
+          created_at: msg.created_at
         })) || [];
         
         console.log('Loaded messages:', sessionMessages.length);

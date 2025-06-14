@@ -1,12 +1,7 @@
-
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sparkles, Camera, ImageIcon, User } from "lucide-react";
 import { useEffect, useRef } from "react";
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
+import { Message } from "@/types/chat";
 
 interface ChatMessagesProps {
   messages: Message[];
@@ -26,8 +21,10 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
 
   const renderMessage = (message: Message, index: number) => {
     const isUser = message.role === 'user';
+    const hasImage = message.visual_context && message.visual_context.length > 0;
+    
     return (
-      <div key={index} className={`flex gap-3 mb-6 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div key={message.id || index} className={`flex gap-3 mb-6 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
         <Avatar className="w-9 h-9 flex-shrink-0">
           <AvatarFallback className={isUser 
             ? "bg-blue-600 text-white" 
@@ -49,8 +46,20 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
           }`}>
             {message.content}
           </div>
+          
+          {hasImage && isUser && (
+            <div className="mt-2 max-w-xs">
+              <img 
+                src={message.visual_context} 
+                alt="Shared image" 
+                className="rounded-lg max-w-full h-auto border border-slate-200 dark:border-slate-700"
+              />
+              <p className="text-xs text-slate-500 mt-1">📷 Image shared with Alex</p>
+            </div>
+          )}
+          
           <div className={`text-xs text-slate-500 dark:text-slate-400 mt-2 ${isUser ? 'text-right' : 'text-left'}`}>
-            {isUser ? 'You' : 'Alex AI'} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {isUser ? 'You' : 'Alex AI'} • {message.created_at ? new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
       </div>
