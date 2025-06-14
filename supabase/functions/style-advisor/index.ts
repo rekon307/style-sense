@@ -20,6 +20,7 @@ serve(async (req) => {
     
     console.log('Request body:', {
       hasCapturedImage: !!requestBody.capturedImage,
+      hasCurrentImage: !!requestBody.currentImage,
       messagesCount: requestBody.messages?.length || 0,
       hasVisualContext: !!requestBody.visualContext,
       selectedModel: requestBody.model
@@ -68,7 +69,7 @@ Always respond in a conversational, helpful tone. Focus on practical advice they
         }
       ];
 
-      console.log('Sending request to OpenAI API...');
+      console.log('Sending request to OpenAI API for initial analysis...');
       
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -116,6 +117,7 @@ Always respond in a conversational, helpful tone. Focus on practical advice they
     if (requestBody.messages && requestBody.messages.length > 0) {
       console.log('Processing conversation message...');
       
+      // Build the conversation messages for OpenAI
       const conversationMessages = [
         {
           role: "system",
@@ -134,14 +136,46 @@ Guidelines for responses:
 - Ask follow-up questions to better understand their needs
 - Be encouraging and positive
 - Give direct answers to specific questions
-- If asked about something you previously analyzed, reference that context
+- If you can see an image, analyze it in detail including colors, fit, styling
+- Reference what you can see in the current photo when giving advice
 
 ${requestBody.visualContext ? `Previous visual context: ${requestBody.visualContext}` : 'No previous visual context available.'}`
-        },
-        ...requestBody.messages
+        }
       ];
 
-      console.log('Sending conversation to OpenAI...');
+      // Add all the conversation messages
+      requestBody.messages.forEach((msg: any) => {
+        conversationMessages.push({
+          role: msg.role,
+          content: msg.content
+        });
+      });
+
+      // If we have a current image, add it to the latest user message
+      if (requestBody.currentImage) {
+        console.log('Adding current image to conversation');
+        
+        // Find the last user message and enhance it with the image
+        for (let i = conversationMessages.length - 1; i >= 0; i--) {
+          if (conversationMessages[i].role === 'user') {
+            conversationMessages[i].content = [
+              {
+                type: "text",
+                text: conversationMessages[i].content
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: requestBody.currentImage
+                }
+              }
+            ];
+            break;
+          }
+        }
+      }
+
+      console.log('Sending conversation to OpenAI with', conversationMessages.length, 'messages...');
       
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',

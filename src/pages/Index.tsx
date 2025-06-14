@@ -17,7 +17,7 @@ interface IndexProps {
   setInitialImageURL: (image: string | null) => void;
   messages: Message[];
   isAnalyzing: boolean;
-  handleSendMessage: (message: string) => void;
+  handleSendMessage: (message: string, photoDataURL?: string | null) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
   currentSessionId: string | null;
@@ -73,7 +73,7 @@ const Index = ({
       console.log('Using initial image URL as fallback');
     }
     
-    // If we have a photo (new, from memory, or initial), set it and store it
+    // If we have a photo (new, from memory, or initial), store it
     if (photoDataURL) {
       console.log('Setting photo for analysis, size:', photoDataURL.length);
       setInitialImageURL(photoDataURL);
@@ -85,8 +85,8 @@ const Index = ({
     
     console.log('=== PHOTO CAPTURE FLOW END ===');
     
-    // Send the message (this will now include the user message in the conversation)
-    handleSendMessage(message);
+    // Send the message with the captured photo
+    handleSendMessage(message, photoDataURL);
   };
 
   return (

@@ -15,6 +15,7 @@ interface UseMessageHandlerProps {
   selectedModel: string;
   currentSessionId: string | null;
   setCurrentSessionId: (id: string | null) => void;
+  initialImageURL: string | null;
 }
 
 export const useMessageHandler = ({
@@ -24,9 +25,10 @@ export const useMessageHandler = ({
   visualContext,
   selectedModel,
   currentSessionId,
-  setCurrentSessionId
+  setCurrentSessionId,
+  initialImageURL
 }: UseMessageHandlerProps) => {
-  const handleSendMessage = async (newMessage: string) => {
+  const handleSendMessage = async (newMessage: string, capturedPhoto?: string | null) => {
     if (!newMessage.trim()) {
       toast({
         title: "Empty message",
@@ -40,6 +42,8 @@ export const useMessageHandler = ({
     console.log('Sending message:', newMessage);
     console.log('Current session ID:', currentSessionId);
     console.log('Visual context available:', !!visualContext);
+    console.log('Captured photo available:', !!capturedPhoto);
+    console.log('Initial image available:', !!initialImageURL);
     console.log('Current messages count:', messages.length);
 
     // Create new user message and add it immediately to show in chat
@@ -100,19 +104,31 @@ export const useMessageHandler = ({
         }
       }
 
+      // Determine which image to send - prefer captured photo, then initial image
+      const imageToSend = capturedPhoto || initialImageURL;
+      
       console.log('Sending message to style-advisor function...');
       console.log('Payload:', { 
         messagesCount: updatedMessages.length,
         hasVisualContext: !!visualContext,
+        hasImageToSend: !!imageToSend,
         selectedModel
       });
 
+      const requestBody: any = { 
+        messages: updatedMessages,
+        visualContext: visualContext,
+        model: selectedModel
+      };
+
+      // Include the current image if available
+      if (imageToSend) {
+        requestBody.currentImage = imageToSend;
+        console.log('Including current image in request');
+      }
+
       const { data, error } = await supabase.functions.invoke('style-advisor', {
-        body: { 
-          messages: updatedMessages,
-          visualContext: visualContext,
-          model: selectedModel
-        }
+        body: requestBody
       });
 
       if (error) {
