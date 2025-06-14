@@ -6,13 +6,56 @@ import { toast } from '@/components/ui/use-toast';
 interface UseVoiceRecordingProps {
   onTranscript: (transcript: string) => void;
   onError: (error: string) => void;
+  onAutoSend?: (transcript: string) => void; // New: auto-send callback
 }
 
-export const useVoiceRecording = ({ onTranscript, onError }: UseVoiceRecordingProps) => {
+export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoiceRecordingProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Voice Activity Detection - detects when user stops speaking
+  const startVoiceActivityDetection = useCallback(() => {
+    if (!audioContextRef.current || !analyserRef.current) return;
+
+    const checkAudioLevel = () => {
+      if (!analyserRef.current || !dataArrayRef.current || !isRecording) return;
+
+      analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+      
+      // Calculate average volume
+      const average = dataArrayRef.current.reduce((a, b) => a + b) / dataArrayRef.current.length;
+      const threshold = 15; // Silence threshold
+      
+      if (average < threshold) {
+        // User is silent - start/continue silence timer
+        if (!silenceTimerRef.current) {
+          silenceTimerRef.current = setTimeout(() => {
+            console.log('Auto-stopping recording due to silence');
+            stopRecording(true); // Auto-stop with auto-send
+          }, 2000); // 2 seconds of silence triggers auto-stop
+        }
+      } else {
+        // User is speaking - clear silence timer
+        if (silenceTimerRef.current) {
+          clearTimeout(silenceTimerRef.current);
+          silenceTimerRef.current = null;
+        }
+      }
+
+      if (isRecording) {
+        requestAnimationFrame(checkAudioLevel);
+      }
+    };
+
+    checkAudioLevel();
+  }, [isRecording]);
 
   const startRecording = useCallback(async () => {
     try {
@@ -25,6 +68,16 @@ export const useVoiceRecording = ({ onTranscript, onError }: UseVoiceRecordingPr
           autoGainControl: true
         } 
       });
+
+      streamRef.current = stream;
+
+      // Set up audio context for voice activity detection
+      audioContextRef.current = new AudioContext();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      analyserRef.current.fftSize = 256;
+      dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
+      source.connect(analyserRef.current);
 
       const mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus'
@@ -43,16 +96,30 @@ export const useVoiceRecording = ({ onTranscript, onError }: UseVoiceRecordingPr
         await processAudio(audioBlob);
         
         // Stop all tracks to release microphone
-        stream.getTracks().forEach(track => track.stop());
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+          streamRef.current = null;
+        }
+
+        // Clean up audio context
+        if (audioContextRef.current) {
+          audioContextRef.current.close();
+          audioContextRef.current = null;
+        }
       };
 
       mediaRecorderRef.current = mediaRecorder;
       mediaRecorder.start();
       setIsRecording(true);
 
+      // Start voice activity detection
+      setTimeout(() => {
+        startVoiceActivityDetection();
+      }, 500); // Small delay to let recording stabilize
+
       toast({
         title: "Recording started",
-        description: "Speak now, click the microphone again to stop.",
+        description: "Speak now. I'll automatically send when you finish speaking.",
       });
 
     } catch (error) {
@@ -64,12 +131,21 @@ export const useVoiceRecording = ({ onTranscript, onError }: UseVoiceRecordingPr
         variant: "destructive",
       });
     }
-  }, [onError]);
+  }, [onError, startVoiceActivityDetection]);
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = useCallback((autoStop = false) => {
     if (mediaRecorderRef.current && isRecording) {
+      // Clear any pending silence timer
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
+
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+
+      // Store auto-stop state for use in processAudio
+      mediaRecorderRef.current.autoStop = autoStop;
     }
   }, [isRecording]);
 
@@ -98,10 +174,25 @@ export const useVoiceRecording = ({ onTranscript, onError }: UseVoiceRecordingPr
         console.log('Transcription result:', data.text);
         onTranscript(data.text);
         
-        toast({
-          title: "Speech transcribed",
-          description: "Your voice has been converted to text.",
-        });
+        // Check if this was an auto-stop (voice activity detection triggered)
+        const wasAutoStop = mediaRecorderRef.current?.autoStop;
+        
+        if (wasAutoStop && onAutoSend) {
+          // Auto-send the message like Siri/Gemini
+          setTimeout(() => {
+            onAutoSend(data.text);
+          }, 500); // Small delay for better UX
+          
+          toast({
+            title: "Message sent automatically",
+            description: "Voice message transcribed and sent.",
+          });
+        } else {
+          toast({
+            title: "Speech transcribed",
+            description: "Click send or continue speaking.",
+          });
+        }
       } else {
         throw new Error('No transcription result received');
       }
@@ -117,6 +208,10 @@ export const useVoiceRecording = ({ onTranscript, onError }: UseVoiceRecordingPr
       });
     } finally {
       setIsProcessing(false);
+      // Clean up auto-stop flag
+      if (mediaRecorderRef.current) {
+        delete mediaRecorderRef.current.autoStop;
+      }
     }
   };
 

@@ -25,6 +25,11 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
     },
     onError: (error) => {
       console.error('Voice recording error:', error);
+    },
+    onAutoSend: (transcript) => {
+      // Auto-send functionality like Siri/Gemini
+      onSendMessage(transcript.trim());
+      setInputValue(""); // Clear input after auto-send
     }
   });
 
@@ -62,7 +67,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
 
   const handleMicClick = () => {
     if (isRecording) {
-      stopRecording();
+      stopRecording(false); // Manual stop, no auto-send
     } else {
       startRecording();
     }
@@ -71,7 +76,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
   return (
     <div className="border-t border-slate-200/50 dark:border-slate-700/50 px-4 py-4">
       <form onSubmit={handleSubmit} className="flex items-center gap-3">
-        {/* Left Action Buttons Group - Better organized */}
+        {/* Left Action Buttons Group */}
         <div className="flex items-center gap-1">
           <Button
             type="button"
@@ -95,7 +100,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
               ? 'text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30' 
               : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
             } ${isRecording ? 'animate-pulse' : ''}`}
-            title={isRecording ? "Stop recording" : "Start voice recording"}
+            title={isRecording ? "Stop recording (or I'll auto-stop when you finish)" : "Start voice recording"}
           >
             {isProcessing ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
@@ -115,11 +120,11 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
           className="hidden"
         />
         
-        {/* Main Input - Improved styling */}
+        {/* Main Input */}
         <Input
           type="text"
           placeholder={
-            isRecording ? "Recording..." : 
+            isRecording ? "Listening... (I'll auto-send when you stop talking)" : 
             isProcessing ? "Processing speech..." :
             isAnalyzing ? "Alex is analyzing..." : 
             "Ask Alex about style, trends, or fashion advice..."
@@ -130,7 +135,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
           disabled={isAnalyzing || isRecording}
         />
 
-        {/* Send Button - Enhanced */}
+        {/* Send Button */}
         <Button 
           type="submit" 
           size="sm"
