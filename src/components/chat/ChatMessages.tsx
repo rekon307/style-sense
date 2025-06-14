@@ -1,6 +1,6 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Sparkles, Camera, ImageIcon, User, Bot } from "lucide-react";
+import { Sparkles, Camera, ImageIcon, User } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 interface Message {
@@ -31,12 +31,12 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
         <Avatar className="w-9 h-9 flex-shrink-0">
           <AvatarFallback className={isUser 
             ? "bg-blue-600 text-white" 
-            : "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900"
+            : "bg-gradient-to-br from-blue-600 to-purple-600 text-white"
           }>
             {isUser ? (
               <User className="h-4 w-4" />
             ) : (
-              <Bot className="h-4 w-4" />
+              <Sparkles className="h-4 w-4" />
             )}
           </AvatarFallback>
         </Avatar>
@@ -60,8 +60,8 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   const renderThinkingIndicator = () => (
     <div className="flex gap-3 mb-6">
       <Avatar className="w-9 h-9 flex-shrink-0">
-        <AvatarFallback className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900">
-          <Bot className="h-4 w-4" />
+        <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white">
+          <Sparkles className="h-4 w-4" />
         </AvatarFallback>
       </Avatar>
       
