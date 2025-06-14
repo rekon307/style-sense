@@ -44,7 +44,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
   const renderMessage = (message: Message, index: number) => {
     const isUser = message.role === 'user';
     return (
-      <div key={index} className={`flex gap-3 mb-4 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div key={index} className={`flex gap-3 mb-6 ${isUser ? 'flex-row-reverse' : 'flex-row'} animate-fade-in`}>
         <Avatar className="w-8 h-8 flex-shrink-0">
           <AvatarFallback className={isUser 
             ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-medium" 
@@ -61,21 +61,24 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
           </AvatarFallback>
         </Avatar>
         
-        <div className={`flex flex-col max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
-          <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
+        <div className={`flex flex-col max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
+          <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm ${
             isUser 
-              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-8' 
-              : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 mr-8'
+              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white' 
+              : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700'
           }`}>
             {message.content}
+          </div>
+          <div className={`text-xs text-slate-400 mt-1 ${isUser ? 'text-right' : 'text-left'}`}>
+            {isUser ? 'You' : 'Alex AI'} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
       </div>
     );
   };
 
-  const renderTypingIndicator = () => (
-    <div className="flex gap-3 mb-4">
+  const renderThinkingIndicator = () => (
+    <div className="flex gap-3 mb-6 animate-fade-in">
       <Avatar className="w-8 h-8 flex-shrink-0">
         <AvatarFallback className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white">
           <div className="relative">
@@ -85,13 +88,19 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         </AvatarFallback>
       </Avatar>
       
-      <div className="flex flex-col max-w-[80%] items-start">
-        <div className="px-3 py-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mr-8">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+      <div className="flex flex-col max-w-[85%] items-start">
+        <div className="px-4 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            </div>
+            <span className="text-sm text-slate-600 dark:text-slate-400 ml-2">Alex is thinking...</span>
           </div>
+        </div>
+        <div className="text-xs text-slate-400 mt-1">
+          Alex AI • analyzing your style
         </div>
       </div>
     </div>
@@ -116,8 +125,10 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
           
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
-              <User className="h-3 w-3 text-blue-600" />
-              <Cpu className="h-3 w-3 text-purple-600" />
+              <div className={`w-2 h-2 rounded-full ${isAnalyzing ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`}></div>
+              <span className="text-xs text-slate-600 dark:text-slate-400">
+                {isAnalyzing ? 'Thinking' : 'Ready'}
+              </span>
             </div>
           </div>
         </CardTitle>
@@ -140,10 +151,10 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         {/* Chat Messages Container - Fixed Height with Scroll */}
         <div 
           ref={chatContainerRef}
-          className="flex-1 overflow-y-auto px-4 py-4 min-h-0"
+          className="flex-1 overflow-y-auto px-4 py-4 min-h-0 scroll-smooth"
           style={{ maxHeight: 'calc(100vh - 300px)' }}
         >
-          {messages.length === 0 ? (
+          {messages.length === 0 && !isAnalyzing ? (
             <div className="text-center py-12">
               <div className="mx-auto w-20 h-20 bg-gradient-to-r from-purple-100 via-indigo-100 to-blue-100 dark:from-purple-900/30 dark:via-indigo-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center mb-6 shadow-lg">
                 <div className="relative">
@@ -163,7 +174,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
           ) : (
             <>
               {messages.map((message, index) => renderMessage(message, index))}
-              {isAnalyzing && renderTypingIndicator()}
+              {isAnalyzing && renderThinkingIndicator()}
             </>
           )}
           <div ref={messagesEndRef} />
@@ -174,7 +185,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
           <form onSubmit={handleSubmit} className="flex items-center gap-3">
             <Input
               type="text"
-              placeholder="Ask Alex about style, trends, or fashion advice..."
+              placeholder={isAnalyzing ? "Alex is thinking..." : "Ask Alex about style, trends, or fashion advice..."}
               className="flex-1 h-10 bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 focus:border-purple-400 dark:focus:border-purple-500 transition-colors text-sm px-3"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -186,7 +197,11 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
               disabled={isAnalyzing || !inputValue.trim()}
               className="h-10 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
             >
-              <Send className="h-4 w-4" />
+              {isAnalyzing ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </form>
         </div>

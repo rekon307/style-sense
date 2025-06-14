@@ -42,6 +42,14 @@ export const useMessageHandler = ({
     console.log('Visual context available:', !!visualContext);
     console.log('Current messages count:', messages.length);
 
+    // Create new user message and add it immediately to show in chat
+    const userMessage: Message = { role: 'user', content: newMessage };
+    const updatedMessages: Message[] = [...messages, userMessage];
+    
+    // Update state immediately to show user's message
+    setMessages(updatedMessages);
+    setIsAnalyzing(true);
+
     try {
       // Create new session if none exists
       let sessionId = currentSessionId;
@@ -74,14 +82,6 @@ export const useMessageHandler = ({
           console.log('New session created:', sessionId);
         }
       }
-
-      // Create updated messages array with user's new message
-      const userMessage: Message = { role: 'user', content: newMessage };
-      const updatedMessages: Message[] = [...messages, userMessage];
-      
-      // Update state immediately to show user's message
-      setMessages(updatedMessages);
-      setIsAnalyzing(true);
 
       // Save user message to database
       if (sessionId) {
@@ -152,7 +152,7 @@ export const useMessageHandler = ({
 
         toast({
           title: "Response received",
-          description: "AI style advisor has responded to your message.",
+          description: "Alex has responded to your message.",
         });
       } else {
         console.error('No response content in data:', data);
