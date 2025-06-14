@@ -18,7 +18,7 @@ interface IndexProps {
   setInitialImageURL: (image: string | null) => void;
   messages: Message[];
   isAnalyzing: boolean;
-  handleSendMessage: (message: string, photoDataURL?: string | null) => void;
+  handleSendMessage: (message: string, photoDataURL?: string | null, temperature?: number) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
   currentSessionId: string | null;

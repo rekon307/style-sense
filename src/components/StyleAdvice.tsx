@@ -14,7 +14,7 @@ interface Message {
 interface StyleAdviceProps {
   messages: Message[];
   isAnalyzing: boolean;
-  onSendMessage: (message: string, uploadedImage?: string | null) => void;
+  onSendMessage: (message: string, uploadedImage?: string | null, temperature?: number) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
 }
