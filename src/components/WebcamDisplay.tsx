@@ -1,6 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Camera, AlertCircle, Play, Square } from "lucide-react";
+import { Camera, AlertCircle } from "lucide-react";
 import { useEffect, useState, RefObject, useRef, forwardRef, useImperativeHandle } from "react";
 
 interface WebcamDisplayProps {
@@ -193,14 +191,6 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
     };
   }, []);
 
-  const handleToggleWebcam = () => {
-    if (isActive) {
-      stopWebcam();
-    } else {
-      startWebcam();
-    }
-  };
-
   const renderOverlay = () => {
     if (isLoading) {
       return (
@@ -232,7 +222,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
           <div>
             <Camera className="h-20 w-20 mx-auto mb-6 opacity-50" />
             <p className="text-xl font-medium mb-2">Camera Stopped</p>
-            <p className="text-sm opacity-75">Click "Start Camera" to begin</p>
+            <p className="text-sm opacity-75">Camera will start automatically</p>
           </div>
         </div>
       );
@@ -250,25 +240,12 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
           </div>
           <span className="font-semibold text-slate-800 dark:text-slate-200">Webcam View</span>
         </div>
-        <Button
-          onClick={handleToggleWebcam}
-          variant="outline"
-          size="sm"
-          disabled={isLoading}
-          className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105 shadow-md"
-        >
-          {isActive ? (
-            <>
-              <Square className="h-4 w-4" />
-              Stop Camera
-            </>
-          ) : (
-            <>
-              <Play className="h-4 w-4" />
-              Start Camera
-            </>
-          )}
-        </Button>
+        <div className={`flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg`}>
+          <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          <span className="text-xs text-slate-600 dark:text-slate-400">
+            {isActive ? 'Active' : 'Inactive'}
+          </span>
+        </div>
       </div>
       
       <div className="flex-1 p-4 min-h-0">
