@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,35 +36,44 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         key={index}
         className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6`}
       >
-        <div className={`flex items-start gap-3 w-full max-w-[95%] ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-            isUser 
-              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white' 
-              : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
-          }`}>
-            {isUser ? 'You' : 'AI'}
+        {isUser ? (
+          // User message - keep original layout with avatar on the right
+          <div className="flex items-start gap-3 w-full max-w-[95%] flex-row-reverse">
+            <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+              You
+            </div>
+            <div className="flex-1 px-4 py-3 rounded-2xl shadow-sm border backdrop-blur-sm bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-500/20">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+            </div>
           </div>
-          <div
-            className={`flex-1 px-4 py-3 rounded-2xl shadow-sm border backdrop-blur-sm ${
-              isUser
-                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-500/20'
-                : 'bg-white/95 dark:bg-slate-800/95 text-slate-900 dark:text-slate-100 border-slate-200/50 dark:border-slate-700/50'
-            }`}
-          >
-            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+        ) : (
+          // AI message - avatar on top, message below
+          <div className="w-full max-w-[95%] flex flex-col">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-purple-700 text-white flex items-center justify-center text-xs font-medium">
+                AI
+              </div>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">AI Style Advisor</span>
+            </div>
+            <div className="w-full px-4 py-4 rounded-2xl shadow-sm border backdrop-blur-sm bg-white/95 dark:bg-slate-800/95 text-slate-900 dark:text-slate-100 border-slate-200/50 dark:border-slate-700/50">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
 
   const renderTypingIndicator = () => (
     <div className="flex justify-start mb-6">
-      <div className="flex items-start gap-3 w-full max-w-[95%]">
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-purple-700 text-white flex items-center justify-center text-xs font-medium">
-          AI
+      <div className="w-full max-w-[95%] flex flex-col">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-purple-700 text-white flex items-center justify-center text-xs font-medium">
+            AI
+          </div>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">AI Style Advisor</span>
         </div>
-        <div className="flex-1 bg-white/95 dark:bg-slate-800/95 text-slate-900 dark:text-slate-100 px-4 py-3 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
+        <div className="w-full bg-white/95 dark:bg-slate-800/95 text-slate-900 dark:text-slate-100 px-4 py-3 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
             <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
