@@ -1,10 +1,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, AlertCircle } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, RefObject } from "react";
 
-const WebcamDisplay = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
+interface WebcamDisplayProps {
+  videoRef: RefObject<HTMLVideoElement>;
+}
+
+const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +56,7 @@ const WebcamDisplay = () => {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [videoRef]);
 
   const renderContent = () => {
     if (isLoading) {

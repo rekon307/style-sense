@@ -1,9 +1,17 @@
 
+import { useRef } from "react";
 import WebcamDisplay from "@/components/WebcamDisplay";
 import Controls from "@/components/Controls";
 import StyleAdvice from "@/components/StyleAdvice";
 
-const Index = () => {
+interface IndexProps {
+  capturedImage: string | null;
+  setCapturedImage: (image: string | null) => void;
+}
+
+const Index = ({ capturedImage, setCapturedImage }: IndexProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -19,8 +27,12 @@ const Index = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left column - Webcam and Controls */}
           <div className="lg:col-span-2 space-y-6">
-            <WebcamDisplay />
-            <Controls />
+            <WebcamDisplay videoRef={videoRef} />
+            <Controls 
+              videoRef={videoRef} 
+              capturedImage={capturedImage} 
+              setCapturedImage={setCapturedImage} 
+            />
           </div>
           
           {/* Right column - Style Advice */}
