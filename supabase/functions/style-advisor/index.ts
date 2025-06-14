@@ -136,7 +136,8 @@ Guidelines for responses:
 - Ask follow-up questions to better understand their needs
 - Be encouraging and positive
 - Give direct answers to specific questions
-- If you can see an image, analyze it in detail including colors, fit, styling
+- When you can see an image, analyze it in detail including colors, fit, styling, and specific elements
+- Always acknowledge that you can see the image when one is provided
 - Reference what you can see in the current photo when giving advice
 
 ${requestBody.visualContext ? `Previous visual context: ${requestBody.visualContext}` : 'No previous visual context available.'}`
@@ -151,17 +152,21 @@ ${requestBody.visualContext ? `Previous visual context: ${requestBody.visualCont
         });
       });
 
-      // If we have a current image, add it to the latest user message
+      // If we have a current image, modify the last user message to include the image
       if (requestBody.currentImage) {
         console.log('Adding current image to conversation');
         
         // Find the last user message and enhance it with the image
         for (let i = conversationMessages.length - 1; i >= 0; i--) {
           if (conversationMessages[i].role === 'user') {
+            // Store the original text content
+            const originalContent = conversationMessages[i].content;
+            
+            // Replace with multimodal content
             conversationMessages[i].content = [
               {
                 type: "text",
-                text: conversationMessages[i].content
+                text: originalContent
               },
               {
                 type: "image_url",
@@ -170,12 +175,14 @@ ${requestBody.visualContext ? `Previous visual context: ${requestBody.visualCont
                 }
               }
             ];
+            console.log('Successfully added image to user message');
             break;
           }
         }
       }
 
       console.log('Sending conversation to OpenAI with', conversationMessages.length, 'messages...');
+      console.log('Last message has image:', requestBody.currentImage ? 'Yes' : 'No');
       
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
