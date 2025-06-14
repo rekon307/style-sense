@@ -3,15 +3,10 @@ import { useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
-interface UseVoiceRecordingProps {
-  onTranscript: (transcript: string) => void;
-  onError: (error: string) => void;
-  onAutoSend?: (transcript: string) => void;
-}
-
-export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoiceRecordingProps) => {
+export const useVoiceRecording = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [transcript, setTranscript] = useState('');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -19,7 +14,10 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const autoStopRef = useRef<boolean>(false); // Fixed: Use ref instead of DOM property
+  const autoStopRef = useRef<boolean>(false);
+
+  // Check if speech recognition is supported
+  const isSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window;
 
   // Voice Activity Detection - detects when user stops speaking
   const startVoiceActivityDetection = useCallback(() => {
@@ -62,6 +60,7 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
   const startRecording = useCallback(async () => {
     try {
       autoStopRef.current = false; // Reset auto-stop flag
+      setTranscript(''); // Clear previous transcript
       
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -117,14 +116,13 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
 
     } catch (error) {
       console.error('Error starting recording:', error);
-      onError('Failed to start recording. Please check microphone permissions.');
       toast({
         title: "Recording failed",
         description: "Please check your microphone permissions.",
         variant: "destructive",
       });
     }
-  }, [onError, startVoiceActivityDetection]);
+  }, [startVoiceActivityDetection]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
@@ -176,34 +174,18 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
 
       if (data && data.text) {
         console.log('Transcription result:', data.text);
-        onTranscript(data.text);
+        setTranscript(data.text);
         
-        // Check if this was an auto-stop (voice activity detection triggered)
-        const wasAutoStop = autoStopRef.current;
-        
-        if (wasAutoStop && onAutoSend) {
-          // Auto-send the message like Siri/Gemini
-          setTimeout(() => {
-            onAutoSend(data.text);
-          }, 500); // Small delay for better UX
-          
-          toast({
-            title: "Message sent automatically",
-            description: "Voice message transcribed and sent.",
-          });
-        } else {
-          toast({
-            title: "Speech transcribed",
-            description: "Click send or continue speaking.",
-          });
-        }
+        toast({
+          title: "Speech transcribed",
+          description: "Voice converted to text successfully.",
+        });
       } else {
         throw new Error('No transcription result received');
       }
 
     } catch (error) {
       console.error('Error processing audio:', error);
-      onError('Failed to process audio recording');
       
       toast({
         title: "Transcription failed",
@@ -219,6 +201,8 @@ export const useVoiceRecording = ({ onTranscript, onError, onAutoSend }: UseVoic
   return {
     isRecording,
     isProcessing,
+    transcript,
+    isSupported,
     startRecording,
     stopRecording
   };
