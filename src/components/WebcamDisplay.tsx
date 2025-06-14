@@ -1,5 +1,6 @@
-import { Camera, AlertCircle } from "lucide-react";
+import { Camera, AlertCircle, Play, Square } from "lucide-react";
 import { useEffect, useState, RefObject, useRef, forwardRef, useImperativeHandle } from "react";
+import { Button } from "@/components/ui/button";
 
 interface WebcamDisplayProps {
   videoRef: RefObject<HTMLVideoElement>;
@@ -151,6 +152,14 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
     console.log('Webcam stopped');
   };
 
+  const handleToggleWebcam = () => {
+    if (isActive) {
+      stopWebcam();
+    } else {
+      startWebcam();
+    }
+  };
+
   // Improved visibility handling - prevent popup behavior
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -240,11 +249,32 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
           </div>
           <span className="font-semibold text-slate-800 dark:text-slate-200">Webcam View</span>
         </div>
-        <div className={`flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg`}>
-          <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-          <span className="text-xs text-slate-600 dark:text-slate-400">
-            {isActive ? 'Active' : 'Inactive'}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg`}>
+            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <span className="text-xs text-slate-600 dark:text-slate-400">
+              {isActive ? 'Active' : 'Inactive'}
+            </span>
+          </div>
+          <Button
+            onClick={handleToggleWebcam}
+            variant="outline"
+            size="sm"
+            disabled={isLoading}
+            className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105 shadow-md"
+          >
+            {isActive ? (
+              <>
+                <Square className="h-4 w-4" />
+                Stop Camera
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4" />
+                Start Camera
+              </>
+            )}
+          </Button>
         </div>
       </div>
       
@@ -257,6 +287,8 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             playsInline
             webkit-playsinline="true"
             controls={false}
+            controlsList="nodownload nofullscreen noremoteplayback"
+            disablePictureInPicture
             className="w-full h-full object-cover rounded-xl"
             style={{ 
               transform: 'scaleX(-1)',
