@@ -1,9 +1,8 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Sparkles2, Send, Settings, User, Camera, Bot, Plus, ImageIcon, Zap } from "lucide-react";
+import { Sparkles, Send, Settings, User, Camera, Bot, Plus, ImageIcon, Zap } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 interface Message {
@@ -125,25 +124,25 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
   );
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="p-6 border-b border-slate-200 dark:border-slate-800">
-        <div className="flex items-center justify-between mb-4">
+      <div className="border-b border-slate-200/50 dark:border-slate-700/50 p-6">
+        <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative">
-              <div className="w-10 h-10 bg-blue-600 dark:bg-blue-500 rounded-xl flex items-center justify-center">
-                <Sparkles2 className="w-5 h-5 text-white" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600">
+                <Sparkles className="h-5 w-5 text-white" />
               </div>
-              <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${isAnalyzing ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`}></div>
+              <div className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white dark:border-slate-900 ${isAnalyzing ? 'bg-amber-500 animate-pulse' : 'bg-green-500'}`}></div>
             </div>
             <div>
-              <h2 className="font-bold text-lg text-slate-900 dark:text-slate-100">Alex AI</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Style Advisor</p>
+              <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">Alex AI</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Style Consultant</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
-            <Zap className="h-3 w-3 text-slate-600 dark:text-slate-400" />
+          <div className="flex items-center gap-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 px-3 py-2">
+            <Zap className="h-3 w-3 text-slate-500 dark:text-slate-400" />
             <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
               {isAnalyzing ? 'Analyzing' : 'Ready'}
             </span>
@@ -153,7 +152,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         <div className="flex items-center gap-2">
           <Settings className="h-4 w-4 text-slate-500 dark:text-slate-400" />
           <Select value={selectedModel} onValueChange={onModelChange}>
-            <SelectTrigger className="w-full h-9 text-sm bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <SelectTrigger className="h-9 bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
               <SelectValue placeholder="Select AI model" />
             </SelectTrigger>
             <SelectContent>
@@ -171,21 +170,21 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       >
         {messages.length === 0 && !isAnalyzing ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Sparkles2 className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30">
+              <Sparkles className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+            <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
               Hello, I'm Alex!
             </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 max-w-sm mx-auto leading-relaxed">
+            <p className="mx-auto mb-6 max-w-sm text-sm leading-relaxed text-slate-500 dark:text-slate-400">
               Your personal AI style advisor, ready to help elevate your fashion game with personalized recommendations.
             </p>
-            <div className="grid grid-cols-1 gap-3 max-w-xs mx-auto">
-              <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <div className="mx-auto grid max-w-xs grid-cols-1 gap-3">
+              <div className="flex items-center gap-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 p-3">
                 <Camera className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                 <span className="text-xs text-slate-600 dark:text-slate-400">Camera captures automatically</span>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+              <div className="flex items-center gap-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/30 p-3">
                 <ImageIcon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                 <span className="text-xs text-slate-600 dark:text-slate-400">Or upload photos manually</span>
               </div>
@@ -201,7 +200,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       </div>
 
       {/* Input */}
-      <div className="p-6 border-t border-slate-200 dark:border-slate-800">
+      <div className="border-t border-slate-200/50 dark:border-slate-700/50 p-6">
         <form onSubmit={handleSubmit} className="flex items-center gap-3">
           <Button
             type="button"
@@ -209,7 +208,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
             size="sm"
             variant="outline"
             disabled={isAnalyzing}
-            className="h-11 px-3 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="h-11 px-3 border-slate-300/50 dark:border-slate-600/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
             title="Upload image"
           >
             <Plus className="h-4 w-4" />
@@ -226,7 +225,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
           <Input
             type="text"
             placeholder={isAnalyzing ? "Alex is analyzing..." : "Ask Alex about style, trends, or fashion advice..."}
-            className="flex-1 h-11 bg-slate-50 dark:bg-slate-800 border-slate-300 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+            className="flex-1 h-11 bg-slate-50/50 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-600/50 focus:border-blue-500 dark:focus:border-blue-400"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             disabled={isAnalyzing}
@@ -235,10 +234,10 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
             type="submit" 
             size="sm"
             disabled={isAnalyzing || !inputValue.trim()}
-            className="h-11 px-4 bg-blue-600 hover:bg-blue-700 text-white"
+            className="h-11 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
           >
             {isAnalyzing ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
             ) : (
               <Send className="h-4 w-4" />
             )}
