@@ -11,25 +11,30 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 const App = () => {
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [styleAdvice, setStyleAdvice] = useState<any>(null);
+  const [initialImageURL, setInitialImageURL] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     const analyzeStyle = async () => {
-      if (!capturedImage) {
-        setStyleAdvice(null);
+      if (!initialImageURL) {
+        setMessages([]);
         return;
       }
 
       setIsAnalyzing(true);
-      setStyleAdvice(null);
+      setMessages([]);
 
       try {
         console.log('Sending image for style analysis...');
         const { data, error } = await supabase.functions.invoke('style-advisor', {
-          body: { capturedImage }
+          body: { capturedImage: initialImageURL }
         });
 
         if (error) {
@@ -38,19 +43,60 @@ const App = () => {
         }
 
         console.log('Received style advice:', data);
-        setStyleAdvice(data);
+        
+        // Add the first AI message to the conversation
+        if (data && data.analysis) {
+          setMessages([{ role: 'assistant', content: data.analysis }]);
+        }
       } catch (error) {
         console.error('Failed to get style advice:', error);
-        setStyleAdvice({
-          error: 'Failed to analyze your style. Please try again.'
-        });
+        setMessages([{
+          role: 'assistant',
+          content: 'Failed to analyze your style. Please try again.'
+        }]);
       } finally {
         setIsAnalyzing(false);
       }
     };
 
     analyzeStyle();
-  }, [capturedImage]);
+  }, [initialImageURL]);
+
+  const handleSendMessage = async (newMessage: string) => {
+    // Create updated messages array with user's new message
+    const updatedMessages = [...messages, { role: 'user', content: newMessage }];
+    
+    // Update state immediately to show user's message
+    setMessages(updatedMessages);
+    setIsAnalyzing(true);
+
+    try {
+      console.log('Sending follow-up message...');
+      const { data, error } = await supabase.functions.invoke('style-advisor', {
+        body: { messages: updatedMessages }
+      });
+
+      if (error) {
+        console.error('Error calling style-advisor function:', error);
+        throw error;
+      }
+
+      console.log('Received follow-up response:', data);
+      
+      // Add AI response to messages
+      if (data && data.response) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.'
+      }]);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -63,10 +109,11 @@ const App = () => {
               path="/" 
               element={
                 <Index 
-                  capturedImage={capturedImage} 
-                  setCapturedImage={setCapturedImage}
-                  styleAdvice={styleAdvice}
+                  initialImageURL={initialImageURL} 
+                  setInitialImageURL={setInitialImageURL}
+                  messages={messages}
                   isAnalyzing={isAnalyzing}
+                  handleSendMessage={handleSendMessage}
                 />
               } 
             />

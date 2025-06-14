@@ -4,14 +4,26 @@ import WebcamDisplay from "@/components/WebcamDisplay";
 import Controls from "@/components/Controls";
 import StyleAdvice from "@/components/StyleAdvice";
 
-interface IndexProps {
-  capturedImage: string | null;
-  setCapturedImage: (image: string | null) => void;
-  styleAdvice: any;
-  isAnalyzing: boolean;
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
 }
 
-const Index = ({ capturedImage, setCapturedImage, styleAdvice, isAnalyzing }: IndexProps) => {
+interface IndexProps {
+  initialImageURL: string | null;
+  setInitialImageURL: (image: string | null) => void;
+  messages: Message[];
+  isAnalyzing: boolean;
+  handleSendMessage: (message: string) => void;
+}
+
+const Index = ({ 
+  initialImageURL, 
+  setInitialImageURL, 
+  messages, 
+  isAnalyzing, 
+  handleSendMessage 
+}: IndexProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   return (
@@ -32,14 +44,18 @@ const Index = ({ capturedImage, setCapturedImage, styleAdvice, isAnalyzing }: In
             <WebcamDisplay videoRef={videoRef} />
             <Controls 
               videoRef={videoRef} 
-              capturedImage={capturedImage} 
-              setCapturedImage={setCapturedImage} 
+              capturedImage={initialImageURL} 
+              setCapturedImage={setInitialImageURL} 
             />
           </div>
           
           {/* Right column - Style Advice */}
           <div className="lg:col-span-1">
-            <StyleAdvice styleAdvice={styleAdvice} isAnalyzing={isAnalyzing} />
+            <StyleAdvice 
+              messages={messages} 
+              isAnalyzing={isAnalyzing}
+              onSendMessage={handleSendMessage}
+            />
           </div>
         </div>
       </div>

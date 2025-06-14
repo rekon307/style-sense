@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sparkles, Send } from "lucide-react";
+import { useState } from "react";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -12,9 +13,20 @@ interface Message {
 interface StyleAdviceProps {
   messages: Message[];
   isAnalyzing: boolean;
+  onSendMessage: (message: string) => void;
 }
 
-const StyleAdvice = ({ messages, isAnalyzing }: StyleAdviceProps) => {
+const StyleAdvice = ({ messages, isAnalyzing, onSendMessage }: StyleAdviceProps) => {
+  const [inputValue, setInputValue] = useState("");
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputValue.trim()) {
+      onSendMessage(inputValue.trim());
+      setInputValue("");
+    }
+  };
+
   const renderMessage = (message: Message, index: number) => {
     const isUser = message.role === 'user';
     return (
@@ -74,13 +86,16 @@ const StyleAdvice = ({ messages, isAnalyzing }: StyleAdviceProps) => {
         </div>
 
         {/* Input Form */}
-        <form className="flex gap-2 border-t pt-4">
+        <form onSubmit={handleSubmit} className="flex gap-2 border-t pt-4">
           <Input
             type="text"
             placeholder="Ask a follow-up question..."
             className="flex-1"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            disabled={isAnalyzing}
           />
-          <Button type="submit" size="icon">
+          <Button type="submit" size="icon" disabled={isAnalyzing || !inputValue.trim()}>
             <Send className="h-4 w-4" />
           </Button>
         </form>
