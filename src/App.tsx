@@ -46,12 +46,12 @@ const App = () => {
         
         // Add the first AI message to the conversation
         if (data && data.analysis) {
-          setMessages([{ role: 'assistant', content: data.analysis }]);
+          setMessages([{ role: 'assistant' as const, content: data.analysis }]);
         }
       } catch (error) {
         console.error('Failed to get style advice:', error);
         setMessages([{
-          role: 'assistant',
+          role: 'assistant' as const,
           content: 'Failed to analyze your style. Please try again.'
         }]);
       } finally {
@@ -64,7 +64,7 @@ const App = () => {
 
   const handleSendMessage = async (newMessage: string) => {
     // Create updated messages array with user's new message
-    const updatedMessages = [...messages, { role: 'user', content: newMessage }];
+    const updatedMessages: Message[] = [...messages, { role: 'user' as const, content: newMessage }];
     
     // Update state immediately to show user's message
     setMessages(updatedMessages);
@@ -85,12 +85,12 @@ const App = () => {
       
       // Add AI response to messages
       if (data && data.response) {
-        setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+        setMessages(prev => [...prev, { role: 'assistant' as const, content: data.response }]);
       }
     } catch (error) {
       console.error('Failed to send message:', error);
       setMessages(prev => [...prev, {
-        role: 'assistant',
+        role: 'assistant' as const,
         content: 'Sorry, I encountered an error. Please try again.'
       }]);
     } finally {
