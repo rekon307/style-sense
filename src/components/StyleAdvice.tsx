@@ -35,24 +35,24 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
     return (
       <div
         key={index}
-        className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6`}
+        className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-8`}
       >
-        <div className={`flex items-start gap-3 max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+        <div className={`flex items-start gap-4 max-w-[90%] ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+          <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center shadow-md ${
             isUser 
               ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white' 
               : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
           }`}>
-            {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+            {isUser ? <User className="h-5 w-5" /> : <Bot className="h-5 w-5" />}
           </div>
           <div
-            className={`p-4 rounded-2xl shadow-sm border backdrop-blur-sm ${
+            className={`px-5 py-4 rounded-2xl shadow-sm border backdrop-blur-sm max-w-full ${
               isUser
                 ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-500/20'
-                : 'bg-white/80 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 border-slate-200/50 dark:border-slate-700/50'
+                : 'bg-white/90 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 border-slate-200/50 dark:border-slate-700/50'
             }`}
           >
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
           </div>
         </div>
       </div>
@@ -60,12 +60,12 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
   };
 
   const renderTypingIndicator = () => (
-    <div className="flex justify-start mb-6">
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-purple-700 text-white flex items-center justify-center">
-          <Bot className="h-4 w-4" />
+    <div className="flex justify-start mb-8">
+      <div className="flex items-start gap-4">
+        <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-purple-700 text-white flex items-center justify-center shadow-md">
+          <Bot className="h-5 w-5" />
         </div>
-        <div className="bg-white/80 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 p-4 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
+        <div className="bg-white/90 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 px-5 py-4 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
             <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
@@ -78,7 +78,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
 
   return (
     <Card className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-lg">
-      <CardHeader className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-700/50">
+      <CardHeader className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-700/50 pb-4">
         <CardTitle className="flex items-center gap-3 text-slate-800 dark:text-slate-200">
           <div className="p-2 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg">
             <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
@@ -105,18 +105,18 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       
       <CardContent className="flex flex-col h-full p-0">
         {/* Chat Log */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-1">
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-1">
           {messages.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full flex items-center justify-center mb-4">
-                <Sparkles className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+            <div className="text-center py-16">
+              <div className="mx-auto w-20 h-20 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full flex items-center justify-center mb-6">
+                <Sparkles className="h-10 w-10 text-purple-600 dark:text-purple-400" />
               </div>
-              <p className="text-slate-700 dark:text-slate-300 font-semibold mb-2">Ready to help with your style!</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+              <p className="text-slate-700 dark:text-slate-300 font-semibold mb-3 text-lg">Ready to help with your style!</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
                 Ask me anything about fashion and style trends
               </p>
-              <div className="flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-lg p-3 mx-4">
-                <Camera className="h-4 w-4" />
+              <div className="flex items-center justify-center gap-3 text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl p-4 mx-6">
+                <Camera className="h-5 w-5" />
                 <span>Photos are automatically captured when you send a message</span>
               </div>
             </div>
@@ -129,23 +129,23 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         </div>
 
         {/* Input Form */}
-        <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-4">
-          <form onSubmit={handleSubmit} className="flex gap-3">
+        <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-6">
+          <form onSubmit={handleSubmit} className="flex items-center gap-4">
             <Input
               type="text"
               placeholder="Ask about style, trends, or fashion advice..."
-              className="flex-1 bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 focus:border-purple-400 dark:focus:border-purple-500 transition-colors"
+              className="flex-1 h-12 bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 focus:border-purple-400 dark:focus:border-purple-500 transition-colors text-base px-4"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               disabled={isAnalyzing}
             />
             <Button 
               type="submit" 
-              size="icon" 
+              size="lg"
               disabled={isAnalyzing || !inputValue.trim()}
-              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 disabled:opacity-50"
+              className="h-12 px-6 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
             </Button>
           </form>
         </div>
