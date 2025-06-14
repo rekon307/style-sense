@@ -91,7 +91,7 @@ async function handleImageAnalysis(imageDataURL: string, model: string) {
       model: model,
       messages: messages,
       max_tokens: 1000,
-      temperature: 0.7,
+      temperature: 1,
     }),
   });
 
@@ -105,6 +105,10 @@ async function handleImageAnalysis(imageDataURL: string, model: string) {
   const data = await response.json();
   console.log('OpenAI response:', JSON.stringify(data, null, 2));
 
+  // Extract token usage information
+  const tokenUsage = data.usage || {};
+  console.log('Token usage:', tokenUsage);
+
   const rawResponse = data.choices[0].message.content;
   console.log('Raw response:', rawResponse);
 
@@ -116,7 +120,8 @@ async function handleImageAnalysis(imageDataURL: string, model: string) {
     
     return new Response(JSON.stringify({
       reply: parsedResponse.reply,
-      visualContext: parsedResponse.visualContext
+      visualContext: parsedResponse.visualContext,
+      tokenUsage: tokenUsage
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -127,7 +132,8 @@ async function handleImageAnalysis(imageDataURL: string, model: string) {
     // Fallback: try to extract meaningful content
     return new Response(JSON.stringify({
       reply: rawResponse || "I can see your style in the photo. Let me provide some personalized advice based on what I observe.",
-      visualContext: "Unable to parse detailed visual context"
+      visualContext: "Unable to parse detailed visual context",
+      tokenUsage: tokenUsage
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -153,7 +159,7 @@ async function handleConversation(messages: any[], visualContext: string | null,
       model: model,
       messages: apiMessages,
       max_tokens: 800,
-      temperature: 0.7,
+      temperature: 1,
     }),
   });
 
@@ -166,8 +172,13 @@ async function handleConversation(messages: any[], visualContext: string | null,
   const data = await response.json();
   const aiResponse = data.choices[0].message.content;
 
+  // Extract token usage information
+  const tokenUsage = data.usage || {};
+  console.log('Token usage:', tokenUsage);
+
   return new Response(JSON.stringify({
-    response: aiResponse
+    response: aiResponse,
+    tokenUsage: tokenUsage
   }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
