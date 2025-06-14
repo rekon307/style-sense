@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +50,6 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         const result = e.target?.result as string;
         if (result) {
           console.log('Image uploaded, size:', result.length);
-          // Send the uploaded image with a default message or prompt user for message
           const message = inputValue.trim() || "Analizează această imagine și dă-mi sfaturi de stil.";
           onSendMessage(message, result);
           setInputValue("");
@@ -57,7 +57,6 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       };
       reader.readAsDataURL(file);
     }
-    // Reset the input so the same file can be selected again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -88,10 +87,10 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         </Avatar>
         
         <div className={`flex flex-col max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
-          <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words shadow-sm ${
+          <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
             isUser 
               ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white' 
-              : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700'
+              : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100'
           }`}>
             {message.content}
           </div>
@@ -115,7 +114,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       </Avatar>
       
       <div className="flex flex-col max-w-[85%] items-start">
-        <div className="px-4 py-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="px-4 py-3 rounded-2xl bg-white dark:bg-slate-800">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce"></div>
@@ -133,11 +132,12 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
   );
 
   return (
-    <Card className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-lg">
-      <CardHeader className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-700/50 pb-3 pt-3 flex-shrink-0">
-        <CardTitle className="flex items-center justify-between text-slate-800 dark:text-slate-200">
+    <div className="w-full h-full flex flex-col bg-white dark:bg-slate-900">
+      {/* Header */}
+      <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-r from-purple-100 via-indigo-100 to-blue-100 dark:from-purple-900/30 dark:via-indigo-900/30 dark:to-blue-900/30 rounded-xl shadow-md">
+            <div className="p-2 bg-gradient-to-r from-purple-100 via-indigo-100 to-blue-100 dark:from-purple-900/30 dark:via-indigo-900/30 dark:to-blue-900/30 rounded-xl">
               <div className="relative">
                 <Brain className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 <Sparkles className="h-2 w-2 text-yellow-500 absolute -top-1 -right-1" />
@@ -157,12 +157,12 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
               </span>
             </div>
           </div>
-        </CardTitle>
+        </div>
         
-        <div className="flex items-center gap-2 pt-2">
+        <div className="flex items-center gap-2">
           <Settings className="h-3 w-3 text-slate-500" />
           <Select value={selectedModel} onValueChange={onModelChange}>
-            <SelectTrigger className="w-40 h-8 text-xs bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700">
+            <SelectTrigger className="w-40 h-8 text-xs bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
               <SelectValue placeholder="Select AI model" />
             </SelectTrigger>
             <SelectContent>
@@ -171,94 +171,91 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
             </SelectContent>
           </Select>
         </div>
-      </CardHeader>
+      </div>
       
-      <CardContent className="flex flex-col h-full p-0 overflow-hidden">
-        {/* Chat Messages Container - Fixed Height with Scroll */}
-        <div 
-          ref={chatContainerRef}
-          className="flex-1 overflow-y-auto px-4 py-4 min-h-0 scroll-smooth"
-          style={{ maxHeight: 'calc(100vh - 300px)' }}
-        >
-          {messages.length === 0 && !isAnalyzing ? (
-            <div className="text-center py-12">
-              <div className="mx-auto w-20 h-20 bg-gradient-to-r from-purple-100 via-indigo-100 to-blue-100 dark:from-purple-900/30 dark:via-indigo-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center mb-6 shadow-lg">
-                <div className="relative">
-                  <Brain className="h-10 w-10 text-purple-600 dark:text-purple-400" />
-                  <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
-                </div>
-              </div>
-              <p className="text-slate-700 dark:text-slate-300 font-semibold mb-2 text-lg">Hello, I'm Alex!</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
-                Your personal AI style advisor, ready to help elevate your fashion game
-              </p>
-              <div className="flex flex-col items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl p-3 mx-4">
-                <div className="flex items-center gap-2">
-                  <Camera className="h-4 w-4" />
-                  <span>Camera captures automatically</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4" />
-                  <span>Or upload photos manually</span>
-                </div>
+      {/* Chat Messages Container */}
+      <div 
+        ref={chatContainerRef}
+        className="flex-1 overflow-y-auto px-4 py-4 min-h-0 scroll-smooth"
+      >
+        {messages.length === 0 && !isAnalyzing ? (
+          <div className="text-center py-12">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-r from-purple-100 via-indigo-100 to-blue-100 dark:from-purple-900/30 dark:via-indigo-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center mb-6">
+              <div className="relative">
+                <Brain className="h-10 w-10 text-purple-600 dark:text-purple-400" />
+                <Sparkles className="h-4 w-4 text-yellow-500 absolute -top-1 -right-1 animate-pulse" />
               </div>
             </div>
-          ) : (
-            <>
-              {messages.map((message, index) => renderMessage(message, index))}
-              {isAnalyzing && renderThinkingIndicator()}
-            </>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+            <p className="text-slate-700 dark:text-slate-300 font-semibold mb-2 text-lg">Hello, I'm Alex!</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+              Your personal AI style advisor, ready to help elevate your fashion game
+            </p>
+            <div className="flex flex-col items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 rounded-xl p-3 mx-4">
+              <div className="flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                <span>Camera captures automatically</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                <span>Or upload photos manually</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {messages.map((message, index) => renderMessage(message, index))}
+            {isAnalyzing && renderThinkingIndicator()}
+          </>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
 
-        {/* Input Form - Fixed at Bottom */}
-        <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-4 flex-shrink-0">
-          <form onSubmit={handleSubmit} className="flex items-center gap-3">
-            <Button
-              type="button"
-              onClick={handleUploadClick}
-              size="sm"
-              variant="outline"
-              disabled={isAnalyzing}
-              className="h-10 px-3 bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-              title="Upload image"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-            
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/svg+xml"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            
-            <Input
-              type="text"
-              placeholder={isAnalyzing ? "Alex is thinking..." : "Ask Alex about style, trends, or fashion advice..."}
-              className="flex-1 h-10 bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 focus:border-purple-400 dark:focus:border-purple-500 transition-colors text-sm px-3"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              disabled={isAnalyzing}
-            />
-            <Button 
-              type="submit" 
-              size="sm"
-              disabled={isAnalyzing || !inputValue.trim()}
-              className="h-10 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-            >
-              {isAnalyzing ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </form>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Input Form */}
+      <div className="border-t border-slate-200 dark:border-slate-700 p-4 flex-shrink-0">
+        <form onSubmit={handleSubmit} className="flex items-center gap-3">
+          <Button
+            type="button"
+            onClick={handleUploadClick}
+            size="sm"
+            variant="outline"
+            disabled={isAnalyzing}
+            className="h-10 px-3 hover:scale-105 disabled:hover:scale-100 transition-transform"
+            title="Upload image"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/svg+xml"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          
+          <Input
+            type="text"
+            placeholder={isAnalyzing ? "Alex is thinking..." : "Ask Alex about style, trends, or fashion advice..."}
+            className="flex-1 h-10"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            disabled={isAnalyzing}
+          />
+          <Button 
+            type="submit" 
+            size="sm"
+            disabled={isAnalyzing || !inputValue.trim()}
+            className="h-10 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
+          >
+            {isAnalyzing ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
+        </form>
+      </div>
+    </div>
   );
 };
 
