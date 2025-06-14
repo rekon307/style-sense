@@ -92,40 +92,42 @@ serve(async (req) => {
       throw new Error('No image or messages provided for analysis');
     }
 
-    console.log('Processing with unified logic:', {
+    console.log('Processing with cleaned message logic:', {
       imageProvided: !!imageToAnalyze,
       messagesProvided: userMessages.length,
       model: model,
       temperature: temperature
     });
 
-    // Build the conversation for OpenAI - ALWAYS start with Master Stylist system prompt
-    const conversationMessages = [
-      {
-        role: "system",
-        content: MASTER_STYLIST_SYSTEM_PROMPT
-      }
-    ];
+    // PART 1: DATA PREPARATION LOGIC - Create clean messages array
+    const messagesForOpenAI: any[] = [];
 
-    // Process user messages and enhance the last one with image if available
+    // Step 1: Always start with the Master Stylist System Prompt
+    messagesForOpenAI.push({
+      role: "system",
+      content: MASTER_STYLIST_SYSTEM_PROMPT
+    });
+
+    // Step 2: Process historical messages (convert to text-only format)
     if (userMessages.length > 0) {
-      // Add all user messages except the last one
+      // Add all messages except the last one as text-only
       for (let i = 0; i < userMessages.length - 1; i++) {
-        conversationMessages.push({
-          role: userMessages[i].role,
-          content: userMessages[i].content
+        const message = userMessages[i];
+        messagesForOpenAI.push({
+          role: message.role,
+          content: extractTextContent(message.content)
         });
       }
 
-      // Handle the last user message - enhance with image if available
+      // Step 3: Handle the last message - enhance with image if available
       const lastMessage = userMessages[userMessages.length - 1];
       if (imageToAnalyze && lastMessage.role === 'user') {
-        conversationMessages.push({
+        messagesForOpenAI.push({
           role: "user",
           content: [
             {
               type: "text",
-              text: lastMessage.content
+              text: extractTextContent(lastMessage.content)
             },
             {
               type: "image_url",
@@ -137,14 +139,14 @@ serve(async (req) => {
         });
         console.log('Enhanced last user message with image');
       } else {
-        conversationMessages.push({
+        messagesForOpenAI.push({
           role: lastMessage.role,
-          content: lastMessage.content
+          content: extractTextContent(lastMessage.content)
         });
       }
     } else if (imageToAnalyze) {
       // No messages but image provided - create initial analysis request
-      conversationMessages.push({
+      messagesForOpenAI.push({
         role: "user",
         content: [
           {
@@ -162,7 +164,7 @@ serve(async (req) => {
       console.log('Created initial style analysis request with image');
     }
 
-    console.log('Sending unified request to OpenAI with', conversationMessages.length, 'messages, temperature:', temperature);
+    console.log('Sending cleaned request to OpenAI with', messagesForOpenAI.length, 'messages, temperature:', temperature);
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -172,7 +174,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: model,
-        messages: conversationMessages,
+        messages: messagesForOpenAI,
         max_tokens: 2500,
         temperature: temperature
       }),
@@ -218,3 +220,19 @@ serve(async (req) => {
     });
   }
 });
+
+// Helper function to extract text content from message content
+function extractTextContent(content: any): string {
+  if (typeof content === 'string') {
+    return content;
+  }
+  
+  if (Array.isArray(content)) {
+    // Extract text parts from multimodal content
+    const textParts = content.filter(part => part.type === 'text');
+    return textParts.map(part => part.text).join(' ');
+  }
+  
+  // Fallback for unexpected content format
+  return String(content);
+}
