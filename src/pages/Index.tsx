@@ -7,9 +7,11 @@ import StyleAdvice from "@/components/StyleAdvice";
 interface IndexProps {
   capturedImage: string | null;
   setCapturedImage: (image: string | null) => void;
+  styleAdvice: any;
+  isAnalyzing: boolean;
 }
 
-const Index = ({ capturedImage, setCapturedImage }: IndexProps) => {
+const Index = ({ capturedImage, setCapturedImage, styleAdvice, isAnalyzing }: IndexProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   return (
@@ -37,7 +39,7 @@ const Index = ({ capturedImage, setCapturedImage }: IndexProps) => {
           
           {/* Right column - Style Advice */}
           <div className="lg:col-span-1">
-            <StyleAdvice />
+            <StyleAdvice styleAdvice={styleAdvice} isAnalyzing={isAnalyzing} />
           </div>
         </div>
       </div>
