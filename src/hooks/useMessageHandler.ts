@@ -28,7 +28,7 @@ export const useMessageHandler = ({
   setCurrentSessionId,
   initialImageURL
 }: UseMessageHandlerProps) => {
-  const handleSendMessage = async (newMessage: string, capturedPhoto?: string | null) => {
+  const handleSendMessage = async (newMessage: string, capturedPhoto?: string | null, temperature?: number) => {
     if (!newMessage.trim()) {
       toast({
         title: "Empty message",
@@ -44,6 +44,7 @@ export const useMessageHandler = ({
     console.log('Visual context available:', !!visualContext);
     console.log('Captured photo available:', !!capturedPhoto);
     console.log('Initial image available:', !!initialImageURL);
+    console.log('Temperature setting:', temperature);
     console.log('Current messages count:', messages.length);
 
     // Create new user message and add it immediately to show in chat
@@ -112,7 +113,8 @@ export const useMessageHandler = ({
         messagesCount: updatedMessages.length,
         hasVisualContext: !!visualContext,
         hasImageToSend: !!imageToSend,
-        selectedModel
+        selectedModel,
+        temperature
       });
 
       const requestBody: any = { 
@@ -120,6 +122,11 @@ export const useMessageHandler = ({
         visualContext: visualContext,
         model: selectedModel
       };
+
+      // Include temperature if provided
+      if (temperature !== undefined) {
+        requestBody.temperature = temperature;
+      }
 
       // Include the current image if available
       if (imageToSend) {

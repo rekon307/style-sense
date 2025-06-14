@@ -64,6 +64,7 @@ serve(async (req) => {
       hasCapturedImage: !!requestBody.capturedImage,
       hasVisualContext: !!requestBody.visualContext,
       selectedModel: requestBody.model || 'not specified',
+      temperature: requestBody.temperature || 'not specified',
       imagePreview: requestBody.currentImage ? requestBody.currentImage.substring(0, 100) + '...' : 'No currentImage',
       capturedImagePreview: requestBody.capturedImage ? requestBody.capturedImage.substring(0, 100) + '...' : 'No capturedImage'
     });
@@ -74,6 +75,8 @@ serve(async (req) => {
     console.log('=== END DEBUG ANALYSIS ===');
     
     const model = requestBody.model || 'gpt-4o-mini';
+    // Extract temperature with default fallback to 0.5 (Balanced Maestro mode)
+    const temperature = requestBody.temperature !== undefined ? requestBody.temperature : 0.5;
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
@@ -92,7 +95,8 @@ serve(async (req) => {
     console.log('Processing with unified logic:', {
       imageProvided: !!imageToAnalyze,
       messagesProvided: userMessages.length,
-      model: model
+      model: model,
+      temperature: temperature
     });
 
     // Build the conversation for OpenAI - ALWAYS start with Master Stylist system prompt
@@ -158,7 +162,7 @@ serve(async (req) => {
       console.log('Created initial style analysis request with image');
     }
 
-    console.log('Sending unified request to OpenAI with', conversationMessages.length, 'messages');
+    console.log('Sending unified request to OpenAI with', conversationMessages.length, 'messages, temperature:', temperature);
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -169,8 +173,8 @@ serve(async (req) => {
       body: JSON.stringify({
         model: model,
         messages: conversationMessages,
-        max_tokens: 1200,
-        temperature: 0.2
+        max_tokens: 2500,
+        temperature: temperature
       }),
     });
 

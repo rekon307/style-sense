@@ -45,10 +45,11 @@ const Index = ({
   const [showChatHistory, setShowChatHistory] = useState(true);
   const [lastCapturedPhoto, setLastCapturedPhoto] = useState<string | null>(null);
 
-  const handleSendMessageWithPhoto = async (message: string, uploadedImage?: string | null) => {
+  const handleSendMessageWithPhoto = async (message: string, uploadedImage?: string | null, temperature?: number) => {
     console.log('=== PHOTO CAPTURE FLOW START ===');
     console.log('Attempting to send message with photo capture:', message);
     console.log('Uploaded image provided:', !!uploadedImage);
+    console.log('Temperature setting:', temperature);
     
     let photoDataURL: string | null = null;
     
@@ -93,8 +94,8 @@ const Index = ({
     
     console.log('=== PHOTO CAPTURE FLOW END ===');
     
-    // Send the message with the captured photo
-    handleSendMessage(message, photoDataURL);
+    // Send the message with the captured photo and temperature
+    handleSendMessage(message, photoDataURL, temperature);
   };
 
   return (
