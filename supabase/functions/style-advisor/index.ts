@@ -79,19 +79,21 @@ serve(async (req) => {
     const temperature = requestBody.temperature !== undefined ? requestBody.temperature : 0.5;
     const userMessages = requestBody.messages || [];
     const currentImage = requestBody.image;
+    const visualHistory = requestBody.visualHistory || [];
 
     console.log('=== REQUEST ANALYSIS ===');
     console.log('Model:', model);
     console.log('Temperature:', temperature);
     console.log('Messages count:', userMessages.length);
     console.log('Has current image:', !!currentImage);
-    console.log('Image data preview:', currentImage ? currentImage.substring(0, 50) + '...' : 'none');
+    console.log('Visual history count:', visualHistory.length);
+    console.log('Visual history with images:', visualHistory.filter(m => m.visual_context).length);
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    // ENHANCED MESSAGE PREPARATION WITH IMAGE DEBUGGING
+    // ENHANCED MESSAGE PREPARATION WITH VISUAL HISTORY CONTEXT
     const messagesForOpenAI: any[] = [];
 
     // Step 1: Always start with Alex's Enhanced Cognitive Constitution
@@ -100,8 +102,63 @@ serve(async (req) => {
       content: ALEX_COGNITIVE_CONSTITUTION
     });
 
-    // Step 2: Add conversation history (text-only for previous messages)
-    if (userMessages.length > 1) {
+    // Step 2: Process visual history - include images from previous messages for context
+    if (visualHistory.length > 0) {
+      console.log('=== PROCESSING VISUAL HISTORY ===');
+      
+      // Group messages and include recent visual context (last 5 messages with images)
+      const recentVisualMessages = visualHistory
+        .filter(msg => msg.visual_context)
+        .slice(-5); // Keep last 5 visual messages for context
+      
+      if (recentVisualMessages.length > 0) {
+        console.log('Including recent visual context:', recentVisualMessages.length, 'messages');
+        
+        // Add a system message about visual context
+        messagesForOpenAI.push({
+          role: "system",
+          content: `You have access to visual context from this conversation. Here are the recent images the user has shared with you:`
+        });
+        
+        // Add recent visual messages
+        for (const visualMsg of recentVisualMessages) {
+          if (visualMsg.visual_context) {
+            messagesForOpenAI.push({
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: `[Previous message from ${new Date(visualMsg.created_at).toLocaleString()}]: ${visualMsg.content}`
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: visualMsg.visual_context,
+                    detail: "low" // Use low detail for context images to save tokens
+                  }
+                }
+              ]
+            });
+          }
+        }
+        
+        // Add separator message
+        messagesForOpenAI.push({
+          role: "system",
+          content: "Above was the visual context from recent conversation. Now continuing with current conversation:"
+        });
+      }
+      
+      // Add text-only conversation flow (excluding the very last message)
+      for (let i = 0; i < Math.max(0, userMessages.length - 1); i++) {
+        const message = userMessages[i];
+        messagesForOpenAI.push({
+          role: message.role,
+          content: extractTextContent(message.content)
+        });
+      }
+    } else if (userMessages.length > 1) {
+      // No visual history, just add text conversation history
       for (let i = 0; i < userMessages.length - 1; i++) {
         const message = userMessages[i];
         messagesForOpenAI.push({
@@ -118,7 +175,7 @@ serve(async (req) => {
       if (currentImage && lastMessage.role === 'user') {
         console.log('=== CREATING ENHANCED MULTIMODAL MESSAGE ===');
         console.log('Text:', extractTextContent(lastMessage.content));
-        console.log('Image length:', currentImage.length);
+        console.log('Current image length:', currentImage.length);
         
         // Create enhanced multimodal message with specific instructions for visual analysis
         messagesForOpenAI.push({
@@ -128,13 +185,13 @@ serve(async (req) => {
               type: "text",
               text: `${extractTextContent(lastMessage.content)}
 
-IMPORTANT: I have provided you with an image. Please analyze it carefully and answer my question based on what you can see. If I'm asking about specific visual elements (like colors, clothing items, accessories), describe exactly what you observe.`
+IMPORTANT: I have provided you with an image. Please analyze it carefully and answer my question based on what you can see. If I'm asking about specific visual elements (like colors, clothing items, accessories), describe exactly what you observe. You also have access to previous images from our conversation for additional context.`
             },
             {
               type: "image_url",
               image_url: {
                 url: currentImage,
-                detail: "high"
+                detail: "high" // High detail for current image
               }
             }
           ]
@@ -176,7 +233,7 @@ IMPORTANT: I have provided you with an image. Please analyze it carefully and an
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          console.log('=== CALLING OPENAI API WITH ENHANCED PROMPT ===');
+          console.log('=== CALLING OPENAI API WITH ENHANCED PROMPT AND VISUAL CONTEXT ===');
           const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
             headers: {

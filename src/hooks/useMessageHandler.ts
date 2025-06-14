@@ -66,37 +66,65 @@ export const useMessageHandler = ({
         }
       }
 
-      // Save user message
+      // Save user message with visual context
       if (sessionId) {
         await supabase
           .from('chat_messages')
           .insert([{
             session_id: sessionId,
             role: 'user',
-            content: message
+            content: message,
+            visual_context: image || null
           }]);
       }
 
-      // Prepare request with enhanced image debugging
+      // Load messages with visual context from database for this session
+      const { data: dbMessages, error: messagesError } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true });
+
+      if (messagesError) {
+        console.error('Error loading messages for context:', messagesError);
+      }
+
+      // Prepare request with enhanced image debugging and visual context
       const requestBody: {
         messages: Message[];
         temperature: number;
         model: string;
         image?: string;
+        visualHistory?: Array<{
+          role: string;
+          content: string;
+          visual_context: string | null;
+          created_at: string;
+        }>;
       } = { 
         messages: updatedMessages,
         temperature: temperature,
         model: 'gpt-4o-mini'
       };
 
-      // CRITICAL: Always include image if provided
+      // Include current image if provided
       if (image) {
         requestBody.image = image;
-        console.log('=== IMAGE ATTACHED TO REQUEST ===');
+        console.log('=== CURRENT IMAGE ATTACHED ===');
         console.log('Image format:', image.substring(0, 30));
         console.log('Image size (bytes):', image.length);
-      } else {
-        console.warn('=== NO IMAGE IN REQUEST ===');
+      }
+
+      // Include visual history from database
+      if (dbMessages && dbMessages.length > 0) {
+        requestBody.visualHistory = dbMessages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          visual_context: msg.visual_context,
+          created_at: msg.created_at
+        }));
+        console.log('=== VISUAL HISTORY INCLUDED ===');
+        console.log('Messages with visual context:', dbMessages.filter(m => m.visual_context).length);
       }
 
       console.log('=== SENDING REQUEST TO EDGE FUNCTION ===');
@@ -183,7 +211,8 @@ export const useMessageHandler = ({
           .insert([{
             session_id: sessionId,
             role: 'assistant',
-            content: assistantContent
+            content: assistantContent,
+            visual_context: null // Assistant responses don't have visual context
           }]);
       }
 
