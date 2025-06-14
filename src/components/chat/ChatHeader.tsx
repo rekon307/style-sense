@@ -1,6 +1,6 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Settings, Zap } from "lucide-react";
+import { Sparkles, Settings } from "lucide-react";
 
 interface ChatHeaderProps {
   isAnalyzing: boolean;
@@ -23,7 +23,7 @@ const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderPro
   return (
     <div className="border-b border-slate-200/50 dark:border-slate-700/50 px-4 py-4">
       <div className="flex items-center justify-between">
-        {/* AI Identity Section */}
+        {/* AI Identity Section - Simplified */}
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600">
@@ -33,45 +33,33 @@ const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderPro
           </div>
           <div>
             <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-              {getModelDisplayName(selectedModel)}
+              Alex, AI Style Consultant
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Style Consultant</p>
           </div>
         </div>
         
-        {/* Right Controls */}
-        <div className="flex items-center gap-3">
-          {/* Status */}
-          <div className="flex items-center gap-2 rounded-lg bg-slate-50 dark:bg-slate-800/50 px-3 py-2">
-            <Zap className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-              {isAnalyzing ? 'Analyzing' : 'Ready'}
-            </span>
-          </div>
-          
-          {/* Model Selector */}
-          <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-slate-500 dark:text-slate-400" />
-            <Select value={selectedModel} onValueChange={onModelChange}>
-              <SelectTrigger className="h-10 w-32 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gpt-4o-mini">
-                  <div className="flex flex-col items-start py-1">
-                    <span className="font-medium">AI Style</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">GPT-4o Mini</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="gpt-4o">
-                  <div className="flex flex-col items-start py-1">
-                    <span className="font-medium">AI Style PRO</span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">GPT-4o</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Model Selector Only */}
+        <div className="flex items-center gap-2">
+          <Settings className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+          <Select value={selectedModel} onValueChange={onModelChange}>
+            <SelectTrigger className="h-10 w-32 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="gpt-4o-mini">
+                <div className="flex flex-col items-start py-1">
+                  <span className="font-medium">AI Style</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">GPT-4o Mini</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="gpt-4o">
+                <div className="flex flex-col items-start py-1">
+                  <span className="font-medium">AI Style PRO</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">GPT-4o</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
@@ -98,7 +99,7 @@ const Index = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
-      {/* Header */}
+      {/* Header - Updated logo text */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-4">
@@ -123,8 +124,8 @@ const Index = ({
                 <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-green-500 dark:border-slate-900"></div>
               </div>
               <div>
-                <h1 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">AI Style Advisor</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Powered by advanced AI</p>
+                <h1 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">AI Style</h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Powered by Lovable</p>
               </div>
             </div>
           </div>

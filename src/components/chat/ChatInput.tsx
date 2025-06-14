@@ -69,17 +69,17 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
   };
 
   return (
-    <div className="border-t border-slate-200/50 dark:border-slate-700/50 px-4 py-3">
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
-        {/* Left Action Buttons Group */}
-        <div className="flex items-center">
+    <div className="border-t border-slate-200/50 dark:border-slate-700/50 px-4 py-4">
+      <form onSubmit={handleSubmit} className="flex items-center gap-3">
+        {/* Left Action Buttons Group - Better organized */}
+        <div className="flex items-center gap-1">
           <Button
             type="button"
             onClick={handleUploadClick}
             size="sm"
             variant="ghost"
             disabled={isAnalyzing || isRecording}
-            className="h-9 w-9 p-0 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800"
+            className="h-10 w-10 p-0 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all duration-200"
             title="Upload image"
           >
             <Plus className="h-4 w-4" />
@@ -91,7 +91,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
             size="sm"
             variant="ghost"
             disabled={isAnalyzing || isProcessing}
-            className={`h-9 w-9 p-0 ml-1 ${isRecording 
+            className={`h-10 w-10 p-0 rounded-xl transition-all duration-200 ${isRecording 
               ? 'text-red-500 hover:text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30' 
               : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800'
             } ${isRecording ? 'animate-pulse' : ''}`}
@@ -115,7 +115,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
           className="hidden"
         />
         
-        {/* Main Input */}
+        {/* Main Input - Improved styling */}
         <Input
           type="text"
           placeholder={
@@ -124,18 +124,18 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
             isAnalyzing ? "Alex is analyzing..." : 
             "Ask Alex about style, trends, or fashion advice..."
           }
-          className="flex-1 h-9 bg-slate-50/50 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-600/50 focus:border-blue-500 dark:focus:border-blue-400 text-sm"
+          className="flex-1 h-10 bg-white/50 dark:bg-slate-800/50 border-slate-300/50 dark:border-slate-600/50 focus:border-blue-500 dark:focus:border-blue-400 text-sm rounded-xl transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           disabled={isAnalyzing || isRecording}
         />
 
-        {/* Send Button */}
+        {/* Send Button - Enhanced */}
         <Button 
           type="submit" 
           size="sm"
           disabled={isAnalyzing || !inputValue.trim() || isRecording || isProcessing}
-          className="h-9 w-9 p-0 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shrink-0"
+          className="h-10 w-10 p-0 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shrink-0 rounded-xl transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
         >
           {isAnalyzing ? (
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>

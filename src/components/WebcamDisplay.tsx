@@ -160,7 +160,6 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
     }
   };
 
-  // Improved visibility handling - prevent popup behavior
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && videoRef.current) {
@@ -248,11 +247,11 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
+      {/* Header - Improved layout */}
+      <div className="flex items-center justify-between p-6 border-b border-slate-200/50 dark:border-slate-700/50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
-            <Camera className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl flex items-center justify-center">
+            <Camera className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
             <h2 className="font-semibold text-slate-900 dark:text-slate-100">Webcam View</h2>
@@ -260,10 +259,10 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
           </div>
         </div>
         
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
-            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-2 bg-slate-100/80 dark:bg-slate-800/80 rounded-xl backdrop-blur-sm">
+            <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
               {isActive ? 'Active' : 'Inactive'}
             </span>
           </div>
@@ -273,7 +272,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             variant="outline"
             size="sm"
             disabled={isLoading}
-            className="flex items-center gap-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="flex items-center gap-2 border-slate-300/50 dark:border-slate-600/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 backdrop-blur-sm transition-all duration-200"
           >
             {isActive ? (
               <>
@@ -290,9 +289,9 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
         </div>
       </div>
       
-      {/* Video Container */}
+      {/* Video Container - Enhanced */}
       <div className="flex-1 p-6">
-        <div className="h-full bg-slate-900 rounded-xl flex items-center justify-center overflow-hidden relative">
+        <div className="h-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl flex items-center justify-center overflow-hidden relative shadow-inner">
           <video
             ref={videoRef}
             autoPlay
@@ -300,11 +299,11 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             playsInline
             webkit-playsinline="true"
             controls={false}
-            controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+            controlsList="nodownload nofullscreen noremoteplaybook noplaybackrate"
             disablePictureInPicture
             disableRemotePlayback
             preload="none"
-            className="w-full h-full object-cover rounded-xl [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-panel]:hidden [&::-webkit-media-controls-play-button]:hidden [&::-webkit-media-controls-start-playback-button]:hidden"
+            className="w-full h-full object-cover rounded-2xl [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-panel]:hidden [&::-webkit-media-controls-play-button]:hidden [&::-webkit-media-controls-start-playback-button]:hidden"
             style={{ 
               transform: 'scaleX(-1)',
               maxWidth: '100%',
