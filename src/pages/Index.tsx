@@ -15,6 +15,8 @@ interface IndexProps {
   messages: Message[];
   isAnalyzing: boolean;
   handleSendMessage: (message: string) => void;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
 }
 
 const Index = ({ 
@@ -22,7 +24,9 @@ const Index = ({
   setInitialImageURL, 
   messages, 
   isAnalyzing, 
-  handleSendMessage 
+  handleSendMessage,
+  selectedModel,
+  onModelChange
 }: IndexProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -55,6 +59,8 @@ const Index = ({
               messages={messages} 
               isAnalyzing={isAnalyzing}
               onSendMessage={handleSendMessage}
+              selectedModel={selectedModel}
+              onModelChange={onModelChange}
             />
           </div>
         </div>

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +21,7 @@ const App = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [visualContext, setVisualContext] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
 
   useEffect(() => {
     const analyzeStyle = async () => {
@@ -36,7 +38,10 @@ const App = () => {
       try {
         console.log('Sending image for style analysis...');
         const { data, error } = await supabase.functions.invoke('style-advisor', {
-          body: { capturedImage: initialImageURL }
+          body: { 
+            capturedImage: initialImageURL,
+            model: selectedModel
+          }
         });
 
         if (error) {
@@ -66,7 +71,7 @@ const App = () => {
     };
 
     analyzeStyle();
-  }, [initialImageURL]);
+  }, [initialImageURL, selectedModel]);
 
   const handleSendMessage = async (newMessage: string) => {
     // Create updated messages array with user's new message
@@ -81,7 +86,8 @@ const App = () => {
       const { data, error } = await supabase.functions.invoke('style-advisor', {
         body: { 
           messages: updatedMessages,
-          visualContext: visualContext
+          visualContext: visualContext,
+          model: selectedModel
         }
       });
 
@@ -123,6 +129,8 @@ const App = () => {
                   messages={messages}
                   isAnalyzing={isAnalyzing}
                   handleSendMessage={handleSendMessage}
+                  selectedModel={selectedModel}
+                  onModelChange={setSelectedModel}
                 />
               } 
             />

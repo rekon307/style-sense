@@ -21,13 +21,14 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { capturedImage, messages, visualContext } = body;
+    const { capturedImage, messages, visualContext, model = "gpt-4o-mini" } = body;
     
     console.log('Received style analysis request');
     console.log('Request body:', JSON.stringify({ 
       hasCapturedImage: !!capturedImage, 
       messagesCount: messages?.length || 0,
-      hasVisualContext: !!visualContext 
+      hasVisualContext: !!visualContext,
+      selectedModel: model
     }));
     
     let apiMessages = [];
@@ -88,6 +89,7 @@ serve(async (req) => {
 
     console.log('Sending request to OpenAI API...');
     console.log('API Messages:', JSON.stringify(apiMessages, null, 2));
+    console.log('Using model:', model);
 
     // Make API call to OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -97,7 +99,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: model,
         messages: apiMessages,
         max_tokens: 1000,
         temperature: 0.7

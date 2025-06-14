@@ -2,7 +2,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, Send } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sparkles, Send, Settings } from "lucide-react";
 import { useState } from "react";
 
 interface Message {
@@ -14,9 +15,11 @@ interface StyleAdviceProps {
   messages: Message[];
   isAnalyzing: boolean;
   onSendMessage: (message: string) => void;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
 }
 
-const StyleAdvice = ({ messages, isAnalyzing, onSendMessage }: StyleAdviceProps) => {
+const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onModelChange }: StyleAdviceProps) => {
   const [inputValue, setInputValue] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -66,6 +69,20 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage }: StyleAdviceProps)
           <Sparkles className="h-5 w-5" />
           Style Advice
         </CardTitle>
+        
+        {/* Model Selector */}
+        <div className="flex items-center gap-2 pt-2">
+          <Settings className="h-4 w-4 text-gray-500" />
+          <Select value={selectedModel} onValueChange={onModelChange}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select AI model" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="gpt-4o-mini">GPT-4o Mini (Fast)</SelectItem>
+              <SelectItem value="gpt-4o">GPT-4o (Advanced)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent className="flex flex-col h-full">
         {/* Chat Log */}
