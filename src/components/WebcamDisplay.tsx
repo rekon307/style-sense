@@ -19,28 +19,11 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const internalVideoRef = useRef<HTMLVideoElement>(null);
   
-  // Use external videoRef if provided, otherwise use internal one
   const videoRef = externalVideoRef || internalVideoRef;
 
   useImperativeHandle(ref, () => ({
     capturePhoto: () => {
-      console.log('=== CAPTURE PHOTO ATTEMPT ===');
-      console.log('Video ref current:', !!videoRef.current);
-      console.log('Is active:', isActive);
-      console.log('Canvas ref current:', !!canvasRef.current);
-      
-      if (!videoRef.current) {
-        console.error('Video element not available');
-        return null;
-      }
-
-      if (!isActive) {
-        console.error('Camera not active');
-        return null;
-      }
-
-      if (!canvasRef.current) {
-        console.error('Canvas element not available');
+      if (!videoRef.current || !isActive || !canvasRef.current) {
         return null;
       }
 
@@ -49,30 +32,17 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
         
-        if (!context) {
-          console.error('Canvas context not available');
-          return null;
-        }
-
-        if (video.videoWidth === 0 || video.videoHeight === 0) {
-          console.error('Video dimensions not available:', { width: video.videoWidth, height: video.videoHeight });
+        if (!context || video.videoWidth === 0 || video.videoHeight === 0) {
           return null;
         }
 
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        
-        console.log('Canvas dimensions set to:', canvas.width, 'x', canvas.height);
-        
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
-        console.log('Photo captured successfully, size:', dataURL.length);
-        console.log('=== CAPTURE PHOTO SUCCESS ===');
-        return dataURL;
+        return canvas.toDataURL('image/jpeg', 0.8);
       } catch (error) {
         console.error('Error capturing photo:', error);
-        console.log('=== CAPTURE PHOTO FAILED ===');
         return null;
       }
     }
@@ -82,7 +52,6 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
     try {
       setIsLoading(true);
       setError(null);
-      console.log('Starting webcam...');
       
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
@@ -93,51 +62,39 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
         audio: false
       });
       
-      console.log('Media stream obtained');
       setStream(mediaStream);
       streamRef.current = mediaStream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        
-        // Prevent popup behavior - critical settings
         videoRef.current.setAttribute('playsinline', 'true');
         videoRef.current.setAttribute('webkit-playsinline', 'true');
-        videoRef.current.setAttribute('controls', 'false');
         videoRef.current.muted = true;
         videoRef.current.autoplay = true;
-        videoRef.current.style.objectFit = 'cover';
         
         await new Promise((resolve) => {
           if (videoRef.current) {
-            videoRef.current.onloadedmetadata = () => {
-              console.log('Video metadata loaded, dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
-              resolve(true);
-            };
+            videoRef.current.onloadedmetadata = () => resolve(true);
           }
         });
         
         await videoRef.current.play();
-        console.log('Video playing');
       }
       
       setIsActive(true);
       setIsLoading(false);
-      console.log('Webcam started successfully');
     } catch (err) {
       console.error('Error accessing webcam:', err);
       setIsLoading(false);
       
       if (err instanceof Error) {
         if (err.name === 'NotAllowedError') {
-          setError('Camera access is required to get styling advice. Please allow camera access and try again.');
+          setError('Accesul la cameră este necesar. Te rog permite accesul și încearcă din nou.');
         } else if (err.name === 'NotFoundError') {
-          setError('No camera found. Please connect a camera and try again.');
+          setError('Nu s-a găsit nicio cameră. Te rog conectează o cameră și încearcă din nou.');
         } else {
-          setError('Failed to access camera. Please check your browser settings.');
+          setError('Eroare la accesarea camerei. Verifică setările browser-ului.');
         }
-      } else {
-        setError('An unexpected error occurred while accessing the camera.');
       }
     }
   };
@@ -153,7 +110,6 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
     }
     setIsActive(false);
     setError(null);
-    console.log('Webcam stopped');
   };
 
   const handleToggleWebcam = () => {
@@ -167,13 +123,9 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && videoRef.current) {
-        // Pause video when tab is hidden but keep stream active
         videoRef.current.pause();
-        console.log('Tab hidden - video paused');
       } else if (!document.hidden && videoRef.current && streamRef.current) {
-        // Resume video when tab becomes visible
         videoRef.current.play().catch(console.error);
-        console.log('Tab visible - video resumed');
       }
     };
 
@@ -194,7 +146,6 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
   useEffect(() => {
     startWebcam();
-
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
@@ -206,13 +157,13 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
   const renderOverlay = () => {
     if (isLoading) {
       return (
-        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-xl">
+        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-2xl">
           <div className="max-w-sm">
-            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Camera className="h-8 w-8 text-white animate-pulse" />
+            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Camera className="h-6 w-6 text-white animate-pulse" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Starting camera...</h3>
-            <p className="text-sm text-slate-300">Please allow camera access when prompted</p>
+            <h3 className="text-lg font-semibold mb-2">Pornesc camera...</h3>
+            <p className="text-sm text-slate-300">Te rog permite accesul la cameră</p>
           </div>
         </div>
       );
@@ -220,12 +171,12 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
     if (error) {
       return (
-        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-xl">
-          <div className="max-w-md px-6">
-            <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <AlertCircle className="h-8 w-8 text-white" />
+        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-2xl">
+          <div className="max-w-md px-4">
+            <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="h-6 w-6 text-white" />
             </div>
-            <h3 className="text-xl font-semibold text-red-400 mb-4">Camera Error</h3>
+            <h3 className="text-lg font-semibold text-red-400 mb-3">Eroare cameră</h3>
             <p className="text-sm text-slate-300">{error}</p>
           </div>
         </div>
@@ -234,13 +185,13 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
     if (!isActive) {
       return (
-        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-xl">
+        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-2xl">
           <div className="max-w-sm">
-            <div className="w-16 h-16 bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Video className="h-8 w-8 text-slate-400" />
+            <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Video className="h-6 w-6 text-slate-400" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Camera Stopped</h3>
-            <p className="text-sm text-slate-300">Click "Start Camera" to begin</p>
+            <h3 className="text-lg font-semibold mb-2">Camera oprită</h3>
+            <p className="text-sm text-slate-300">Apasă "Pornește" pentru a începe</p>
           </div>
         </div>
       );
@@ -251,61 +202,50 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header - 2 columns layout */}
+      {/* Cleaner Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/50 dark:border-slate-700/50">
-        {/* Left Column - Camera Icon + Title */}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg flex items-center justify-center">
-            <Camera className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+            <Camera className="h-3 w-3 text-white" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Webcam View</h2>
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Webcam View</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">Live camera feed</p>
           </div>
         </div>
         
-        {/* Right Column - Status and Stop Button on same row */}
-        <div className="flex items-center gap-3">
-          {/* Status */}
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} ${isActive ? 'animate-pulse' : ''}`}></div>
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-              {isActive ? 'Active' : 'Inactive'}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+              {isActive ? 'Activ' : 'Inactiv'}
             </span>
           </div>
           
-          {/* Stop Button */}
           <Button
             onClick={handleToggleWebcam}
             variant="outline"
             size="sm"
             disabled={isLoading}
-            className="h-9 px-4 text-sm font-medium border-slate-300/50 dark:border-slate-600/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 backdrop-blur-sm transition-all duration-200"
+            className="h-8 px-3 text-xs font-medium"
           >
-            {isActive ? "Stop" : "Start"}
+            {isActive ? "Oprește" : "Pornește"}
           </Button>
         </div>
       </div>
       
-      {/* Video Container */}
-      <div className="flex-1 p-4">
-        <div className="h-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl flex items-center justify-center overflow-hidden relative shadow-inner">
+      {/* Improved Video Container */}
+      <div className="flex-1 p-3">
+        <div className="h-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl overflow-hidden relative shadow-inner">
           <video
             ref={videoRef}
             autoPlay
             muted
             playsInline
-            webkit-playsinline="true"
-            controls={false}
-            controlsList="nodownload nofullscreen noremoteplaybook noplaybackrate"
-            disablePictureInPicture
-            disableRemotePlayback
-            preload="none"
-            className="w-full h-full object-cover rounded-xl [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-panel]:hidden [&::-webkit-media-controls-play-button]:hidden [&::-webkit-media-controls-start-playback-button]:hidden"
+            className="w-full h-full object-cover"
             style={{ 
               transform: 'scaleX(-1)',
-              maxWidth: '100%',
-              maxHeight: '100%'
+              aspectRatio: '16/9'
             }}
           />
           <canvas ref={canvasRef} className="hidden" />
