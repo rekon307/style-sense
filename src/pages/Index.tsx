@@ -102,13 +102,13 @@ const Index = ({
       <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-700/25 bg-[size:32px_32px] opacity-50"></div>
       
       {/* Top Bar with Controls */}
-      <div className="relative z-50 flex items-center justify-between p-4 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex-shrink-0">
+      <div className="relative z-50 flex items-center justify-between p-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-4">
           <Button
             onClick={() => setShowChatHistory(!showChatHistory)}
             variant="outline"
             size="sm"
-            className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105 shadow-md"
+            className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105"
           >
             {showChatHistory ? (
               <>
@@ -124,7 +124,7 @@ const Index = ({
           </Button>
           
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg">
+            <div className="p-2 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -144,8 +144,8 @@ const Index = ({
       
       <div className="relative flex flex-1 min-h-0">
         {/* Chat History Sidebar */}
-        <div className={`${showChatHistory ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm flex-shrink-0`}>
-          <div className="h-full p-4">
+        <div className={`${showChatHistory ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm flex-shrink-0`}>
+          <div className="h-full p-6">
             <ChatHistory onSessionChange={onSessionChange} />
           </div>
         </div>
@@ -154,20 +154,22 @@ const Index = ({
         <div className="flex-1 flex min-w-0">
           {/* Webcam Section */}
           <div className="flex-1 p-6 min-w-0">
-            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl h-full flex flex-col min-h-0">
+            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl h-full flex flex-col min-h-0">
               <WebcamDisplay ref={webcamRef} videoRef={videoRef} />
             </div>
           </div>
           
-          {/* Style Advice Panel - increased width */}
-          <div className="w-[450px] p-6 border-l border-slate-200/50 dark:border-slate-700/50 flex-shrink-0">
-            <StyleAdvice 
-              messages={messages} 
-              isAnalyzing={isAnalyzing}
-              onSendMessage={handleSendMessageWithPhoto}
-              selectedModel={selectedModel}
-              onModelChange={onModelChange}
-            />
+          {/* Style Advice Panel */}
+          <div className="w-[450px] p-6 flex-shrink-0">
+            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl h-full">
+              <StyleAdvice 
+                messages={messages} 
+                isAnalyzing={isAnalyzing}
+                onSendMessage={handleSendMessageWithPhoto}
+                selectedModel={selectedModel}
+                onModelChange={onModelChange}
+              />
+            </div>
           </div>
         </div>
       </div>
