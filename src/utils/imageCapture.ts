@@ -83,6 +83,17 @@ export const capturePhotoFromWebcam = (): string | null => {
     console.log('Image data URL length:', dataURL.length);
     console.log('Image format preview:', dataURL.substring(0, 50) + '...');
     
+    // CRITICAL: Let's test if the image actually contains visual data
+    const imgTest = new Image();
+    imgTest.onload = () => {
+      console.log('=== IMAGE VALIDATION: LOADED SUCCESSFULLY ===');
+      console.log('Image natural dimensions:', imgTest.naturalWidth, 'x', imgTest.naturalHeight);
+    };
+    imgTest.onerror = () => {
+      console.error('=== IMAGE VALIDATION: FAILED TO LOAD ===');
+    };
+    imgTest.src = dataURL;
+    
     return dataURL;
   } catch (error) {
     console.error('=== PHOTO CAPTURE ERROR ===');
@@ -151,4 +162,46 @@ export const debugWebcamStatus = (): void => {
       id: videoEl.id
     });
   });
+};
+
+/**
+ * Force photo capture with more aggressive error handling
+ */
+export const forcePhotoCapture = (): string | null => {
+  console.log('=== FORCE PHOTO CAPTURE ATTEMPT ===');
+  
+  const videos = document.querySelectorAll('video');
+  console.log('Found video elements:', videos.length);
+  
+  for (let i = 0; i < videos.length; i++) {
+    const video = videos[i] as HTMLVideoElement;
+    console.log(`Trying video ${i + 1}:`);
+    console.log('- Dimensions:', video.videoWidth, 'x', video.videoHeight);
+    console.log('- Ready state:', video.readyState);
+    console.log('- Has stream:', !!video.srcObject);
+    
+    if (video.videoWidth > 0 && video.videoHeight > 0 && video.readyState >= 2) {
+      try {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        
+        if (context) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0);
+          const dataURL = canvas.toDataURL('image/jpeg', 0.85);
+          
+          console.log('=== FORCE CAPTURE SUCCESS ===');
+          console.log('Image length:', dataURL.length);
+          return dataURL;
+        }
+      } catch (error) {
+        console.error('Force capture failed for video', i + 1, ':', error);
+        continue;
+      }
+    }
+  }
+  
+  console.error('=== FORCE CAPTURE FAILED - NO SUITABLE VIDEO FOUND ===');
+  return null;
 };
