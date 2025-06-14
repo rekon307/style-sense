@@ -52,7 +52,8 @@ serve(async (req) => {
           {
             type: "image_url",
             image_url: {
-              url: capturedImage
+              url: capturedImage,
+              detail: "high"
             }
           }
         ]
@@ -96,7 +97,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: apiMessages,
         max_tokens: 1000,
         temperature: 0.7
@@ -131,7 +132,7 @@ serve(async (req) => {
         }
         
         return new Response(JSON.stringify({ 
-          analysis: parsedResponse.reply,
+          reply: parsedResponse.reply,
           visualContext: parsedResponse.visualContext 
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -142,7 +143,7 @@ serve(async (req) => {
         
         // Fallback if JSON parsing fails
         return new Response(JSON.stringify({ 
-          analysis: aiResponse,
+          reply: aiResponse,
           visualContext: "Unable to extract visual context from response" 
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
