@@ -112,6 +112,14 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
           }
         });
         
+        // Set video properties to prevent popup behavior
+        if (videoRef.current) {
+          videoRef.current.setAttribute('playsinline', 'true');
+          videoRef.current.setAttribute('webkit-playsinline', 'true');
+          videoRef.current.muted = true;
+          videoRef.current.autoplay = true;
+        }
+        
         await videoRef.current.play();
         console.log('Video playing');
       }
@@ -150,6 +158,24 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
     setError(null);
     console.log('Webcam stopped');
   };
+
+  // Handle visibility changes to prevent camera issues when switching tabs
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('Tab became hidden, maintaining camera stream');
+        // Don't stop the camera when tab becomes hidden
+      } else {
+        console.log('Tab became visible');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     startWebcam();
@@ -247,6 +273,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             autoPlay
             muted
             playsInline
+            webkit-playsinline="true"
             className="w-full h-full object-cover rounded-xl"
             style={{ transform: 'scaleX(-1)' }}
           />
