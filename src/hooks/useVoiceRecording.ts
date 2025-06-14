@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 
@@ -17,8 +16,11 @@ export const useVoiceRecording = () => {
   const onSpeechEndRef = useRef<((transcript: string) => void) | null>(null);
 
   // Check if speech recognition is supported
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const isSupported = !!SpeechRecognition;
+  const getSpeechRecognition = () => {
+    return window.SpeechRecognition || window.webkitSpeechRecognition;
+  };
+  
+  const isSupported = !!getSpeechRecognition();
 
   // Audio level monitoring
   const startAudioLevelMonitoring = useCallback(async () => {
@@ -82,7 +84,9 @@ export const useVoiceRecording = () => {
   }, []);
 
   const startListening = useCallback((onSpeechEnd?: (transcript: string) => void) => {
-    if (!isSupported) {
+    const SpeechRecognitionClass = getSpeechRecognition();
+    
+    if (!SpeechRecognitionClass) {
       toast({
         title: "Recunoașterea vocală nu este suportată",
         description: "Browser-ul tău nu suportă această funcționalitate.",
@@ -94,20 +98,20 @@ export const useVoiceRecording = () => {
     try {
       onSpeechEndRef.current = onSpeechEnd || null;
       
-      const recognition = new SpeechRecognition();
+      const recognition = new SpeechRecognitionClass();
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'ro-RO';
 
       recognition.onstart = () => {
-        console.log('Speech recognition started');
+        console.log('Speech recognition started - real-time mode');
         setIsListening(true);
         setLiveTranscript('');
         startAudioLevelMonitoring();
         
         toast({
-          title: "Alex ascultă",
-          description: "Vorbește natural. Alex va răspunde automat când termini.",
+          title: "Alex ascultă în timp real",
+          description: "Vorbește natural. Textul va apărea pe măsură ce vorbești.",
         });
       };
 
@@ -124,8 +128,9 @@ export const useVoiceRecording = () => {
           }
         }
 
-        // Update live transcript with interim results
-        setLiveTranscript(finalTranscript + interimTranscript);
+        // Update live transcript with both final and interim results
+        const fullTranscript = finalTranscript + interimTranscript;
+        setLiveTranscript(fullTranscript);
 
         // Clear existing pause timer
         if (pauseTimerRef.current) {
@@ -133,15 +138,15 @@ export const useVoiceRecording = () => {
           pauseTimerRef.current = null;
         }
 
-        // If we have some content and speech seems to have paused, set a timer
-        if (finalTranscript.trim() || interimTranscript.trim()) {
+        // Smart pause detection - if we have content and user paused
+        if (fullTranscript.trim()) {
           pauseTimerRef.current = setTimeout(() => {
-            const fullTranscript = (finalTranscript + interimTranscript).trim();
-            if (fullTranscript) {
-              console.log('Speech pause detected, finalizing transcript:', fullTranscript);
+            const currentTranscript = fullTranscript.trim();
+            if (currentTranscript) {
+              console.log('Natural pause detected, auto-sending:', currentTranscript);
               stopListening();
               if (onSpeechEndRef.current) {
-                onSpeechEndRef.current(fullTranscript);
+                onSpeechEndRef.current(currentTranscript);
               }
             }
           }, 1500); // 1.5 second pause detection
@@ -179,7 +184,7 @@ export const useVoiceRecording = () => {
         variant: "destructive",
       });
     }
-  }, [isSupported, startAudioLevelMonitoring, stopAudioLevelMonitoring]);
+  }, [startAudioLevelMonitoring, stopAudioLevelMonitoring]);
 
   const stopListening = useCallback(() => {
     if (pauseTimerRef.current) {
