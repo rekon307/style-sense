@@ -192,12 +192,11 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
                 Your personal AI style advisor, ready to help elevate your fashion game
               </p>
-              <div className="flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl p-3 mx-4">
+              <div className="flex flex-col items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl p-3 mx-4">
                 <div className="flex items-center gap-2">
                   <Camera className="h-4 w-4" />
                   <span>Camera captures automatically</span>
                 </div>
-                <span>•</span>
                 <div className="flex items-center gap-2">
                   <ImageIcon className="h-4 w-4" />
                   <span>Or upload photos manually</span>
@@ -231,7 +230,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,image/bmp,image/svg+xml"
               onChange={handleFileUpload}
               className="hidden"
             />
