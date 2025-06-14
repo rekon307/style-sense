@@ -14,18 +14,13 @@ interface Message {
 interface StyleAdviceProps {
   messages: Message[];
   isAnalyzing: boolean;
-  onSendMessage: (message: string, uploadedImage?: string | null, temperature?: number) => void;
+  onSendMessage: (message: string, image?: string | null, temperature?: number) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
 }
 
 const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onModelChange }: StyleAdviceProps) => {
   const [temperature, setTemperature] = useState<number>(0.5);
-
-  const handleSendMessageWithTemperature = (message: string, uploadedImage?: string | null) => {
-    // Pass the temperature value along with the message
-    onSendMessage(message, uploadedImage, temperature);
-  };
 
   const getPersonalityConfig = (temp: number) => {
     if (temp <= 0.3) return { label: "Analyst", icon: Target, description: "Factual & Precise" };
@@ -43,7 +38,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         onModelChange={onModelChange}
       />
       
-      {/* Personality Control Section */}
+      {/* AI Personality Dial */}
       <div className="border-b border-slate-200/50 dark:border-slate-700/50 p-4 bg-white/30 dark:bg-slate-900/30">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -97,7 +92,8 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
 
       <ChatInput 
         isAnalyzing={isAnalyzing}
-        onSendMessage={handleSendMessageWithTemperature}
+        onSendMessage={onSendMessage}
+        temperature={temperature}
       />
     </div>
   );

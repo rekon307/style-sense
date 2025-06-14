@@ -11,25 +11,19 @@ interface UseMessageHandlerProps {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   setIsAnalyzing: (analyzing: boolean) => void;
-  visualContext: string | null;
-  selectedModel: string;
   currentSessionId: string | null;
   setCurrentSessionId: (id: string | null) => void;
-  initialImageURL: string | null;
 }
 
 export const useMessageHandler = ({
   messages,
   setMessages,
   setIsAnalyzing,
-  visualContext,
-  selectedModel,
   currentSessionId,
-  setCurrentSessionId,
-  initialImageURL
+  setCurrentSessionId
 }: UseMessageHandlerProps) => {
-  const handleSendMessage = async (newMessage: string, capturedPhoto?: string | null, temperature?: number) => {
-    if (!newMessage.trim()) {
+  const handleSendMessage = async (message: string, image: string | null, temperature: number) => {
+    if (!message.trim()) {
       toast({
         title: "Empty message",
         description: "Please enter a message before sending.",
@@ -38,28 +32,21 @@ export const useMessageHandler = ({
       return;
     }
 
-    console.log('=== MESSAGE HANDLER START ===');
-    console.log('Sending message:', newMessage);
-    console.log('Current session ID:', currentSessionId);
-    console.log('Visual context available:', !!visualContext);
-    console.log('Captured photo available:', !!capturedPhoto);
-    console.log('Initial image available:', !!initialImageURL);
-    console.log('Temperature setting:', temperature);
-    console.log('Current messages count:', messages.length);
+    console.log('=== ALEX MESSAGE HANDLER ===');
+    console.log('Message:', message);
+    console.log('Has image:', !!image);
+    console.log('Temperature:', temperature);
 
-    // Create new user message and add it immediately to show in chat
-    const userMessage: Message = { role: 'user', content: newMessage };
+    // Add user message immediately
+    const userMessage: Message = { role: 'user', content: message };
     const updatedMessages: Message[] = [...messages, userMessage];
-    
-    // Update state immediately to show user's message
     setMessages(updatedMessages);
     setIsAnalyzing(true);
 
     try {
-      // Create new session if none exists
+      // Create session if needed
       let sessionId = currentSessionId;
       if (!sessionId) {
-        console.log('Creating new session for message...');
         const { data: userData } = await supabase.auth.getUser();
         
         const { data, error } = await supabase
@@ -71,109 +58,68 @@ export const useMessageHandler = ({
           .select()
           .single();
 
-        if (error) {
-          console.error('Error creating session:', error);
-          toast({
-            title: "Session Error",
-            description: "Failed to create new chat session. Please try again.",
-            variant: "destructive",
-          });
-          throw error;
-        }
-
+        if (error) throw error;
         if (data) {
           sessionId = data.id;
           setCurrentSessionId(sessionId);
-          console.log('New session created:', sessionId);
         }
       }
 
-      // Save user message to database
+      // Save user message
       if (sessionId) {
-        const { error: saveError } = await supabase
+        await supabase
           .from('chat_messages')
           .insert([{
             session_id: sessionId,
             role: 'user',
-            content: newMessage
+            content: message
           }]);
-
-        if (saveError) {
-          console.error('Error saving user message:', saveError);
-        } else {
-          console.log('User message saved to database');
-        }
       }
 
-      // Determine which image to send - prefer captured photo, then initial image
-      const imageToSend = capturedPhoto || initialImageURL;
-      
-      console.log('Sending message to style-advisor function...');
-      console.log('Payload:', { 
-        messagesCount: updatedMessages.length,
-        hasVisualContext: !!visualContext,
-        hasImageToSend: !!imageToSend,
-        selectedModel,
-        temperature
-      });
-
-      const requestBody: any = { 
+      // Prepare request body
+      const requestBody = { 
         messages: updatedMessages,
-        visualContext: visualContext,
-        model: selectedModel
+        temperature: temperature,
+        model: 'gpt-4o-mini'
       };
 
-      // Include temperature if provided
-      if (temperature !== undefined) {
-        requestBody.temperature = temperature;
+      if (image) {
+        requestBody.image = image;
       }
 
-      // Include the current image if available
-      if (imageToSend) {
-        requestBody.currentImage = imageToSend;
-        console.log('Including current image in request');
-      }
-
-      // Make the streaming request to the Supabase function
+      // Make streaming request
       const response = await fetch(`https://rqubwaskrqvlsjcnsihy.supabase.co/functions/v1/style-advisor`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabase.supabaseKey}`,
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJxdWJ3YXNrcnF2bHNqY25zaWh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5MTM5MDAsImV4cCI6MjA2NTQ4OTkwMH0.v_LgbF4Hx7Vf87OI7s3GCey3PheLDRZe3Aa9wN3DtqY`,
         },
         body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Style advisor function error:', response.status, errorText);
-        throw new Error(`Style advisor function error: ${response.status} ${errorText}`);
+        throw new Error(`API error: ${response.status}`);
       }
 
       if (!response.body) {
-        throw new Error('No response body received');
+        throw new Error('No response body');
       }
 
-      // Read the streaming response
+      // Handle streaming response
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      let assistantResponseContent = '';
+      let assistantContent = '';
 
-      // Create the assistant message object that will be updated progressively
+      // Add assistant message placeholder
       const assistantMessage: Message = { role: 'assistant', content: '' };
       setMessages(prev => [...prev, assistantMessage]);
 
       while (true) {
         const { done, value } = await reader.read();
-        
-        if (done) {
-          console.log('Streaming response completed');
-          break;
-        }
+        if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
@@ -189,40 +135,34 @@ export const useMessageHandler = ({
               }
               
               if (parsed.content) {
-                assistantResponseContent += parsed.content;
+                assistantContent += parsed.content;
                 
-                // Update the assistant message in real-time
+                // Update assistant message in real-time
                 setMessages(prev => {
                   const newMessages = [...prev];
                   const lastMessage = newMessages[newMessages.length - 1];
                   if (lastMessage.role === 'assistant') {
-                    lastMessage.content = assistantResponseContent;
+                    lastMessage.content = assistantContent;
                   }
                   return newMessages;
                 });
               }
             } catch (e) {
-              console.log('Skipping invalid JSON line:', data);
+              // Skip invalid JSON
             }
           }
         }
       }
 
-      // Save final assistant message to database
-      if (sessionId && assistantResponseContent) {
-        const { error: saveError } = await supabase
+      // Save assistant response
+      if (sessionId && assistantContent) {
+        await supabase
           .from('chat_messages')
           .insert([{
             session_id: sessionId,
             role: 'assistant',
-            content: assistantResponseContent
+            content: assistantContent
           }]);
-
-        if (saveError) {
-          console.error('Error saving assistant message:', saveError);
-        } else {
-          console.log('Assistant message saved to database');
-        }
       }
 
       toast({
@@ -230,25 +170,13 @@ export const useMessageHandler = ({
         description: "Alex has responded to your message.",
       });
 
-      console.log('=== MESSAGE HANDLER END ===');
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error('Message handler error:', error);
       const errorMessage = {
         role: 'assistant' as const,
-        content: 'Sorry, I encountered an error processing your request. Please ensure your camera is working and try again.'
+        content: 'Sorry, I encountered an error. Please try again.'
       };
       setMessages(prev => [...prev, errorMessage]);
-      
-      // Save error message to database
-      if (currentSessionId) {
-        await supabase
-          .from('chat_messages')
-          .insert([{
-            session_id: currentSessionId,
-            role: 'assistant',
-            content: errorMessage.content
-          }]);
-      }
       
       toast({
         title: "Message Failed",

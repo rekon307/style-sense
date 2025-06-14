@@ -11,7 +11,6 @@ interface Message {
 export const useMessages = (currentSessionId: string | null) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [visualContext, setVisualContext] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Clear messages when starting a new session or no session is selected
@@ -19,7 +18,6 @@ export const useMessages = (currentSessionId: string | null) => {
     if (!currentSessionId) {
       console.log('Clearing messages - no current session');
       setMessages([]);
-      setVisualContext(null);
     }
   }, [currentSessionId]);
 
@@ -54,13 +52,6 @@ export const useMessages = (currentSessionId: string | null) => {
         
         console.log('Loaded messages:', sessionMessages.length);
         setMessages(sessionMessages);
-        
-        // Set visual context from the first message that has it
-        const messageWithContext = data?.find(msg => msg.visual_context);
-        if (messageWithContext) {
-          setVisualContext(messageWithContext.visual_context);
-          console.log('Visual context loaded');
-        }
       } catch (error) {
         console.error('Failed to load session messages:', error);
       } finally {
@@ -76,8 +67,6 @@ export const useMessages = (currentSessionId: string | null) => {
     setMessages,
     isAnalyzing,
     setIsAnalyzing,
-    visualContext,
-    setVisualContext,
     isLoading
   };
 };

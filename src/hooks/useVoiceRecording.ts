@@ -1,95 +1,28 @@
+
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 
 export const useVoiceRecording = () => {
   const [isListening, setIsListening] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
-  const [audioLevel, setAudioLevel] = useState(0);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const pauseTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
   const onSpeechEndRef = useRef<((transcript: string) => void) | null>(null);
 
-  // Check if speech recognition is supported
   const getSpeechRecognition = () => {
     return window.SpeechRecognition || window.webkitSpeechRecognition;
   };
   
   const isSupported = !!getSpeechRecognition();
 
-  // Audio level monitoring
-  const startAudioLevelMonitoring = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: 44100,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        }
-      });
-
-      streamRef.current = stream;
-      audioContextRef.current = new AudioContext();
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = 256;
-      analyserRef.current.smoothingTimeConstant = 0.8;
-      
-      dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
-      source.connect(analyserRef.current);
-
-      const monitorAudioLevel = () => {
-        if (!analyserRef.current || !dataArrayRef.current || !isListening) return;
-
-        analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-        const average = dataArrayRef.current.reduce((a, b) => a + b) / dataArrayRef.current.length;
-        const normalizedLevel = Math.min(100, Math.max(0, (average / 128) * 100));
-        setAudioLevel(normalizedLevel);
-
-        if (isListening) {
-          animationFrameRef.current = requestAnimationFrame(monitorAudioLevel);
-        }
-      };
-
-      monitorAudioLevel();
-    } catch (error) {
-      console.error('Error accessing microphone for audio level monitoring:', error);
-    }
-  }, [isListening]);
-
-  const stopAudioLevelMonitoring = useCallback(() => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-
-    setAudioLevel(0);
-  }, []);
-
   const startListening = useCallback((onSpeechEnd?: (transcript: string) => void) => {
     const SpeechRecognitionClass = getSpeechRecognition();
     
     if (!SpeechRecognitionClass) {
       toast({
-        title: "Recunoașterea vocală nu este suportată",
-        description: "Browser-ul tău nu suportă această funcționalitate.",
+        title: "Speech recognition not supported",
+        description: "Your browser doesn't support this feature.",
         variant: "destructive",
       });
       return;
@@ -104,10 +37,9 @@ export const useVoiceRecording = () => {
       recognition.lang = 'ro-RO';
 
       recognition.onstart = () => {
-        console.log('Speech recognition started - real-time mode');
+        console.log('Voice recognition started - real-time mode');
         setIsListening(true);
         setLiveTranscript('');
-        startAudioLevelMonitoring();
         
         toast({
           title: "Alex ascultă în timp real",
@@ -128,7 +60,6 @@ export const useVoiceRecording = () => {
           }
         }
 
-        // Update live transcript with both final and interim results
         const fullTranscript = finalTranscript + interimTranscript;
         setLiveTranscript(fullTranscript);
 
@@ -138,25 +69,22 @@ export const useVoiceRecording = () => {
           pauseTimerRef.current = null;
         }
 
-        // Smart pause detection - if we have content and user paused
+        // Smart pause detection - 1.5 seconds of silence
         if (fullTranscript.trim()) {
           pauseTimerRef.current = setTimeout(() => {
             const currentTranscript = fullTranscript.trim();
-            if (currentTranscript) {
-              console.log('Natural pause detected, auto-sending:', currentTranscript);
+            if (currentTranscript && onSpeechEndRef.current) {
+              console.log('Speech pause detected, auto-sending:', currentTranscript);
               stopListening();
-              if (onSpeechEndRef.current) {
-                onSpeechEndRef.current(currentTranscript);
-              }
+              onSpeechEndRef.current(currentTranscript);
             }
-          }, 1500); // 1.5 second pause detection
+          }, 1500);
         }
       };
 
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
-        stopAudioLevelMonitoring();
         
         if (event.error !== 'aborted') {
           toast({
@@ -170,7 +98,6 @@ export const useVoiceRecording = () => {
       recognition.onend = () => {
         console.log('Speech recognition ended');
         setIsListening(false);
-        stopAudioLevelMonitoring();
       };
 
       recognitionRef.current = recognition;
@@ -184,7 +111,7 @@ export const useVoiceRecording = () => {
         variant: "destructive",
       });
     }
-  }, [startAudioLevelMonitoring, stopAudioLevelMonitoring]);
+  }, []);
 
   const stopListening = useCallback(() => {
     if (pauseTimerRef.current) {
@@ -197,11 +124,9 @@ export const useVoiceRecording = () => {
       recognitionRef.current = null;
     }
 
-    stopAudioLevelMonitoring();
     setIsListening(false);
-  }, [stopAudioLevelMonitoring]);
+  }, []);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       stopListening();
@@ -211,7 +136,6 @@ export const useVoiceRecording = () => {
   return {
     isListening,
     liveTranscript,
-    audioLevel,
     isSupported,
     startListening,
     stopListening

@@ -7,17 +7,17 @@ import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
 interface ChatInputProps {
   isAnalyzing: boolean;
-  onSendMessage: (message: string, capturedPhoto?: string | null) => void;
+  onSendMessage: (message: string, image?: string | null, temperature?: number) => void;
+  temperature: number;
 }
 
-const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
+const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) => {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const {
     isListening,
     liveTranscript,
-    audioLevel,
     startListening,
     stopListening,
     isSupported
@@ -28,27 +28,21 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
       const videoElement = document.querySelector('video') as HTMLVideoElement;
       
       if (!videoElement || videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
-        console.log('Video element not available or not ready');
         return null;
       }
 
       const canvas = document.createElement('canvas');
       const context = canvas.getContext('2d');
       
-      if (!context) {
-        console.log('Canvas context not available');
-        return null;
-      }
+      if (!context) return null;
 
       canvas.width = videoElement.videoWidth;
       canvas.height = videoElement.videoHeight;
       context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
       
-      const dataURL = canvas.toDataURL('image/jpeg', 0.8);
-      console.log('Photo captured from webcam for Alex analysis');
-      return dataURL;
+      return canvas.toDataURL('image/jpeg', 0.8);
     } catch (error) {
-      console.error('Error capturing photo from webcam:', error);
+      console.error('Error capturing photo:', error);
       return null;
     }
   };
@@ -57,7 +51,10 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
     console.log('Auto-sending voice message:', finalTranscript);
     
     const capturedPhoto = capturePhotoFromWebcam();
-    onSendMessage(finalTranscript, capturedPhoto);
+    onSendMessage(finalTranscript, capturedPhoto, temperature);
+    
+    // Clear the text area after auto-send
+    setMessage("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -67,7 +64,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
     if (!messageToSend) return;
 
     const capturedPhoto = capturePhotoFromWebcam();
-    onSendMessage(messageToSend, capturedPhoto);
+    onSendMessage(messageToSend, capturedPhoto, temperature);
     
     setMessage("");
     
@@ -124,24 +121,9 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
               isListening 
                 ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-600' 
                 : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
-            } ${
-              isListening ? 'focus:border-blue-500 dark:focus:border-blue-400' : 'focus:border-blue-500 dark:focus:border-blue-400'
             }`}
             style={{ height: 'auto' }}
           />
-          
-          {/* Audio level indicator */}
-          {isListening && (
-            <div className="absolute right-12 top-3 w-2 bg-slate-200 dark:bg-slate-700 rounded-full h-8 overflow-hidden">
-              <div 
-                className="bg-gradient-to-t from-green-400 via-yellow-400 to-red-400 w-full transition-all duration-100 rounded-full"
-                style={{ 
-                  height: `${audioLevel}%`,
-                  transform: 'translateY(' + (100 - audioLevel) + '%)'
-                }}
-              />
-            </div>
-          )}
           
           {isSupported && (
             <Button
@@ -152,15 +134,12 @@ const ChatInput = ({ isAnalyzing, onSendMessage }: ChatInputProps) => {
               disabled={isAnalyzing}
               className={`absolute right-2 top-2 h-7 w-7 p-0 transition-all ${
                 isListening 
-                  ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900/30 shadow-lg' 
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300' 
+                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
               {isListening ? (
-                <div className="relative">
-                  <Mic className="h-4 w-4" />
-                  <div className="absolute inset-0 rounded-full bg-blue-400 animate-ping opacity-20"></div>
-                </div>
+                <Square className="h-4 w-4" />
               ) : (
                 <Mic className="h-4 w-4" />
               )}

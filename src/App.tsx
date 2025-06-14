@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,7 +10,6 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { useMessages } from "./hooks/useMessages";
-import { useImageAnalysis } from "./hooks/useImageAnalysis";
 import { useMessageHandler } from "./hooks/useMessageHandler";
 import { useAuth } from "./hooks/useAuth";
 
@@ -18,13 +18,12 @@ const queryClient = new QueryClient({
     queries: {
       retry: 3,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
     },
   },
 });
 
 const App = () => {
-  const [initialImageURL, setInitialImageURL] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
@@ -34,43 +33,24 @@ const App = () => {
     messages,
     setMessages,
     isAnalyzing,
-    setIsAnalyzing,
-    visualContext,
-    setVisualContext
+    setIsAnalyzing
   } = useMessages(currentSessionId);
-
-  useImageAnalysis({
-    initialImageURL,
-    selectedModel,
-    currentSessionId,
-    setCurrentSessionId,
-    messages,
-    setMessages,
-    setIsAnalyzing,
-    setVisualContext
-  });
 
   const { handleSendMessage } = useMessageHandler({
     messages,
     setMessages,
     setIsAnalyzing,
-    visualContext,
-    selectedModel,
     currentSessionId,
-    setCurrentSessionId,
-    initialImageURL
+    setCurrentSessionId
   });
 
   const handleSessionChange = (sessionId: string | null) => {
-    console.log('Session changed to:', sessionId);
     setCurrentSessionId(sessionId);
   };
 
   const handleAuthChange = () => {
-    // Force a refresh of sessions and messages when auth state changes
     setCurrentSessionId(null);
     setMessages([]);
-    setVisualContext(null);
   };
 
   if (authLoading) {
@@ -97,8 +77,6 @@ const App = () => {
                   path="/" 
                   element={
                     <Index 
-                      initialImageURL={initialImageURL} 
-                      setInitialImageURL={setInitialImageURL}
                       messages={messages}
                       isAnalyzing={isAnalyzing}
                       handleSendMessage={handleSendMessage}

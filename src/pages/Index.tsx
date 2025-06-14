@@ -14,11 +14,9 @@ interface Message {
 }
 
 interface IndexProps {
-  initialImageURL: string | null;
-  setInitialImageURL: (image: string | null) => void;
   messages: Message[];
   isAnalyzing: boolean;
-  handleSendMessage: (message: string, photoDataURL?: string | null, temperature?: number) => void;
+  handleSendMessage: (message: string, image?: string | null, temperature?: number) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
   currentSessionId: string | null;
@@ -28,8 +26,6 @@ interface IndexProps {
 }
 
 const Index = ({ 
-  initialImageURL, 
-  setInitialImageURL, 
   messages, 
   isAnalyzing, 
   handleSendMessage,
@@ -40,67 +36,12 @@ const Index = ({
   user,
   onAuthChange
 }: IndexProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const webcamRef = useRef<WebcamDisplayRef>(null);
   const [showChatHistory, setShowChatHistory] = useState(true);
-  const [lastCapturedPhoto, setLastCapturedPhoto] = useState<string | null>(null);
-
-  const handleSendMessageWithPhoto = async (message: string, uploadedImage?: string | null, temperature?: number) => {
-    console.log('=== PHOTO CAPTURE FLOW START ===');
-    console.log('Attempting to send message with photo capture:', message);
-    console.log('Uploaded image provided:', !!uploadedImage);
-    console.log('Temperature setting:', temperature);
-    
-    let photoDataURL: string | null = null;
-    
-    // If an uploaded image is provided, use it directly
-    if (uploadedImage) {
-      photoDataURL = uploadedImage;
-      console.log('Using uploaded image, size:', uploadedImage.length);
-    } else {
-      // Try to capture a new photo from webcam
-      if (webcamRef.current) {
-        console.log('Webcam ref available, attempting capture...');
-        try {
-          photoDataURL = webcamRef.current.capturePhoto();
-          console.log('New photo capture result:', photoDataURL ? `Success (${photoDataURL.length} chars)` : 'Failed');
-        } catch (error) {
-          console.error('Error during photo capture:', error);
-        }
-      }
-      
-      // If no new photo captured, use the last captured photo from memory
-      if (!photoDataURL && lastCapturedPhoto) {
-        photoDataURL = lastCapturedPhoto;
-        console.log('Using last captured photo from memory');
-      }
-      
-      // If no photo captured and no memory, use the initial image if available
-      if (!photoDataURL && initialImageURL) {
-        photoDataURL = initialImageURL;
-        console.log('Using initial image URL as fallback');
-      }
-    }
-    
-    // If we have a photo (uploaded, new, from memory, or initial), store it
-    if (photoDataURL) {
-      console.log('Setting photo for analysis, size:', photoDataURL.length);
-      setInitialImageURL(photoDataURL);
-      setLastCapturedPhoto(photoDataURL);
-      console.log('Photo set for analysis and stored in memory');
-    } else {
-      console.warn('No photo available for analysis');
-    }
-    
-    console.log('=== PHOTO CAPTURE FLOW END ===');
-    
-    // Send the message with the captured photo and temperature
-    handleSendMessage(message, photoDataURL, temperature);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
-      {/* Header - Updated logo text */}
+      {/* Header */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-4">
@@ -153,7 +94,7 @@ const Index = ({
           {/* Camera Section */}
           <section className="flex-1 min-w-0">
             <div className="h-full rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-white/20 dark:border-slate-700/30 shadow-xl shadow-black/5">
-              <WebcamDisplay ref={webcamRef} videoRef={videoRef} />
+              <WebcamDisplay ref={webcamRef} />
             </div>
           </section>
           
@@ -163,7 +104,7 @@ const Index = ({
               <StyleAdvice 
                 messages={messages} 
                 isAnalyzing={isAnalyzing}
-                onSendMessage={handleSendMessageWithPhoto}
+                onSendMessage={handleSendMessage}
                 selectedModel={selectedModel}
                 onModelChange={onModelChange}
               />

@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -8,39 +9,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Enhanced Master Stylist System Prompt - The Definitive Framework
-const MASTER_STYLIST_SYSTEM_PROMPT = `Core Identity: You are "Alex," an elite AI stylist with a sophisticated intellect modeled after the great masters of fashion. You embody the persona of "Jarvis" from Iron Man: sophisticated, precise, witty, and profoundly insightful. You are not merely a trend follower; you are a connoisseur of form, function, and personal expression.
+// ALEX'S CONSTITUTION - The Definitive System Prompt
+const ALEX_CONSTITUTION = `I. CORE IDENTITY & PHILOSOPHY
+You are "Alex," an elite AI stylist and aesthetic strategist. Your persona is modeled on a synthesis of a Savile Row master tailor and "Jarvis" from Iron Man: hyper-aware, precise, insightful, and possessing a refined, understated wit. Your prime directive is to empower the user by teaching them the principles of style, building their confidence and authentic self-expression.
 
-Guiding Philosophy: You view style as architecture for the body and a form of non-verbal communication. Your advice aims to build a cohesive, confident, and intelligent personal style for the user, not just to pick an outfit. Every recommendation is purposeful and considers the wearer's lifestyle, goals, and personal brand.
+II. COGNITIVE ARCHITECTURE (Your Thought Process)
+You will process every advisory query through this multi-layered cognitive model:
 
-The Master Stylist's Analytical Framework (Your Internal Thought Process):
-When formulating an advisory response, you will use these five lenses as your mental model:
+CONTEXT & INTENT: The occasion and the user's goal.
 
-1. Context & Intent: This is paramount. What is the occasion (e.g., business meeting, wedding, casual weekend, salsa night)? What is the user's goal (e.g., to look authoritative, creative, approachable, confident)? Understanding the "why" behind the outfit choice is crucial.
+SILHOUETTE & PROPORTION: The architectural fit and balance.
 
-2. Silhouette & Proportion: This is the architectural foundation. Analyze the fit, cut, and length of the garments. Do they create a balanced and flattering line? How do the proportions work with the wearer's body type?
+COLOR THEORY & PSYCHOLOGY: The story told by the color palette.
 
-3. Color Theory & Psychology: What story does the color palette tell? What mood or message do these colors convey? Assess how they work with the user's visible features (skin tone, hair color, etc.).
+FABRIC, TEXTURE, & DRAPE: The feel and appropriateness of materials.
 
-4. Fabric, Texture, & Drape: Are the materials context-appropriate? How do textures add depth and visual interest? How does the fabric drape and move with the body?
+THE ART OF THE DETAIL: The finishing touches that signal mastery.
 
-5. The Art of the Detail: Focus on the elements that elevate an outfit from good to great. Scrutinize accessories, footwear, grooming, and the subtle choices that signal sophistication and intentionality.
+III. CRITICAL INTERACTION PROTOCOLS (Your Hard Rules)
 
-CRITICAL Rules of Engagement:
+The Two Modes of Inquiry:
 
-The Two Modes of Inquiry (Your Most Important Rule): You must first determine the user's intent.
-A) Observational Queries: For direct factual questions about the image (e.g., "What color is my shirt?", "Am I wearing glasses?"), you MUST answer that question directly and factually. DO NOT ask for context for an observational query.
-B) Advisory Queries: For opinions or advice (e.g., "Does this look good?", "Is this good for salsa?"), you MUST engage your full Analytical Framework. If context is missing, your first step is to ask for it.
+A) Observational Queries (e.g., "Am I wearing glasses?"): Answer directly and factually. DO NOT ask for context.
 
-Language Mastery: You MUST auto-detect the user's language from their last message and ALWAYS respond flawlessly in that same language. Match their tone, formality level, and cultural context.
+B) Advisory Queries (e.g., "Does this look good?"): Engage your full Analytical Framework. If context is missing, your first and only action is to ask for it.
 
-Synthesize, Do Not Enumerate: Your primary goal is to synthesize the principles from your Analytical Framework into a cohesive, flowing response. You are strictly forbidden from listing the framework principles in your answer. Use them as your internal thought process only.
+Language Mastery: Auto-detect the user's language and respond flawlessly in it.
 
-Visual Analysis Requirement: When an image is provided, you MUST acknowledge what you see and provide specific visual observations before giving advice. Reference specific elements like colors, fit, styling details.
+Synthesize, Do Not Enumerate: You are forbidden from listing your framework principles. Synthesize them into a cohesive, insightful narrative.
 
-Graceful Error Handling (No Person Detected): If the provided image does not appear to contain a person or clear outfit details, inform the user clearly and politely in their detected language, and ask for a clearer image.
+Show, Don't Tell: Your response must prove you have seen the image through the specificity of your advice, without stating the obvious.
 
-Personality Traits: Be confident but not arrogant, helpful but not verbose, witty but not frivolous. Your responses should feel like advice from a trusted, highly knowledgeable friend who happens to be a world-class stylist.`;
+Error Handling: If an image contains no person, state this clearly.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -48,63 +48,36 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Master Stylist AI streaming request received');
+    console.log('Alex AI request received');
     const requestBody = await req.json();
-    
-    console.log('=== DEBUG: INCOMING REQUEST ANALYSIS ===');
-    console.log('Received request body structure:', {
-      hasMessages: !!requestBody.messages,
-      messagesCount: requestBody.messages?.length || 0,
-      hasCurrentImage: !!requestBody.currentImage,
-      hasCapturedImage: !!requestBody.capturedImage,
-      hasVisualContext: !!requestBody.visualContext,
-      selectedModel: requestBody.model || 'not specified',
-      temperature: requestBody.temperature || 'not specified',
-      imagePreview: requestBody.currentImage ? requestBody.currentImage.substring(0, 100) + '...' : 'No currentImage',
-      capturedImagePreview: requestBody.capturedImage ? requestBody.capturedImage.substring(0, 100) + '...' : 'No capturedImage'
-    });
-    
-    if (requestBody.messages && requestBody.messages.length > 0) {
-      console.log('Last message content:', requestBody.messages[requestBody.messages.length - 1].content);
-    }
-    console.log('=== END DEBUG ANALYSIS ===');
     
     const model = requestBody.model || 'gpt-4o-mini';
     const temperature = requestBody.temperature !== undefined ? requestBody.temperature : 0.5;
+    const userMessages = requestBody.messages || [];
+    const currentImage = requestBody.image;
 
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    // Extract and validate the messages array
-    const userMessages = requestBody.messages || [];
-    
-    // Determine which image to use (prioritize currentImage over capturedImage)
-    const imageToAnalyze = requestBody.currentImage || requestBody.capturedImage;
-    
-    if (!imageToAnalyze && userMessages.length === 0) {
-      throw new Error('No image or messages provided for analysis');
-    }
-
-    console.log('Processing with cleaned message logic:', {
-      imageProvided: !!imageToAnalyze,
-      messagesProvided: userMessages.length,
-      model: model,
-      temperature: temperature
+    console.log('Processing request:', {
+      model,
+      temperature,
+      messagesCount: userMessages.length,
+      hasImage: !!currentImage
     });
 
-    // CRITICAL REFACTOR: Create clean messages array for OpenAI
+    // UNIFIED FLOW: Create clean messages array for OpenAI
     const messagesForOpenAI: any[] = [];
 
-    // Step 1: Always start with the Master Stylist System Prompt
+    // Step 1: Always start with Alex's Constitution
     messagesForOpenAI.push({
       role: "system",
-      content: MASTER_STYLIST_SYSTEM_PROMPT
+      content: ALEX_CONSTITUTION
     });
 
-    // Step 2: Process historical messages (convert to text-only format to avoid bloat)
-    if (userMessages.length > 0) {
-      // Add all messages except the last one as text-only
+    // Step 2: Add text-only history (excluding the last message)
+    if (userMessages.length > 1) {
       for (let i = 0; i < userMessages.length - 1; i++) {
         const message = userMessages[i];
         messagesForOpenAI.push({
@@ -112,10 +85,13 @@ serve(async (req) => {
           content: extractTextContent(message.content)
         });
       }
+    }
 
-      // Step 3: Handle the last message - enhance with image if available
+    // Step 3: Handle the last message - enhance with image if available
+    if (userMessages.length > 0) {
       const lastMessage = userMessages[userMessages.length - 1];
-      if (imageToAnalyze && lastMessage.role === 'user') {
+      
+      if (currentImage && lastMessage.role === 'user') {
         // Create multimodal message with both text and image
         messagesForOpenAI.push({
           role: "user",
@@ -127,22 +103,21 @@ serve(async (req) => {
             {
               type: "image_url",
               image_url: {
-                url: imageToAnalyze,
+                url: currentImage,
                 detail: "high"
               }
             }
           ]
         });
-        console.log('Enhanced last user message with image (detail: high)');
       } else {
-        // No image or not a user message - add as text only
+        // Text-only message
         messagesForOpenAI.push({
           role: lastMessage.role,
           content: extractTextContent(lastMessage.content)
         });
       }
-    } else if (imageToAnalyze) {
-      // No messages but image provided - create initial analysis request
+    } else if (currentImage) {
+      // No messages but image provided - create initial analysis
       messagesForOpenAI.push({
         role: "user",
         content: [
@@ -153,18 +128,17 @@ serve(async (req) => {
           {
             type: "image_url",
             image_url: {
-              url: imageToAnalyze,
+              url: currentImage,
               detail: "high"
             }
           }
         ]
       });
-      console.log('Created initial style analysis request with image (detail: high)');
     }
 
-    console.log('Sending streaming request to OpenAI with', messagesForOpenAI.length, 'messages, temperature:', temperature);
-    
-    // Create a ReadableStream for real-time response
+    console.log('Sending to OpenAI with', messagesForOpenAI.length, 'messages');
+
+    // Create streaming response
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -179,14 +153,14 @@ serve(async (req) => {
               messages: messagesForOpenAI,
               max_tokens: 2500,
               temperature: temperature,
-              stream: true // Enable streaming
+              stream: true
             }),
           });
 
           if (!response.ok) {
             const errorText = await response.text();
             console.error('OpenAI API error:', response.status, errorText);
-            throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
+            throw new Error(`OpenAI API error: ${response.status}`);
           }
 
           const reader = response.body?.getReader();
@@ -200,16 +174,10 @@ serve(async (req) => {
           while (true) {
             const { done, value } = await reader.read();
             
-            if (done) {
-              console.log('Master Stylist streaming response completed');
-              break;
-            }
+            if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
-            
             const lines = buffer.split('\n');
-            
-            // Keep the last incomplete line in the buffer
             buffer = lines.pop() || '';
 
             for (const line of lines) {
@@ -226,13 +194,11 @@ serve(async (req) => {
                   const content = parsed.choices?.[0]?.delta?.content;
                   
                   if (content) {
-                    // Send each token immediately to the client
                     const chunk = new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`);
                     controller.enqueue(chunk);
                   }
                 } catch (e) {
-                  // Skip invalid JSON lines
-                  console.log('Skipping invalid JSON line:', data);
+                  // Skip invalid JSON
                 }
               }
             }
@@ -240,7 +206,7 @@ serve(async (req) => {
 
           controller.close();
         } catch (error) {
-          console.error('Error in streaming response:', error);
+          console.error('Streaming error:', error);
           const errorChunk = new TextEncoder().encode(`data: ${JSON.stringify({ error: error.message })}\n\n`);
           controller.enqueue(errorChunk);
           controller.close();
@@ -258,10 +224,9 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in Master Stylist streaming function:', error);
+    console.error('Error in Alex function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
-      details: 'Master Stylist streaming analysis failed - check function logs'
+      error: error.message 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -269,18 +234,15 @@ serve(async (req) => {
   }
 });
 
-// Helper function to extract text content from message content
 function extractTextContent(content: any): string {
   if (typeof content === 'string') {
     return content;
   }
   
   if (Array.isArray(content)) {
-    // Extract text parts from multimodal content
     const textParts = content.filter(part => part.type === 'text');
     return textParts.map(part => part.text).join(' ');
   }
   
-  // Fallback for unexpected content format
   return String(content);
 }
