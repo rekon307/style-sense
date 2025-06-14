@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Mic, Square } from "lucide-react";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
-import { capturePhotoFromWebcam } from "@/utils/imageCapture";
+import { capturePhotoFromWebcam, isWebcamReady } from "@/utils/imageCapture";
 
 interface ChatInputProps {
   isAnalyzing: boolean;
@@ -27,10 +27,17 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
   const handleCognitiveAutoSend = (finalTranscript: string) => {
     console.log('Alex cognitive auto-send:', finalTranscript);
     
-    const capturedPhoto = capturePhotoFromWebcam();
-    onSendMessage(finalTranscript, capturedPhoto, temperature);
+    if (!finalTranscript.trim()) {
+      console.warn('Empty transcript, skipping auto-send');
+      return;
+    }
+
+    const capturedPhoto = isWebcamReady() ? capturePhotoFromWebcam() : null;
+    if (!capturedPhoto) {
+      console.warn('Could not capture photo for cognitive auto-send');
+    }
     
-    // Clear the text area after cognitive auto-send
+    onSendMessage(finalTranscript, capturedPhoto, temperature);
     setMessage("");
   };
 
@@ -40,9 +47,12 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
     const messageToSend = message.trim();
     if (!messageToSend) return;
 
-    const capturedPhoto = capturePhotoFromWebcam();
-    onSendMessage(messageToSend, capturedPhoto, temperature);
+    const capturedPhoto = isWebcamReady() ? capturePhotoFromWebcam() : null;
+    if (!capturedPhoto) {
+      console.warn('Could not capture photo for message submission');
+    }
     
+    onSendMessage(messageToSend, capturedPhoto, temperature);
     setMessage("");
     
     if (textareaRef.current) {

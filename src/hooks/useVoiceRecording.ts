@@ -2,6 +2,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
 export const useVoiceRecording = () => {
   const [isListening, setIsListening] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
@@ -9,12 +16,40 @@ export const useVoiceRecording = () => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const pauseTimerRef = useRef<NodeJS.Timeout | null>(null);
   const onSpeechEndRef = useRef<((transcript: string) => void) | null>(null);
+  const isCleanupRef = useRef(false);
 
   const getSpeechRecognition = () => {
     return window.SpeechRecognition || window.webkitSpeechRecognition;
   };
   
   const isSupported = !!getSpeechRecognition();
+
+  const cleanup = useCallback(() => {
+    if (isCleanupRef.current) return;
+    isCleanupRef.current = true;
+
+    if (pauseTimerRef.current) {
+      clearTimeout(pauseTimerRef.current);
+      pauseTimerRef.current = null;
+    }
+
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (error) {
+        console.warn('Error stopping recognition:', error);
+      }
+      recognitionRef.current = null;
+    }
+
+    setIsListening(false);
+    setLiveTranscript('');
+    onSpeechEndRef.current = null;
+    
+    setTimeout(() => {
+      isCleanupRef.current = false;
+    }, 100);
+  }, []);
 
   const startListening = useCallback((onSpeechEnd?: (transcript: string) => void) => {
     const SpeechRecognitionClass = getSpeechRecognition();
@@ -28,6 +63,12 @@ export const useVoiceRecording = () => {
       return;
     }
 
+    if (isListening) {
+      console.warn('Already listening, stopping first');
+      cleanup();
+      return;
+    }
+
     try {
       onSpeechEndRef.current = onSpeechEnd || null;
       
@@ -35,6 +76,7 @@ export const useVoiceRecording = () => {
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'ro-RO';
+      recognition.maxAlternatives = 1;
 
       recognition.onstart = () => {
         console.log('Alex is listening - real-time cognitive mode');
@@ -47,7 +89,7 @@ export const useVoiceRecording = () => {
         });
       };
 
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let interimTranscript = '';
         let finalTranscript = '';
 
@@ -60,7 +102,7 @@ export const useVoiceRecording = () => {
           }
         }
 
-        const fullTranscript = finalTranscript + interimTranscript;
+        const fullTranscript = (finalTranscript + interimTranscript).trim();
         setLiveTranscript(fullTranscript);
 
         // Clear existing pause timer
@@ -70,34 +112,37 @@ export const useVoiceRecording = () => {
         }
 
         // Enhanced smart pause detection - 1.5 seconds for cognitive processing
-        if (fullTranscript.trim()) {
+        if (fullTranscript) {
           pauseTimerRef.current = setTimeout(() => {
-            const currentTranscript = fullTranscript.trim();
-            if (currentTranscript && onSpeechEndRef.current) {
-              console.log('Cognitive pause detected, processing:', currentTranscript);
-              stopListening();
-              onSpeechEndRef.current(currentTranscript);
+            if (fullTranscript && onSpeechEndRef.current && !isCleanupRef.current) {
+              console.log('Cognitive pause detected, processing:', fullTranscript);
+              const callback = onSpeechEndRef.current;
+              cleanup();
+              callback(fullTranscript);
             }
           }, 1500);
         }
       };
 
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
-        setIsListening(false);
         
-        if (event.error !== 'aborted') {
+        if (event.error !== 'aborted' && !isCleanupRef.current) {
           toast({
             title: "Eroare la recunoașterea vocală",
-            description: "A apărut o problemă. Încearcă din nou.",
+            description: `A apărut o problemă: ${event.error}. Încearcă din nou.`,
             variant: "destructive",
           });
         }
+        
+        cleanup();
       };
 
       recognition.onend = () => {
         console.log('Speech recognition ended');
-        setIsListening(false);
+        if (!isCleanupRef.current) {
+          setIsListening(false);
+        }
       };
 
       recognitionRef.current = recognition;
@@ -105,33 +150,25 @@ export const useVoiceRecording = () => {
 
     } catch (error) {
       console.error('Error starting speech recognition:', error);
+      cleanup();
       toast({
         title: "Eroare la pornirea recunoașterii vocale",
         description: "Verifică permisiunile pentru microfon.",
         variant: "destructive",
       });
     }
-  }, []);
+  }, [isListening, cleanup]);
 
   const stopListening = useCallback(() => {
-    if (pauseTimerRef.current) {
-      clearTimeout(pauseTimerRef.current);
-      pauseTimerRef.current = null;
-    }
-
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-
-    setIsListening(false);
-  }, []);
+    console.log('Stopping speech recognition manually');
+    cleanup();
+  }, [cleanup]);
 
   useEffect(() => {
     return () => {
-      stopListening();
+      cleanup();
     };
-  }, [stopListening]);
+  }, [cleanup]);
 
   return {
     isListening,
