@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,16 +19,19 @@ const App = () => {
   const [initialImageURL, setInitialImageURL] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [visualContext, setVisualContext] = useState<string | null>(null);
 
   useEffect(() => {
     const analyzeStyle = async () => {
       if (!initialImageURL) {
         setMessages([]);
+        setVisualContext(null);
         return;
       }
 
       setIsAnalyzing(true);
       setMessages([]);
+      setVisualContext(null);
 
       try {
         console.log('Sending image for style analysis...');
@@ -44,9 +46,13 @@ const App = () => {
 
         console.log('Received style advice:', data);
         
-        // Add the first AI message to the conversation
-        if (data && data.analysis) {
-          setMessages([{ role: 'assistant' as const, content: data.analysis }]);
+        // Add the first AI message to the conversation and store visual context
+        if (data && data.reply) {
+          setMessages([{ role: 'assistant' as const, content: data.reply }]);
+        }
+        
+        if (data && data.visualContext) {
+          setVisualContext(data.visualContext);
         }
       } catch (error) {
         console.error('Failed to get style advice:', error);
@@ -73,7 +79,10 @@ const App = () => {
     try {
       console.log('Sending follow-up message...');
       const { data, error } = await supabase.functions.invoke('style-advisor', {
-        body: { messages: updatedMessages }
+        body: { 
+          messages: updatedMessages,
+          visualContext: visualContext
+        }
       });
 
       if (error) {
