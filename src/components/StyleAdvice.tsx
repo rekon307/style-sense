@@ -1,10 +1,9 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Sparkles, Send, Settings, User, Camera, Brain, Cpu } from "lucide-react";
+import { Sparkles, Send, Settings, User, Camera, Brain, Cpu, Plus, ImageIcon } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
 interface Message {
@@ -15,7 +14,7 @@ interface Message {
 interface StyleAdviceProps {
   messages: Message[];
   isAnalyzing: boolean;
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, uploadedImage?: string | null) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
 }
@@ -24,6 +23,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -39,6 +39,32 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       onSendMessage(inputValue.trim());
       setInputValue("");
     }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        if (result) {
+          console.log('Image uploaded, size:', result.length);
+          // Send the uploaded image with a default message or prompt user for message
+          const message = inputValue.trim() || "Analizează această imagine și dă-mi sfaturi de stil.";
+          onSendMessage(message, result);
+          setInputValue("");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset the input so the same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
   const renderMessage = (message: Message, index: number) => {
@@ -167,8 +193,15 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
                 Your personal AI style advisor, ready to help elevate your fashion game
               </p>
               <div className="flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl p-3 mx-4">
-                <Camera className="h-4 w-4" />
-                <span>Photos are automatically captured when you send a message</span>
+                <div className="flex items-center gap-2">
+                  <Camera className="h-4 w-4" />
+                  <span>Camera captures automatically</span>
+                </div>
+                <span>•</span>
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="h-4 w-4" />
+                  <span>Or upload photos manually</span>
+                </div>
               </div>
             </div>
           ) : (
@@ -183,6 +216,26 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         {/* Input Form - Fixed at Bottom */}
         <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-4 flex-shrink-0">
           <form onSubmit={handleSubmit} className="flex items-center gap-3">
+            <Button
+              type="button"
+              onClick={handleUploadClick}
+              size="sm"
+              variant="outline"
+              disabled={isAnalyzing}
+              className="h-10 px-3 bg-white/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+              title="Upload image"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            
             <Input
               type="text"
               placeholder={isAnalyzing ? "Alex is thinking..." : "Ask Alex about style, trends, or fashion advice..."}

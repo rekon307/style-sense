@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
@@ -44,36 +45,43 @@ const Index = ({
   const [showChatHistory, setShowChatHistory] = useState(true);
   const [lastCapturedPhoto, setLastCapturedPhoto] = useState<string | null>(null);
 
-  const handleSendMessageWithPhoto = async (message: string) => {
+  const handleSendMessageWithPhoto = async (message: string, uploadedImage?: string | null) => {
     console.log('=== PHOTO CAPTURE FLOW START ===');
     console.log('Attempting to send message with photo capture:', message);
+    console.log('Uploaded image provided:', !!uploadedImage);
     
     let photoDataURL: string | null = null;
     
-    // Try to capture a new photo first
-    if (webcamRef.current) {
-      console.log('Webcam ref available, attempting capture...');
-      try {
-        photoDataURL = webcamRef.current.capturePhoto();
-        console.log('New photo capture result:', photoDataURL ? `Success (${photoDataURL.length} chars)` : 'Failed');
-      } catch (error) {
-        console.error('Error during photo capture:', error);
+    // If an uploaded image is provided, use it directly
+    if (uploadedImage) {
+      photoDataURL = uploadedImage;
+      console.log('Using uploaded image, size:', uploadedImage.length);
+    } else {
+      // Try to capture a new photo from webcam
+      if (webcamRef.current) {
+        console.log('Webcam ref available, attempting capture...');
+        try {
+          photoDataURL = webcamRef.current.capturePhoto();
+          console.log('New photo capture result:', photoDataURL ? `Success (${photoDataURL.length} chars)` : 'Failed');
+        } catch (error) {
+          console.error('Error during photo capture:', error);
+        }
+      }
+      
+      // If no new photo captured, use the last captured photo from memory
+      if (!photoDataURL && lastCapturedPhoto) {
+        photoDataURL = lastCapturedPhoto;
+        console.log('Using last captured photo from memory');
+      }
+      
+      // If no photo captured and no memory, use the initial image if available
+      if (!photoDataURL && initialImageURL) {
+        photoDataURL = initialImageURL;
+        console.log('Using initial image URL as fallback');
       }
     }
     
-    // If no new photo captured, use the last captured photo from memory
-    if (!photoDataURL && lastCapturedPhoto) {
-      photoDataURL = lastCapturedPhoto;
-      console.log('Using last captured photo from memory');
-    }
-    
-    // If no photo captured and no memory, use the initial image if available
-    if (!photoDataURL && initialImageURL) {
-      photoDataURL = initialImageURL;
-      console.log('Using initial image URL as fallback');
-    }
-    
-    // If we have a photo (new, from memory, or initial), store it
+    // If we have a photo (uploaded, new, from memory, or initial), store it
     if (photoDataURL) {
       console.log('Setting photo for analysis, size:', photoDataURL.length);
       setInitialImageURL(photoDataURL);
