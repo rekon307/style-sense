@@ -53,7 +53,7 @@ export const useMessageHandler = ({
           .from('chat_sessions')
           .insert([{ 
             title: `Chat ${new Date().toLocaleDateString()}`,
-            user_id: userData.user?.id || null // Allow null for anonymous users
+            user_id: userData.user?.id || null
           }])
           .select()
           .single();
@@ -76,7 +76,8 @@ export const useMessageHandler = ({
       }
 
       // Create updated messages array with user's new message
-      const updatedMessages: Message[] = [...messages, { role: 'user' as const, content: newMessage }];
+      const userMessage: Message = { role: 'user', content: newMessage };
+      const updatedMessages: Message[] = [...messages, userMessage];
       
       // Update state immediately to show user's message
       setMessages(updatedMessages);

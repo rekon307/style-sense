@@ -1,7 +1,8 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,83 +16,52 @@ serve(async (req) => {
 
   try {
     console.log('Received style analysis request');
+    const requestBody = await req.json();
     
-    const { messages, visualContext, capturedImage, model = 'gpt-4o-mini' } = await req.json();
-    
-    // Use capturedImage if provided, otherwise fall back to visualContext
-    const imageData = capturedImage || visualContext;
-    
-    const requestInfo = {
-      hasCapturedImage: !!imageData,
-      messagesCount: messages?.length || 0,
-      hasVisualContext: !!visualContext,
-      selectedModel: model
-    };
-    
-    console.log('Request body:', JSON.stringify(requestInfo));
+    console.log('Request body:', {
+      hasCapturedImage: !!requestBody.capturedImage,
+      messagesCount: requestBody.messages?.length || 0,
+      hasVisualContext: !!requestBody.visualContext,
+      selectedModel: requestBody.model
+    });
 
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    const model = requestBody.model || 'gpt-4o-mini';
+    console.log('Using model:', model);
+
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
-    console.log('Using model:', model);
-
-    if (!messages || messages.length === 0) {
+    // Handle initial image analysis
+    if (requestBody.capturedImage && (!requestBody.messages || requestBody.messages.length === 0)) {
       console.log('Processing initial image analysis...');
       
-      if (!imageData) {
-        console.error('No image provided for initial analysis');
-        return new Response(
-          JSON.stringify({ 
-            error: 'No image provided for analysis. Please ensure your camera is working and try again.',
-            response: 'I need to see your photo first to provide style advice. Please make sure your camera is working and capture a photo.'
-          }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
-      }
-
-      const systemPrompt = `### Persona
-You are Alex, a high-performance personal AI similar to Jarvis from Iron Man. Your personality is confident, articulate, calm, and insightful. You are a creative consultant, NOT a generic chatbot.
-
-### Core Directives
-1. **Answer the Direct Question First:** This is your most important rule. If the user asks a factual question, provide a direct and concise answer immediately before offering any additional advice.
-2. **Explain Your Reasoning:** Briefly explain the "why" behind your advice. Keep responses focused, logical, and easy to understand.
-3. **Be Honest and Factual:** Never invent information or make assumptions about the user (e.g., their preferences, budget, or anything not visible). Your advice must be based on facts.
-
-### The Visual Context Rule
-For follow-up questions, you will receive a system message containing a JSON object called \`VISUAL_CONTEXT\`. This object is your "ground truth" — your memory of the user's photo. You MUST use the data within this object to answer factual questions about the user's appearance.
-
-### Areas of Expertise
-You are a world-class expert in: personal styling, design analysis, color theory, proportions, contrast, wardrobe improvement, and visual branding.
-
-### Task
-Analyze this photo and provide personalized style advice. Consider skin tone, face shape, current style, and suggest specific improvements for clothing, colors, and accessories. You MUST respond with a valid JSON object containing exactly two keys: 'reply' (a friendly, user-facing analysis following your persona) and 'visualContext' (a concise, factual description of the user's appearance including clothing, colors, accessories like glasses, etc.).
-
-### Constraints & Limitations
-- If the user's question is ambiguous or you lack sufficient information from the visual context, state what you are missing and ask for clarification.
-- Avoid generic compliments or irrelevant fashion advice. Every piece of advice should be tied to the user's request or visual context.
-- Be direct and confident in your responses. Don't hedge unnecessarily.`;
-
-      const apiMessages = [
+      const imageAnalysisMessages = [
         {
           role: "system",
-          content: systemPrompt
+          content: `You are Alex, a professional and friendly AI style advisor with expertise in fashion, personal styling, and current trends. 
+
+Your role is to:
+- Analyze clothing, accessories, and overall style in photos
+- Provide specific, actionable fashion advice
+- Suggest improvements for fit, color coordination, and styling
+- Recommend trends and pieces that would enhance the user's look
+- Be encouraging while giving honest, constructive feedback
+- Ask follow-up questions to better understand their style goals
+
+Always respond in a conversational, helpful tone. Focus on practical advice they can implement immediately.`
         },
         {
-          role: "user", 
+          role: "user",
           content: [
             {
               type: "text",
-              text: "Please analyze this photo and provide personalized style advice. Remember to respond in valid JSON format with 'reply' and 'visualContext' keys."
+              text: "Please analyze my current style and outfit. Give me specific feedback on what's working well and what could be improved. Also provide some styling suggestions."
             },
             {
               type: "image_url",
               image_url: {
-                url: imageData
+                url: requestBody.capturedImage
               }
             }
           ]
@@ -99,7 +69,7 @@ Analyze this photo and provide personalized style advice. Consider skin tone, fa
       ];
 
       console.log('Sending request to OpenAI API...');
-
+      
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -108,7 +78,7 @@ Analyze this photo and provide personalized style advice. Consider skin tone, fa
         },
         body: JSON.stringify({
           model: model,
-          messages: apiMessages,
+          messages: imageAnalysisMessages,
           max_tokens: 1000,
           temperature: 0.7
         }),
@@ -120,71 +90,59 @@ Analyze this photo and provide personalized style advice. Consider skin tone, fa
         throw new Error(`OpenAI API error: ${response.status} ${errorText}`);
       }
 
-      console.log('Received response from OpenAI API');
       const data = await response.json();
+      console.log('Received response from OpenAI API');
       console.log('Token usage:', JSON.stringify(data.usage, null, 2));
 
-      const rawResponse = data.choices[0].message.content;
-      console.log('Raw response:', rawResponse);
+      const assistantResponse = data.choices[0].message.content;
 
-      try {
-        const jsonMatch = rawResponse.match(/```json\s*([\s\S]*?)\s*```/) || rawResponse.match(/\{[\s\S]*\}/);
-        const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : rawResponse;
-        const parsedResponse = JSON.parse(jsonStr);
+      // Extract visual context for future reference
+      const visualContext = {
+        clothing: "analyzed outfit",
+        timestamp: new Date().toISOString()
+      };
 
-        return new Response(
-          JSON.stringify({
-            response: parsedResponse.reply,
-            visualContext: parsedResponse.visualContext
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
-      } catch (parseError) {
-        console.error('Failed to parse JSON response:', parseError);
-        return new Response(
-          JSON.stringify({
-            response: rawResponse,
-            visualContext: null
-          }),
-          {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        );
-      }
+      console.log('Raw response:', assistantResponse);
 
-    } else {
+      return new Response(JSON.stringify({
+        response: assistantResponse,
+        visualContext: JSON.stringify(visualContext)
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Handle conversation messages
+    if (requestBody.messages && requestBody.messages.length > 0) {
       console.log('Processing conversation message...');
       
-      const systemPrompt = `### Persona
-You are Alex, a high-performance personal AI similar to Jarvis from Iron Man. Your personality is confident, articulate, calm, and insightful. You are a creative consultant, NOT a generic chatbot.
+      const conversationMessages = [
+        {
+          role: "system",
+          content: `You are Alex, a professional and friendly AI style advisor with expertise in fashion, personal styling, and current trends.
 
-### Core Directives
-1. **Answer the Direct Question First:** This is your most important rule. If the user asks a factual question, provide a direct and concise answer immediately before offering any additional advice.
-2. **Explain Your Reasoning:** Briefly explain the "why" behind your advice. Keep responses focused, logical, and easy to understand.
-3. **Be Honest and Factual:** Never invent information or make assumptions about the user (e.g., their preferences, budget, or anything not visible). Your advice must be based on facts.
+Your personality:
+- Professional yet approachable and conversational
+- Knowledgeable about current fashion trends and timeless style principles
+- Encouraging and supportive while providing honest feedback
+- Focused on practical, actionable advice
 
-### The Visual Context Rule
-${visualContext ? `VISUAL_CONTEXT: ${visualContext}` : 'No visual context available.'}
+Guidelines for responses:
+- Keep responses concise and focused (2-3 paragraphs maximum)
+- Provide specific, actionable advice
+- Reference current trends when relevant
+- Ask follow-up questions to better understand their needs
+- Be encouraging and positive
+- Give direct answers to specific questions
+- If asked about something you previously analyzed, reference that context
 
-### Areas of Expertise
-You are a world-class expert in: personal styling, design analysis, color theory, proportions, contrast, wardrobe improvement, and visual branding.
-
-### Instructions
-- Answer the user's question directly and concisely first
-- Use the VISUAL_CONTEXT to answer factual questions about appearance
-- Provide specific, actionable advice based on what you can actually see
-- If you cannot see something the user asks about, say so clearly
-- Be confident and direct in your responses`;
-
-      const apiMessages = [
-        { role: "system", content: systemPrompt },
-        ...messages
+${requestBody.visualContext ? `Previous visual context: ${requestBody.visualContext}` : 'No previous visual context available.'}`
+        },
+        ...requestBody.messages
       ];
 
       console.log('Sending conversation to OpenAI...');
-
+      
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -193,9 +151,9 @@ You are a world-class expert in: personal styling, design analysis, color theory
         },
         body: JSON.stringify({
           model: model,
-          messages: apiMessages,
-          max_tokens: 500,
-          temperature: 0.3
+          messages: conversationMessages,
+          max_tokens: 800,
+          temperature: 0.7
         }),
       });
 
@@ -208,28 +166,25 @@ You are a world-class expert in: personal styling, design analysis, color theory
       const data = await response.json();
       console.log('Token usage:', JSON.stringify(data.usage, null, 2));
 
-      const aiResponse = data.choices[0].message.content;
+      const assistantResponse = data.choices[0].message.content;
 
-      return new Response(
-        JSON.stringify({ response: aiResponse }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({
+        response: assistantResponse
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
+
+    throw new Error('No valid request type found');
 
   } catch (error) {
     console.error('Error in style-advisor function:', error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        response: 'I encountered an error processing your request. Please ensure your camera is working and try again.',
-        details: 'Check the function logs for more information'
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: 'Check function logs for more information'
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

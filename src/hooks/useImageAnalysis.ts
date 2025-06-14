@@ -86,9 +86,10 @@ export const useImageAnalysis = ({
 
         console.log('Sending image for style analysis...');
         
+        // Send the image data in the correct parameter name
         const { data, error } = await supabase.functions.invoke('style-advisor', {
           body: { 
-            capturedImage: initialImageURL,
+            capturedImage: initialImageURL,  // Make sure this matches what the function expects
             model: selectedModel
           }
         });

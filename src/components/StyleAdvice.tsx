@@ -23,6 +23,7 @@ interface StyleAdviceProps {
 const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onModelChange }: StyleAdviceProps) => {
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,7 +35,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim()) {
+    if (inputValue.trim() && !isAnalyzing) {
       onSendMessage(inputValue.trim());
       setInputValue("");
     }
@@ -43,66 +44,49 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
   const renderMessage = (message: Message, index: number) => {
     const isUser = message.role === 'user';
     return (
-      <div
-        key={index}
-        className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-6`}
-      >
-        {isUser ? (
-          // User message - keep original layout with avatar on the right
-          <div className="flex items-start gap-3 w-full max-w-[95%] flex-row-reverse">
-            <Avatar className="w-8 h-8 flex-shrink-0">
-              <AvatarFallback className="bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-medium">
-                <User className="h-4 w-4" />
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 px-4 py-3 rounded-2xl shadow-sm border backdrop-blur-sm bg-gradient-to-r from-blue-600 to-blue-700 text-white border-blue-500/20">
-              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
-            </div>
-          </div>
-        ) : (
-          // AI message - avatar on top, message below
-          <div className="w-full max-w-[95%] flex flex-col">
-            <div className="flex items-center gap-3 mb-3">
-              <Avatar className="w-9 h-9 flex-shrink-0">
-                <AvatarFallback className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white">
-                  <div className="relative">
-                    <Brain className="h-5 w-5" />
-                    <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  </div>
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Alex</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">AI Style Advisor</span>
+      <div key={index} className={`flex gap-3 mb-4 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+        <Avatar className="w-8 h-8 flex-shrink-0">
+          <AvatarFallback className={isUser 
+            ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white text-xs font-medium" 
+            : "bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white"
+          }>
+            {isUser ? (
+              <User className="h-4 w-4" />
+            ) : (
+              <div className="relative">
+                <Brain className="h-4 w-4" />
+                <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-green-400 rounded-full"></div>
               </div>
-            </div>
-            <div className="w-full px-4 py-4 rounded-2xl shadow-sm border backdrop-blur-sm bg-white/95 dark:bg-slate-800/95 text-slate-900 dark:text-slate-100 border-slate-200/50 dark:border-slate-700/50">
-              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
-            </div>
+            )}
+          </AvatarFallback>
+        </Avatar>
+        
+        <div className={`flex flex-col max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
+          <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
+            isUser 
+              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white ml-8' 
+              : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 mr-8'
+          }`}>
+            {message.content}
           </div>
-        )}
+        </div>
       </div>
     );
   };
 
   const renderTypingIndicator = () => (
-    <div className="flex justify-start mb-6">
-      <div className="w-full max-w-[95%] flex flex-col">
-        <div className="flex items-center gap-3 mb-3">
-          <Avatar className="w-9 h-9 flex-shrink-0">
-            <AvatarFallback className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white">
-              <div className="relative">
-                <Brain className="h-5 w-5 animate-pulse" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
-              </div>
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">Alex</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">AI Style Advisor</span>
+    <div className="flex gap-3 mb-4">
+      <Avatar className="w-8 h-8 flex-shrink-0">
+        <AvatarFallback className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white">
+          <div className="relative">
+            <Brain className="h-4 w-4 animate-pulse" />
+            <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-green-400 rounded-full animate-ping"></div>
           </div>
-        </div>
-        <div className="w-full bg-white/95 dark:bg-slate-800/95 text-slate-900 dark:text-slate-100 px-4 py-3 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-sm">
+        </AvatarFallback>
+      </Avatar>
+      
+      <div className="flex flex-col max-w-[80%] items-start">
+        <div className="px-3 py-2 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 mr-8">
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
             <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
@@ -130,7 +114,6 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
             </div>
           </div>
           
-          {/* User and AI icons in header */}
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
               <User className="h-3 w-3 text-blue-600" />
@@ -139,7 +122,6 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
           </div>
         </CardTitle>
         
-        {/* Model Selector - more compact */}
         <div className="flex items-center gap-2 pt-2">
           <Settings className="h-3 w-3 text-slate-500" />
           <Select value={selectedModel} onValueChange={onModelChange}>
@@ -155,8 +137,12 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       </CardHeader>
       
       <CardContent className="flex flex-col h-full p-0 overflow-hidden">
-        {/* Chat Log - Fixed scrolling */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 min-h-0">
+        {/* Chat Messages Container - Fixed Height with Scroll */}
+        <div 
+          ref={chatContainerRef}
+          className="flex-1 overflow-y-auto px-4 py-4 min-h-0"
+          style={{ maxHeight: 'calc(100vh - 300px)' }}
+        >
           {messages.length === 0 ? (
             <div className="text-center py-12">
               <div className="mx-auto w-20 h-20 bg-gradient-to-r from-purple-100 via-indigo-100 to-blue-100 dark:from-purple-900/30 dark:via-indigo-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center mb-6 shadow-lg">
@@ -178,12 +164,12 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
             <>
               {messages.map((message, index) => renderMessage(message, index))}
               {isAnalyzing && renderTypingIndicator()}
-              <div ref={messagesEndRef} />
             </>
           )}
+          <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Form - Fixed positioning */}
+        {/* Input Form - Fixed at Bottom */}
         <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm p-4 flex-shrink-0">
           <form onSubmit={handleSubmit} className="flex items-center gap-3">
             <Input

@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Camera, AlertCircle, Play, Square } from "lucide-react";
@@ -52,22 +51,18 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
           return null;
         }
 
-        // Check if video has loaded dimensions
         if (video.videoWidth === 0 || video.videoHeight === 0) {
           console.error('Video dimensions not available:', { width: video.videoWidth, height: video.videoHeight });
           return null;
         }
 
-        // Set canvas size to match video dimensions
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         
         console.log('Canvas dimensions set to:', canvas.width, 'x', canvas.height);
         
-        // Draw the video frame to canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // Convert to data URL
         const dataURL = canvas.toDataURL('image/jpeg', 0.8);
         console.log('Photo captured successfully, size:', dataURL.length);
         console.log('=== CAPTURE PHOTO SUCCESS ===');
@@ -102,7 +97,14 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         
-        // Wait for the video to load metadata
+        // Prevent popup behavior - critical settings
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('webkit-playsinline', 'true');
+        videoRef.current.setAttribute('controls', 'false');
+        videoRef.current.muted = true;
+        videoRef.current.autoplay = true;
+        videoRef.current.style.objectFit = 'cover';
+        
         await new Promise((resolve) => {
           if (videoRef.current) {
             videoRef.current.onloadedmetadata = () => {
@@ -111,14 +113,6 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             };
           }
         });
-        
-        // Set video properties to prevent popup behavior
-        if (videoRef.current) {
-          videoRef.current.setAttribute('playsinline', 'true');
-          videoRef.current.setAttribute('webkit-playsinline', 'true');
-          videoRef.current.muted = true;
-          videoRef.current.autoplay = true;
-        }
         
         await videoRef.current.play();
         console.log('Video playing');
@@ -159,21 +153,32 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
     console.log('Webcam stopped');
   };
 
-  // Handle visibility changes to prevent camera issues when switching tabs
+  // Improved visibility handling - prevent popup behavior
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        console.log('Tab became hidden, maintaining camera stream');
-        // Don't stop the camera when tab becomes hidden
-      } else {
-        console.log('Tab became visible');
+      if (document.hidden && videoRef.current) {
+        // Pause video when tab is hidden but keep stream active
+        videoRef.current.pause();
+        console.log('Tab hidden - video paused');
+      } else if (!document.hidden && videoRef.current && streamRef.current) {
+        // Resume video when tab becomes visible
+        videoRef.current.play().catch(console.error);
+        console.log('Tab visible - video resumed');
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
 
@@ -274,8 +279,13 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             muted
             playsInline
             webkit-playsinline="true"
+            controls={false}
             className="w-full h-full object-cover rounded-xl"
-            style={{ transform: 'scaleX(-1)' }}
+            style={{ 
+              transform: 'scaleX(-1)',
+              maxWidth: '100%',
+              maxHeight: '100%'
+            }}
           />
           <canvas ref={canvasRef} className="hidden" />
           {renderOverlay()}
