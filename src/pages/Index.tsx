@@ -43,14 +43,22 @@ const Index = ({
   const handleSendMessageWithPhoto = async (message: string) => {
     console.log('=== PHOTO CAPTURE FLOW START ===');
     console.log('Attempting to send message with photo capture:', message);
+    console.log('Webcam ref current:', !!webcamRef.current);
+    console.log('Video ref current:', !!videoRef.current);
+    console.log('Last captured photo available:', !!lastCapturedPhoto);
+    console.log('Initial image URL available:', !!initialImageURL);
     
     let photoDataURL: string | null = null;
     
     // Try to capture a new photo first
     if (webcamRef.current) {
       console.log('Webcam ref available, attempting capture...');
-      photoDataURL = webcamRef.current.capturePhoto();
-      console.log('New photo capture result:', photoDataURL ? 'Success' : 'Failed');
+      try {
+        photoDataURL = webcamRef.current.capturePhoto();
+        console.log('New photo capture result:', photoDataURL ? `Success (${photoDataURL.length} chars)` : 'Failed');
+      } catch (error) {
+        console.error('Error during photo capture:', error);
+      }
     } else {
       console.log('Webcam ref not available');
     }
@@ -74,7 +82,7 @@ const Index = ({
       setLastCapturedPhoto(photoDataURL);
       console.log('Photo set for analysis and stored in memory');
     } else {
-      console.warn('No photo available for analysis - proceeding without image');
+      console.warn('No photo available for analysis - this will likely cause issues');
     }
     
     console.log('=== PHOTO CAPTURE FLOW END ===');
@@ -137,7 +145,7 @@ const Index = ({
         <div className="flex-1 flex">
           {/* Webcam Section - Larger */}
           <div className="flex-1 p-6">
-            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl h-full">
+            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl h-full flex flex-col">
               <WebcamDisplay ref={webcamRef} videoRef={videoRef} />
             </div>
           </div>

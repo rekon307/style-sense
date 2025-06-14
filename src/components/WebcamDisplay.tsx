@@ -22,44 +22,59 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
   useImperativeHandle(ref, () => ({
     capturePhoto: () => {
-      console.log('Attempting to capture photo...');
+      console.log('=== CAPTURE PHOTO ATTEMPT ===');
       console.log('Video ref current:', !!videoRef.current);
       console.log('Is active:', isActive);
+      console.log('Canvas ref current:', !!canvasRef.current);
       
-      if (videoRef.current && isActive) {
-        try {
-          const video = videoRef.current;
-          const canvas = canvasRef.current;
-          if (!canvas) {
-            console.error('Canvas not available');
-            return null;
-          }
-          
-          const context = canvas.getContext('2d');
-          if (!context) {
-            console.error('Canvas context not available');
-            return null;
-          }
+      if (!videoRef.current) {
+        console.error('Video element not available');
+        return null;
+      }
 
-          // Set canvas size to match video dimensions
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          
-          console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
-          
-          // Draw the video frame to canvas
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
-          // Convert to data URL
-          const dataURL = canvas.toDataURL('image/jpeg', 0.8);
-          console.log('Photo captured successfully, size:', dataURL.length);
-          return dataURL;
-        } catch (error) {
-          console.error('Error capturing photo:', error);
+      if (!isActive) {
+        console.error('Camera not active');
+        return null;
+      }
+
+      if (!canvasRef.current) {
+        console.error('Canvas element not available');
+        return null;
+      }
+
+      try {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const context = canvas.getContext('2d');
+        
+        if (!context) {
+          console.error('Canvas context not available');
           return null;
         }
-      } else {
-        console.warn('Cannot capture photo - video not available or not active');
+
+        // Check if video has loaded dimensions
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+          console.error('Video dimensions not available:', { width: video.videoWidth, height: video.videoHeight });
+          return null;
+        }
+
+        // Set canvas size to match video dimensions
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        
+        console.log('Canvas dimensions set to:', canvas.width, 'x', canvas.height);
+        
+        // Draw the video frame to canvas
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Convert to data URL
+        const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+        console.log('Photo captured successfully, size:', dataURL.length);
+        console.log('=== CAPTURE PHOTO SUCCESS ===');
+        return dataURL;
+      } catch (error) {
+        console.error('Error capturing photo:', error);
+        console.log('=== CAPTURE PHOTO FAILED ===');
         return null;
       }
     }
@@ -69,6 +84,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
     try {
       setIsLoading(true);
       setError(null);
+      console.log('Starting webcam...');
       
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
@@ -79,12 +95,25 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
         audio: false
       });
       
+      console.log('Media stream obtained');
       setStream(mediaStream);
       streamRef.current = mediaStream;
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        
+        // Wait for the video to load metadata
+        await new Promise((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = () => {
+              console.log('Video metadata loaded, dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
+              resolve(true);
+            };
+          }
+        });
+        
         await videoRef.current.play();
+        console.log('Video playing');
       }
       
       setIsActive(true);
@@ -182,50 +211,50 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
   };
 
   return (
-    <Card className="h-full flex flex-col bg-gradient-to-br from-slate-50/80 to-slate-100/80 dark:from-slate-900/80 dark:to-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center justify-between text-slate-800 dark:text-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <Camera className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <span className="font-semibold">Webcam View</span>
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between p-4 border-b border-slate-200/50 dark:border-slate-700/50">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+            <Camera className="h-5 w-5 text-blue-600 dark:text-blue-400" />
           </div>
-          <Button
-            onClick={handleToggleWebcam}
-            variant="outline"
-            size="sm"
-            disabled={isLoading}
-            className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105 shadow-md"
-          >
-            {isActive ? (
-              <>
-                <Square className="h-4 w-4" />
-                Stop Camera
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4" />
-                Start Camera
-              </>
-            )}
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="flex-1 p-4">
+          <span className="font-semibold text-slate-800 dark:text-slate-200">Webcam View</span>
+        </div>
+        <Button
+          onClick={handleToggleWebcam}
+          variant="outline"
+          size="sm"
+          disabled={isLoading}
+          className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105 shadow-md"
+        >
+          {isActive ? (
+            <>
+              <Square className="h-4 w-4" />
+              Stop Camera
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4" />
+              Start Camera
+            </>
+          )}
+        </Button>
+      </div>
+      
+      <div className="flex-1 p-4">
         <div className="h-full bg-gray-900 rounded-xl flex items-center justify-center overflow-hidden relative">
           <video
             ref={videoRef}
             autoPlay
             muted
             playsInline
-            className="w-full h-full object-cover transform -scale-x-100"
+            className="w-full h-full object-cover"
+            style={{ transform: 'scaleX(-1)' }}
           />
           <canvas ref={canvasRef} className="hidden" />
           {renderOverlay()}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 });
 
