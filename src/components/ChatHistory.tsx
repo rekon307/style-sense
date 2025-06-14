@@ -2,7 +2,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, MessageSquare, Trash2, Clock } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Plus, Trash2, Clock, MessageSquareText, History, Archive } from "lucide-react";
 import { useChatHistory } from "@/hooks/useChatHistory";
 import { toast } from "@/components/ui/use-toast";
 
@@ -98,17 +99,20 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
       <CardHeader className="pb-4 border-b border-slate-200/50 dark:border-slate-700/50">
         <CardTitle className="flex items-center justify-between text-slate-800 dark:text-slate-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-              <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2 bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 dark:from-blue-900/30 dark:via-indigo-900/30 dark:to-purple-900/30 rounded-lg shadow-md">
+              <History className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
-            <span className="font-semibold">Chat History</span>
+            <div className="flex flex-col">
+              <span className="font-semibold">Chat History</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">Your conversations</span>
+            </div>
           </div>
         </CardTitle>
         <Button
           onClick={handleNewChat}
           size="sm"
           disabled={isLoading}
-          className="w-full mt-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
+          className="w-full mt-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
         >
           <Plus className="h-4 w-4 mr-2" />
           New Chat
@@ -125,8 +129,8 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
               </div>
             ) : sessions.length === 0 ? (
               <div className="text-center py-12">
-                <div className="mx-auto w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                  <MessageSquare className="h-8 w-8 text-slate-400" />
+                <div className="mx-auto w-16 h-16 bg-gradient-to-r from-slate-100 via-blue-100 to-purple-100 dark:from-slate-800 dark:via-blue-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                  <Archive className="h-8 w-8 text-slate-400" />
                 </div>
                 <p className="text-slate-600 dark:text-slate-400 font-medium mb-2">No conversations yet</p>
                 <p className="text-sm text-slate-500 dark:text-slate-500">
@@ -140,22 +144,29 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
                   onClick={() => handleSessionClick(session.id)}
                   className={`group p-4 rounded-xl cursor-pointer transition-all duration-200 border backdrop-blur-sm ${
                     currentSessionId === session.id
-                      ? 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-700 shadow-md scale-[1.02]'
+                      ? 'bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-700 shadow-md scale-[1.02]'
                       : 'bg-white/60 dark:bg-slate-800/60 border-slate-200/50 dark:border-slate-700/50 hover:bg-white/80 dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md hover:scale-[1.01]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <h4 className={`text-sm font-semibold truncate mb-2 ${
-                        currentSessionId === session.id
-                          ? 'text-blue-900 dark:text-blue-100'
-                          : 'text-slate-900 dark:text-slate-100'
-                      }`}>
-                        {session.title}
-                      </h4>
-                      <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                        <Clock className="h-3 w-3" />
-                        <span>{formatDate(session.updated_at)}</span>
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <Avatar className="w-8 h-8 flex-shrink-0">
+                        <AvatarFallback className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-xs">
+                          <MessageSquareText className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`text-sm font-semibold truncate mb-2 ${
+                          currentSessionId === session.id
+                            ? 'text-blue-900 dark:text-blue-100'
+                            : 'text-slate-900 dark:text-slate-100'
+                        }`}>
+                          {session.title}
+                        </h4>
+                        <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                          <Clock className="h-3 w-3" />
+                          <span>{formatDate(session.updated_at)}</span>
+                        </div>
                       </div>
                     </div>
                     <Button
