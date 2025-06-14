@@ -1,7 +1,6 @@
 
 import { useRef } from "react";
 import WebcamDisplay from "@/components/WebcamDisplay";
-import Controls from "@/components/Controls";
 import StyleAdvice from "@/components/StyleAdvice";
 import ChatHistory from "@/components/ChatHistory";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -38,7 +37,27 @@ const Index = ({
   onSessionChange
 }: IndexProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [showChatHistory, setShowChatHistory] = useState(false);
+  const [showChatHistory, setShowChatHistory] = useState(true); // Open by default
+
+  const handleSendMessageWithPhoto = async (message: string) => {
+    // Capture photo automatically when sending a message
+    if (videoRef.current) {
+      const video = videoRef.current;
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+
+      if (context) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL('image/png');
+        setInitialImageURL(dataURL);
+      }
+    }
+    
+    // Send the message
+    handleSendMessage(message);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
@@ -93,16 +112,9 @@ const Index = ({
         {/* Main Content Area */}
         <div className="flex-1 flex">
           {/* Webcam Section - Larger */}
-          <div className="flex-1 p-6 space-y-6">
-            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl h-[70vh]">
+          <div className="flex-1 p-6">
+            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl h-full">
               <WebcamDisplay videoRef={videoRef} />
-            </div>
-            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl p-6">
-              <Controls 
-                videoRef={videoRef} 
-                capturedImage={initialImageURL} 
-                setCapturedImage={setInitialImageURL} 
-              />
             </div>
           </div>
           
@@ -111,7 +123,7 @@ const Index = ({
             <StyleAdvice 
               messages={messages} 
               isAnalyzing={isAnalyzing}
-              onSendMessage={handleSendMessage}
+              onSendMessage={handleSendMessageWithPhoto}
               selectedModel={selectedModel}
               onModelChange={onModelChange}
             />

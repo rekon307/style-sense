@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Send, Settings, Bot, User } from "lucide-react";
+import { Sparkles, Send, Settings, Bot, User, Camera } from "lucide-react";
 import { useState } from "react";
 
 interface Message {
@@ -77,7 +77,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
   );
 
   return (
-    <Card className="w-full h-fit flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-lg">
+    <Card className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-slate-200 dark:border-slate-700 shadow-lg">
       <CardHeader className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-slate-200/50 dark:border-slate-700/50">
         <CardTitle className="flex items-center gap-3 text-slate-800 dark:text-slate-200">
           <div className="p-2 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg">
@@ -105,16 +105,20 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       
       <CardContent className="flex flex-col h-full p-0">
         {/* Chat Log */}
-        <div className="flex-1 max-h-96 overflow-y-auto p-4 space-y-1">
+        <div className="flex-1 overflow-y-auto p-4 space-y-1">
           {messages.length === 0 ? (
             <div className="text-center py-12">
               <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-full flex items-center justify-center mb-4">
                 <Sparkles className="h-8 w-8 text-purple-600 dark:text-purple-400" />
               </div>
               <p className="text-slate-700 dark:text-slate-300 font-semibold mb-2">Ready to help with your style!</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                Capture a photo or ask me anything about fashion and style trends
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                Ask me anything about fashion and style trends
               </p>
+              <div className="flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-lg p-3 mx-4">
+                <Camera className="h-4 w-4" />
+                <span>Photos are automatically captured when you send a message</span>
+              </div>
             </div>
           ) : (
             <>
