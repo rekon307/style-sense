@@ -12,16 +12,16 @@ const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderPro
   const getModelDisplayName = (model: string) => {
     switch (model) {
       case "gpt-4o-mini":
-        return "AI Style";
+        return "AI Style Mini";
       case "gpt-4o":
-        return "AI Style PRO";
-      default:
         return "AI Style";
+      default:
+        return "AI Style Mini";
     }
   };
 
   return (
-    <div className="border-b border-slate-200/50 dark:border-slate-700/50 px-4 py-4">
+    <div className="border-b border-slate-200/50 dark:border-slate-700/50 px-6 py-4">
       <div className="flex items-center justify-between">
         {/* Left Column - AI Identity with 2 rows */}
         <div className="flex items-center gap-3">
@@ -41,24 +41,24 @@ const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderPro
           </div>
         </div>
         
-        {/* Right Column - Model Selector */}
+        {/* Right Column - AI Style Model Selector */}
         <div className="flex items-center gap-2">
           <Settings className="h-4 w-4 text-slate-500 dark:text-slate-400" />
           <Select value={selectedModel} onValueChange={onModelChange}>
-            <SelectTrigger className="h-10 w-32 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
+            <SelectTrigger className="h-10 w-36 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="gpt-4o-mini">
                 <div className="flex flex-col items-start py-1">
-                  <span className="font-medium">AI Style</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">GPT-4o Mini</span>
+                  <span className="font-medium">AI Style Mini</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Faster responses</span>
                 </div>
               </SelectItem>
               <SelectItem value="gpt-4o">
                 <div className="flex flex-col items-start py-1">
-                  <span className="font-medium">AI Style PRO</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">GPT-4o</span>
+                  <span className="font-medium">AI Style</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">More precise analysis</span>
                 </div>
               </SelectItem>
             </SelectContent>

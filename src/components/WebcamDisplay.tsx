@@ -1,4 +1,3 @@
-
 import { Camera, AlertCircle, Play, Square, Video } from "lucide-react";
 import { useEffect, useState, RefObject, useRef, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
@@ -199,92 +198,6 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
       }
     };
   }, []);
-
-  const startWebcam = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      console.log('Starting webcam...');
-      
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: 'user'
-        },
-        audio: false
-      });
-      
-      console.log('Media stream obtained');
-      setStream(mediaStream);
-      streamRef.current = mediaStream;
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        
-        // Prevent popup behavior - critical settings
-        videoRef.current.setAttribute('playsinline', 'true');
-        videoRef.current.setAttribute('webkit-playsinline', 'true');
-        videoRef.current.setAttribute('controls', 'false');
-        videoRef.current.muted = true;
-        videoRef.current.autoplay = true;
-        videoRef.current.style.objectFit = 'cover';
-        
-        await new Promise((resolve) => {
-          if (videoRef.current) {
-            videoRef.current.onloadedmetadata = () => {
-              console.log('Video metadata loaded, dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
-              resolve(true);
-            };
-          }
-        });
-        
-        await videoRef.current.play();
-        console.log('Video playing');
-      }
-      
-      setIsActive(true);
-      setIsLoading(false);
-      console.log('Webcam started successfully');
-    } catch (err) {
-      console.error('Error accessing webcam:', err);
-      setIsLoading(false);
-      
-      if (err instanceof Error) {
-        if (err.name === 'NotAllowedError') {
-          setError('Camera access is required to get styling advice. Please allow camera access and try again.');
-        } else if (err.name === 'NotFoundError') {
-          setError('No camera found. Please connect a camera and try again.');
-        } else {
-          setError('Failed to access camera. Please check your browser settings.');
-        }
-      } else {
-        setError('An unexpected error occurred while accessing the camera.');
-      }
-    }
-  };
-
-  const stopWebcam = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-      setStream(null);
-      if (videoRef.current) {
-        videoRef.current.srcObject = null;
-      }
-    }
-    setIsActive(false);
-    setError(null);
-    console.log('Webcam stopped');
-  };
-
-  const handleToggleWebcam = () => {
-    if (isActive) {
-      stopWebcam();
-    } else {
-      startWebcam();
-    }
-  };
 
   const renderOverlay = () => {
     if (isLoading) {
