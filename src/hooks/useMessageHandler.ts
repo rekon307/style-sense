@@ -134,53 +134,101 @@ export const useMessageHandler = ({
         console.log('Including current image in request');
       }
 
-      const { data, error } = await supabase.functions.invoke('style-advisor', {
-        body: requestBody
+      // Make the streaming request to the Supabase function
+      const response = await fetch(`https://rqubwaskrqvlsjcnsihy.supabase.co/functions/v1/style-advisor`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`,
+        },
+        body: JSON.stringify(requestBody)
       });
 
-      if (error) {
-        console.error('Error calling style-advisor function:', error);
-        console.error('Error details:', JSON.stringify(error, null, 2));
-        toast({
-          title: "AI Service Error",
-          description: `Failed to get AI response: ${error.message || 'Unknown error'}. Please try again.`,
-          variant: "destructive",
-        });
-        throw error;
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Style advisor function error:', response.status, errorText);
+        throw new Error(`Style advisor function error: ${response.status} ${errorText}`);
       }
 
-      console.log('Received AI response:', data);
-      
-      // Add AI response to messages
-      if (data && data.response) {
-        const assistantMessage = { role: 'assistant' as const, content: data.response };
-        setMessages(prev => [...prev, assistantMessage]);
-        
-        // Save assistant message to database
-        if (sessionId) {
-          const { error: saveError } = await supabase
-            .from('chat_messages')
-            .insert([{
-              session_id: sessionId,
-              role: 'assistant',
-              content: data.response
-            }]);
+      if (!response.body) {
+        throw new Error('No response body received');
+      }
 
-          if (saveError) {
-            console.error('Error saving assistant message:', saveError);
-          } else {
-            console.log('Assistant message saved to database');
-          }
+      // Read the streaming response
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let assistantResponseContent = '';
+
+      // Create the assistant message object that will be updated progressively
+      const assistantMessage: Message = { role: 'assistant', content: '' };
+      setMessages(prev => [...prev, assistantMessage]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) {
+          console.log('Streaming response completed');
+          break;
         }
 
-        toast({
-          title: "Response received",
-          description: "Alex has responded to your message.",
-        });
-      } else {
-        console.error('No response content in data:', data);
-        throw new Error('No response content from AI');
+        buffer += decoder.decode(value, { stream: true });
+        
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            
+            try {
+              const parsed = JSON.parse(data);
+              
+              if (parsed.error) {
+                throw new Error(parsed.error);
+              }
+              
+              if (parsed.content) {
+                assistantResponseContent += parsed.content;
+                
+                // Update the assistant message in real-time
+                setMessages(prev => {
+                  const newMessages = [...prev];
+                  const lastMessage = newMessages[newMessages.length - 1];
+                  if (lastMessage.role === 'assistant') {
+                    lastMessage.content = assistantResponseContent;
+                  }
+                  return newMessages;
+                });
+              }
+            } catch (e) {
+              console.log('Skipping invalid JSON line:', data);
+            }
+          }
+        }
       }
+
+      // Save final assistant message to database
+      if (sessionId && assistantResponseContent) {
+        const { error: saveError } = await supabase
+          .from('chat_messages')
+          .insert([{
+            session_id: sessionId,
+            role: 'assistant',
+            content: assistantResponseContent
+          }]);
+
+        if (saveError) {
+          console.error('Error saving assistant message:', saveError);
+        } else {
+          console.log('Assistant message saved to database');
+        }
+      }
+
+      toast({
+        title: "Response received",
+        description: "Alex has responded to your message.",
+      });
 
       console.log('=== MESSAGE HANDLER END ===');
     } catch (error) {
