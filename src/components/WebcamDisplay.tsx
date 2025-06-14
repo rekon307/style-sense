@@ -240,14 +240,14 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
         </Button>
       </div>
       
-      <div className="flex-1 p-4">
+      <div className="flex-1 p-4 min-h-0">
         <div className="h-full bg-gray-900 rounded-xl flex items-center justify-center overflow-hidden relative">
           <video
             ref={videoRef}
             autoPlay
             muted
             playsInline
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover rounded-xl"
             style={{ transform: 'scaleX(-1)' }}
           />
           <canvas ref={canvasRef} className="hidden" />

@@ -92,11 +92,11 @@ const Index = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 transition-colors duration-300 flex flex-col">
       <div className="absolute inset-0 bg-grid-slate-200/50 dark:bg-grid-slate-700/25 bg-[size:32px_32px] opacity-50"></div>
       
       {/* Top Bar with Controls */}
-      <div className="relative z-50 flex items-center justify-between p-4 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+      <div className="relative z-50 flex items-center justify-between p-4 border-b border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-4">
           <Button
             onClick={() => setShowChatHistory(!showChatHistory)}
@@ -133,25 +133,25 @@ const Index = ({
         <ThemeToggle />
       </div>
       
-      <div className="relative flex h-[calc(100vh-80px)]">
+      <div className="relative flex flex-1 min-h-0">
         {/* Chat History Sidebar */}
-        <div className={`${showChatHistory ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm`}>
+        <div className={`${showChatHistory ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm flex-shrink-0`}>
           <div className="h-full p-4">
             <ChatHistory onSessionChange={onSessionChange} />
           </div>
         </div>
         
         {/* Main Content Area */}
-        <div className="flex-1 flex">
-          {/* Webcam Section - Larger */}
-          <div className="flex-1 p-6">
-            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl h-full flex flex-col">
+        <div className="flex-1 flex min-w-0">
+          {/* Webcam Section */}
+          <div className="flex-1 p-6 min-w-0">
+            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-200/50 dark:border-slate-700/50 shadow-xl h-full flex flex-col min-h-0">
               <WebcamDisplay ref={webcamRef} videoRef={videoRef} />
             </div>
           </div>
           
           {/* Style Advice Panel */}
-          <div className="w-96 p-6 border-l border-slate-200/50 dark:border-slate-700/50">
+          <div className="w-96 p-6 border-l border-slate-200/50 dark:border-slate-700/50 flex-shrink-0">
             <StyleAdvice 
               messages={messages} 
               isAnalyzing={isAnalyzing}
