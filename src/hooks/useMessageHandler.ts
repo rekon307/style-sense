@@ -53,7 +53,7 @@ export const useMessageHandler = ({
           .from('chat_sessions')
           .insert([{ 
             title: `Chat ${new Date().toLocaleDateString()}`,
-            user_id: userData.user?.id 
+            user_id: userData.user?.id || null // Allow null for anonymous users
           }])
           .select()
           .single();

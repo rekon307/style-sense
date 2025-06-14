@@ -61,7 +61,7 @@ export const useImageAnalysis = ({
             .from('chat_sessions')
             .insert([{ 
               title: 'Style Analysis',
-              user_id: userData.user?.id 
+              user_id: userData.user?.id || null // Allow null for anonymous users
             }])
             .select()
             .single();

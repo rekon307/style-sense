@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import { useMessages } from "./hooks/useMessages";
 import { useImageAnalysis } from "./hooks/useImageAnalysis";
 import { useMessageHandler } from "./hooks/useMessageHandler";
+import { useAuth } from "./hooks/useAuth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,6 +28,8 @@ const App = () => {
   const [initialImageURL, setInitialImageURL] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>("gpt-4o-mini");
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+
+  const { user, loading: authLoading } = useAuth();
 
   const {
     messages,
@@ -63,6 +66,24 @@ const App = () => {
     setCurrentSessionId(sessionId);
   };
 
+  const handleAuthChange = () => {
+    // Force a refresh of sessions and messages when auth state changes
+    setCurrentSessionId(null);
+    setMessages([]);
+    setVisualContext(null);
+  };
+
+  if (authLoading) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-300">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="system" storageKey="ai-style-advisor-theme">
@@ -85,6 +106,8 @@ const App = () => {
                       onModelChange={setSelectedModel}
                       currentSessionId={currentSessionId}
                       onSessionChange={handleSessionChange}
+                      user={user}
+                      onAuthChange={handleAuthChange}
                     />
                   } 
                 />

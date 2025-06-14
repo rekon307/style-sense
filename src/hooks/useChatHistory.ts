@@ -42,11 +42,13 @@ export const useChatHistory = () => {
   const createNewSession = async (title?: string) => {
     setIsLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data, error } = await supabase
         .from('chat_sessions')
         .insert([{ 
           title: title || 'New Chat',
-          user_id: (await supabase.auth.getUser()).data.user?.id 
+          user_id: user?.id || null // Allow null for anonymous users
         }])
         .select()
         .single();

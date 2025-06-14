@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
 import ChatHistory from "@/components/ChatHistory";
+import AuthButton from "@/components/AuthButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { PanelLeft, PanelLeftClose } from "lucide-react";
@@ -22,6 +23,8 @@ interface IndexProps {
   onModelChange: (model: string) => void;
   currentSessionId: string | null;
   onSessionChange: (sessionId: string | null) => void;
+  user: any;
+  onAuthChange: () => void;
 }
 
 const Index = ({ 
@@ -33,7 +36,9 @@ const Index = ({
   selectedModel,
   onModelChange,
   currentSessionId,
-  onSessionChange
+  onSessionChange,
+  user,
+  onAuthChange
 }: IndexProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const webcamRef = useRef<WebcamDisplayRef>(null);
@@ -130,7 +135,10 @@ const Index = ({
           </div>
         </div>
         
-        <ThemeToggle />
+        <div className="flex items-center gap-3">
+          <AuthButton user={user} onAuthChange={onAuthChange} />
+          <ThemeToggle />
+        </div>
       </div>
       
       <div className="relative flex flex-1 min-h-0">
