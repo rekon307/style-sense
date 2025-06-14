@@ -3,20 +3,24 @@ import { useEffect, useState, RefObject, useRef, forwardRef, useImperativeHandle
 import { Button } from "@/components/ui/button";
 
 interface WebcamDisplayProps {
-  videoRef: RefObject<HTMLVideoElement>;
+  videoRef?: RefObject<HTMLVideoElement>;
 }
 
 export interface WebcamDisplayRef {
   capturePhoto: () => string | null;
 }
 
-const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoRef }, ref) => {
+const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoRef: externalVideoRef }, ref) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const internalVideoRef = useRef<HTMLVideoElement>(null);
+  
+  // Use external videoRef if provided, otherwise use internal one
+  const videoRef = externalVideoRef || internalVideoRef;
 
   useImperativeHandle(ref, () => ({
     capturePhoto: () => {

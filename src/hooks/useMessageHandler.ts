@@ -22,7 +22,7 @@ export const useMessageHandler = ({
   currentSessionId,
   setCurrentSessionId
 }: UseMessageHandlerProps) => {
-  const handleSendMessage = async (message: string, image: string | null, temperature: number) => {
+  const handleSendMessage = async (message: string, image: string | null = null, temperature: number = 0.5) => {
     if (!message.trim()) {
       toast({
         title: "Empty message",
@@ -76,8 +76,13 @@ export const useMessageHandler = ({
           }]);
       }
 
-      // Prepare request body
-      const requestBody = { 
+      // Prepare request body with image support
+      const requestBody: {
+        messages: Message[];
+        temperature: number;
+        model: string;
+        image?: string;
+      } = { 
         messages: updatedMessages,
         temperature: temperature,
         model: 'gpt-4o-mini'
