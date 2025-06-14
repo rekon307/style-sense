@@ -1,4 +1,4 @@
-import { Camera, AlertCircle, Play, Square, Video } from "lucide-react";
+import { Camera, AlertCircle, Video } from "lucide-react";
 import { useEffect, useState, RefObject, useRef, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -247,42 +247,32 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header - Reorganized with columns */}
-      <div className="flex items-center justify-between p-6 border-b border-slate-200/50 dark:border-slate-700/50">
+      {/* Header - Improved spacing and alignment */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/50 dark:border-slate-700/50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl flex items-center justify-center">
-            <Camera className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg flex items-center justify-center">
+            <Camera className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <div>
-            <h2 className="font-semibold text-slate-900 dark:text-slate-100">Webcam View</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Live camera feed</p>
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-tight">Webcam View</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-tight">Live camera feed</p>
           </div>
         </div>
         
-        {/* Right side - organized in columns */}
-        <div className="flex flex-col items-end gap-2">
+        {/* Right side - improved column layout */}
+        <div className="flex flex-col items-end gap-1.5">
           <Button
             onClick={handleToggleWebcam}
             variant="outline"
             size="sm"
             disabled={isLoading}
-            className="flex items-center gap-2 border-slate-300/50 dark:border-slate-600/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 backdrop-blur-sm transition-all duration-200"
+            className="h-8 px-3 text-xs font-medium border-slate-300/50 dark:border-slate-600/50 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 backdrop-blur-sm transition-all duration-200"
           >
-            {isActive ? (
-              <>
-                <Square className="h-4 w-4" />
-                Stop
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4" />
-                Start
-              </>
-            )}
+            {isActive ? "Stop" : "Start"}
           </Button>
           
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-lg backdrop-blur-sm">
-            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-md backdrop-blur-sm">
+            <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} ${isActive ? 'animate-pulse' : ''}`}></div>
             <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
               {isActive ? 'Active' : 'Inactive'}
             </span>
@@ -290,9 +280,9 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
         </div>
       </div>
       
-      {/* Video Container - Enhanced */}
-      <div className="flex-1 p-6">
-        <div className="h-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl flex items-center justify-center overflow-hidden relative shadow-inner">
+      {/* Video Container - Enhanced aspect ratio handling */}
+      <div className="flex-1 p-4">
+        <div className="h-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl flex items-center justify-center overflow-hidden relative shadow-inner">
           <video
             ref={videoRef}
             autoPlay
@@ -304,7 +294,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             disablePictureInPicture
             disableRemotePlayback
             preload="none"
-            className="w-full h-full object-cover rounded-2xl [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-panel]:hidden [&::-webkit-media-controls-play-button]:hidden [&::-webkit-media-controls-start-playback-button]:hidden"
+            className="w-full h-full object-cover rounded-xl [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-panel]:hidden [&::-webkit-media-controls-play-button]:hidden [&::-webkit-media-controls-start-playback-button]:hidden"
             style={{ 
               transform: 'scaleX(-1)',
               maxWidth: '100%',

@@ -1,6 +1,6 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Settings } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 interface ChatHeaderProps {
   isAnalyzing: boolean;
@@ -9,17 +9,6 @@ interface ChatHeaderProps {
 }
 
 const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderProps) => {
-  const getModelDisplayName = (model: string) => {
-    switch (model) {
-      case "gpt-4o-mini":
-        return "AI Style Mini";
-      case "gpt-4o":
-        return "AI Style";
-      default:
-        return "AI Style Mini";
-    }
-  };
-
   return (
     <div className="border-b border-slate-200/50 dark:border-slate-700/50 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -41,11 +30,10 @@ const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderPro
           </div>
         </div>
         
-        {/* Right Column - AI Style Model Selector */}
-        <div className="flex items-center gap-2">
-          <Settings className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+        {/* Right Column - AI Style Model Selector without settings icon */}
+        <div className="flex items-center">
           <Select value={selectedModel} onValueChange={onModelChange}>
-            <SelectTrigger className="h-10 w-36 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
+            <SelectTrigger className="h-10 w-40 text-sm bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
