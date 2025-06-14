@@ -37,11 +37,10 @@ const Index = ({
   onAuthChange
 }: IndexProps) => {
   const webcamRef = useRef<WebcamDisplayRef>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [showChatHistory, setShowChatHistory] = useState(true);
 
-  // Enhanced cognitive message handler
-  const handleCognitiveMessage = (message: string, image?: string | null, temperature?: number) => {
+  // Enhanced cognitive message handler with consistent temperature handling
+  const handleCognitiveMessage = (message: string, image?: string | null, temperature: number = 0.5) => {
     console.log('=== ALEX COGNITIVE PROCESSING ===');
     console.log('Message:', message);
     console.log('Has image:', !!image);
@@ -114,7 +113,7 @@ const Index = ({
           {/* Camera Section */}
           <section className="flex-1 min-w-0">
             <div className="h-full rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm border border-white/20 dark:border-slate-700/30 shadow-xl shadow-black/5">
-              <WebcamDisplay ref={webcamRef} videoRef={videoRef} />
+              <WebcamDisplay ref={webcamRef} />
             </div>
           </section>
           

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Mic, Square } from "lucide-react";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
+import { capturePhotoFromWebcam } from "@/utils/imageCapture";
 
 interface ChatInputProps {
   isAnalyzing: boolean;
@@ -22,30 +23,6 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
     stopListening,
     isSupported
   } = useVoiceRecording();
-
-  const capturePhotoFromWebcam = (): string | null => {
-    try {
-      const videoElement = document.querySelector('video') as HTMLVideoElement;
-      
-      if (!videoElement || videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
-        return null;
-      }
-
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-      
-      if (!context) return null;
-
-      canvas.width = videoElement.videoWidth;
-      canvas.height = videoElement.videoHeight;
-      context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-      
-      return canvas.toDataURL('image/jpeg', 0.8);
-    } catch (error) {
-      console.error('Error capturing photo:', error);
-      return null;
-    }
-  };
 
   const handleCognitiveAutoSend = (finalTranscript: string) => {
     console.log('Alex cognitive auto-send:', finalTranscript);
