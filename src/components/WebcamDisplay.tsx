@@ -1,4 +1,4 @@
-import { Camera, AlertCircle, Play, Square } from "lucide-react";
+import { Camera, AlertCircle, Play, Square, Video } from "lucide-react";
 import { useEffect, useState, RefObject, useRef, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -203,11 +203,13 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
   const renderOverlay = () => {
     if (isLoading) {
       return (
-        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-xl">
-          <div>
-            <Camera className="h-20 w-20 mx-auto mb-6 opacity-50 animate-pulse" />
-            <p className="text-xl font-medium mb-2">Starting camera...</p>
-            <p className="text-sm opacity-75">Please allow camera access when prompted</p>
+        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-xl">
+          <div className="max-w-sm">
+            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Camera className="h-8 w-8 text-white animate-pulse" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Starting camera...</h3>
+            <p className="text-sm text-slate-300">Please allow camera access when prompted</p>
           </div>
         </div>
       );
@@ -215,11 +217,13 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
     if (error) {
       return (
-        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-xl">
+        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-xl">
           <div className="max-w-md px-6">
-            <AlertCircle className="h-20 w-20 mx-auto mb-6 text-red-400" />
-            <p className="text-xl font-medium text-red-400 mb-4">Camera Error</p>
-            <p className="text-sm opacity-75">{error}</p>
+            <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <AlertCircle className="h-8 w-8 text-white" />
+            </div>
+            <h3 className="text-xl font-semibold text-red-400 mb-4">Camera Error</h3>
+            <p className="text-sm text-slate-300">{error}</p>
           </div>
         </div>
       );
@@ -227,11 +231,13 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
     if (!isActive) {
       return (
-        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center text-center text-gray-300 rounded-xl">
-          <div>
-            <Camera className="h-20 w-20 mx-auto mb-6 opacity-50" />
-            <p className="text-xl font-medium mb-2">Camera Stopped</p>
-            <p className="text-sm opacity-75">Camera will start automatically</p>
+        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-xl">
+          <div className="max-w-sm">
+            <div className="w-16 h-16 bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Video className="h-8 w-8 text-slate-400" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Camera Stopped</h3>
+            <p className="text-sm text-slate-300">Click "Start Camera" to begin</p>
           </div>
         </div>
       );
@@ -242,44 +248,51 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b border-slate-200/50 dark:border-slate-700/50">
+      {/* Header */}
+      <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-            <Camera className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+            <Camera className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <span className="font-semibold text-slate-800 dark:text-slate-200">Webcam View</span>
+          <div>
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100">Webcam View</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Live camera feed</p>
+          </div>
         </div>
+        
         <div className="flex items-center gap-3">
-          <div className={`flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg`}>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
             <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className="text-xs text-slate-600 dark:text-slate-400">
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
               {isActive ? 'Active' : 'Inactive'}
             </span>
           </div>
+          
           <Button
             onClick={handleToggleWebcam}
             variant="outline"
             size="sm"
             disabled={isLoading}
-            className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 transition-all duration-200 hover:scale-105 shadow-md"
+            className="flex items-center gap-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             {isActive ? (
               <>
                 <Square className="h-4 w-4" />
-                Stop Camera
+                Stop
               </>
             ) : (
               <>
                 <Play className="h-4 w-4" />
-                Start Camera
+                Start
               </>
             )}
           </Button>
         </div>
       </div>
       
-      <div className="flex-1 p-4 min-h-0">
-        <div className="h-full bg-gray-900 rounded-xl flex items-center justify-center overflow-hidden relative">
+      {/* Video Container */}
+      <div className="flex-1 p-6">
+        <div className="h-full bg-slate-900 rounded-xl flex items-center justify-center overflow-hidden relative">
           <video
             ref={videoRef}
             autoPlay
