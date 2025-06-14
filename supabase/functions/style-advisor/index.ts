@@ -74,7 +74,7 @@ serve(async (req) => {
       });
     }
 
-    // Make API call to Deepseek
+    // Make API call to Deepseek with the correct model name
     const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
@@ -82,7 +82,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: "deepseek-vl-chat",
+        model: "deepseek-chat", // Updated to use the correct model name
         messages: apiMessages,
         max_tokens: 1000,
         temperature: 0.7
@@ -92,7 +92,7 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Deepseek API error:', response.status, errorText);
-      throw new Error(`Deepseek API error: ${response.status}`);
+      throw new Error(`Deepseek API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
