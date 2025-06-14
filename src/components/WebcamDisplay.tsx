@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Camera, AlertCircle, Play, Square } from "lucide-react";
 import { useEffect, useState, RefObject } from "react";
 
 interface WebcamDisplayProps {
@@ -10,58 +11,77 @@ interface WebcamDisplayProps {
 const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+
+  const startWebcam = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480 },
+        audio: false
+      });
+      
+      setStream(mediaStream);
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        videoRef.current.play().catch(console.error);
+      }
+      
+      setIsActive(true);
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Error accessing webcam:', err);
+      setIsLoading(false);
+      
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') {
+          setError('Camera access is required to get styling advice. Please allow camera access and try again.');
+        } else if (err.name === 'NotFoundError') {
+          setError('No camera found. Please connect a camera and try again.');
+        } else {
+          setError('Failed to access camera. Please check your browser settings.');
+        }
+      } else {
+        setError('An unexpected error occurred while accessing the camera.');
+      }
+    }
+  };
+
+  const stopWebcam = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    }
+    setIsActive(false);
+    setError(null);
+  };
 
   useEffect(() => {
-    let currentStream: MediaStream | null = null;
-
-    const startWebcam = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 640, height: 480 },
-          audio: false
-        });
-        
-        currentStream = mediaStream;
-        setStream(mediaStream);
-        
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-          // Ensure the video plays
-          videoRef.current.play().catch(console.error);
-        }
-        
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Error accessing webcam:', err);
-        setIsLoading(false);
-        
-        if (err instanceof Error) {
-          if (err.name === 'NotAllowedError') {
-            setError('Camera access is required to get styling advice. Please allow camera access and refresh the page.');
-          } else if (err.name === 'NotFoundError') {
-            setError('No camera found. Please connect a camera and try again.');
-          } else {
-            setError('Failed to access camera. Please check your browser settings.');
-          }
-        } else {
-          setError('An unexpected error occurred while accessing the camera.');
-        }
-      }
-    };
-
+    // Auto-start webcam on component mount
     startWebcam();
 
     // Cleanup function to stop the webcam stream
     return () => {
-      if (currentStream) {
-        currentStream.getTracks().forEach(track => track.stop());
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [videoRef]);
+  }, []);
+
+  const handleToggleWebcam = () => {
+    if (isActive) {
+      stopWebcam();
+    } else {
+      startWebcam();
+    }
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -84,6 +104,16 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
       );
     }
 
+    if (!isActive) {
+      return (
+        <div className="text-center text-gray-400">
+          <Camera className="h-16 w-16 mx-auto mb-4 opacity-50" />
+          <p className="text-lg font-medium">Camera Stopped</p>
+          <p className="text-sm mt-2">Click "Start Camera" to begin</p>
+        </div>
+      );
+    }
+
     return (
       <video
         ref={videoRef}
@@ -98,9 +128,30 @@ const WebcamDisplay = ({ videoRef }: WebcamDisplayProps) => {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Camera className="h-5 w-5" />
-          Webcam View
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Camera className="h-5 w-5" />
+            Webcam View
+          </div>
+          <Button
+            onClick={handleToggleWebcam}
+            variant="outline"
+            size="sm"
+            disabled={isLoading}
+            className="flex items-center gap-2"
+          >
+            {isActive ? (
+              <>
+                <Square className="h-4 w-4" />
+                Stop Camera
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4" />
+                Start Camera
+              </>
+            )}
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent>
