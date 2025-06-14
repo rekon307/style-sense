@@ -23,7 +23,7 @@ const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderPro
   return (
     <div className="border-b border-slate-200/50 dark:border-slate-700/50 px-4 py-4">
       <div className="flex items-center justify-between">
-        {/* AI Identity Section - Simplified */}
+        {/* Left Column - AI Identity with 2 rows */}
         <div className="flex items-center gap-3">
           <div className="relative">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600">
@@ -33,12 +33,15 @@ const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderPro
           </div>
           <div>
             <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-              Alex, AI Style Consultant
+              Alex
             </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              AI Style Consultant
+            </p>
           </div>
         </div>
         
-        {/* Model Selector Only */}
+        {/* Right Column - Model Selector */}
         <div className="flex items-center gap-2">
           <Settings className="h-4 w-4 text-slate-500 dark:text-slate-400" />
           <Select value={selectedModel} onValueChange={onModelChange}>

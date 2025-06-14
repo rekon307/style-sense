@@ -1,3 +1,4 @@
+
 import { Camera, AlertCircle, Play, Square, Video } from "lucide-react";
 import { useEffect, useState, RefObject, useRef, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
@@ -199,6 +200,92 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
     };
   }, []);
 
+  const startWebcam = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      console.log('Starting webcam...');
+      
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: 'user'
+        },
+        audio: false
+      });
+      
+      console.log('Media stream obtained');
+      setStream(mediaStream);
+      streamRef.current = mediaStream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        
+        // Prevent popup behavior - critical settings
+        videoRef.current.setAttribute('playsinline', 'true');
+        videoRef.current.setAttribute('webkit-playsinline', 'true');
+        videoRef.current.setAttribute('controls', 'false');
+        videoRef.current.muted = true;
+        videoRef.current.autoplay = true;
+        videoRef.current.style.objectFit = 'cover';
+        
+        await new Promise((resolve) => {
+          if (videoRef.current) {
+            videoRef.current.onloadedmetadata = () => {
+              console.log('Video metadata loaded, dimensions:', videoRef.current?.videoWidth, 'x', videoRef.current?.videoHeight);
+              resolve(true);
+            };
+          }
+        });
+        
+        await videoRef.current.play();
+        console.log('Video playing');
+      }
+      
+      setIsActive(true);
+      setIsLoading(false);
+      console.log('Webcam started successfully');
+    } catch (err) {
+      console.error('Error accessing webcam:', err);
+      setIsLoading(false);
+      
+      if (err instanceof Error) {
+        if (err.name === 'NotAllowedError') {
+          setError('Camera access is required to get styling advice. Please allow camera access and try again.');
+        } else if (err.name === 'NotFoundError') {
+          setError('No camera found. Please connect a camera and try again.');
+        } else {
+          setError('Failed to access camera. Please check your browser settings.');
+        }
+      } else {
+        setError('An unexpected error occurred while accessing the camera.');
+      }
+    }
+  };
+
+  const stopWebcam = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+      setStream(null);
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    }
+    setIsActive(false);
+    setError(null);
+    console.log('Webcam stopped');
+  };
+
+  const handleToggleWebcam = () => {
+    if (isActive) {
+      stopWebcam();
+    } else {
+      startWebcam();
+    }
+  };
+
   const renderOverlay = () => {
     if (isLoading) {
       return (
@@ -247,7 +334,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header - Improved layout */}
+      {/* Header - Reorganized with columns */}
       <div className="flex items-center justify-between p-6 border-b border-slate-200/50 dark:border-slate-700/50">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl flex items-center justify-center">
@@ -259,14 +346,8 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-2 bg-slate-100/80 dark:bg-slate-800/80 rounded-xl backdrop-blur-sm">
-            <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
-            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
-              {isActive ? 'Active' : 'Inactive'}
-            </span>
-          </div>
-          
+        {/* Right side - organized in columns */}
+        <div className="flex flex-col items-end gap-2">
           <Button
             onClick={handleToggleWebcam}
             variant="outline"
@@ -286,6 +367,13 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
               </>
             )}
           </Button>
+          
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/80 dark:bg-slate-800/80 rounded-lg backdrop-blur-sm">
+            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+              {isActive ? 'Active' : 'Inactive'}
+            </span>
+          </div>
         </div>
       </div>
       
