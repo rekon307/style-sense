@@ -5,7 +5,7 @@ import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
 import DailyVideoFrame from "./DailyVideoFrame";
 import { useTavus } from "@/hooks/useTavus";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { Message } from "@/types/chat";
 
 interface StyleAdviceProps {
@@ -38,10 +38,10 @@ const StyleAdvice = ({
   const [isCreatingVideo, setIsCreatingVideo] = useState(false);
   const [hasTriedAutoStart, setHasTriedAutoStart] = useState(false);
   
-  // Track previous values to detect changes
+  // Single source of truth for ending conversations - prevents spam
+  const endingConversationRef = useRef<string | null>(null);
   const previousVideoModeRef = useRef<boolean>(isVideoMode);
   const previousSessionIdRef = useRef<string | null>(currentSessionId);
-  const isEndingConversationRef = useRef<boolean>(false);
   
   const { 
     createConversation, 
@@ -54,17 +54,23 @@ const StyleAdvice = ({
 
   const temperature = 0.2;
 
-  // Function to safely end video conversation
+  // Centralized function to safely end video conversation with spam prevention
   const safeEndVideoConversation = async (conversationId: string | null = null) => {
     const idToEnd = conversationId || currentConversationId;
     
-    if (!idToEnd || isEndingConversationRef.current) {
-      console.log('🔄 No conversation to end or already ending');
+    if (!idToEnd) {
+      console.log('🔄 No conversation to end');
       return;
     }
 
-    isEndingConversationRef.current = true;
-    console.log('🛑 Safely ending video conversation:', idToEnd);
+    // Prevent duplicate end requests for the same conversation
+    if (endingConversationRef.current === idToEnd) {
+      console.log('🔄 Already ending conversation:', idToEnd);
+      return;
+    }
+
+    endingConversationRef.current = idToEnd;
+    console.log('🛑 Starting to end video conversation:', idToEnd);
     
     try {
       await endConversation(idToEnd);
@@ -92,28 +98,32 @@ const StyleAdvice = ({
         variant: "destructive",
       });
     } finally {
-      isEndingConversationRef.current = false;
+      // Clear the guard after completion or error
+      endingConversationRef.current = null;
     }
   };
 
-  // Watch for session changes and end conversation immediately
+  // Watch for session changes - single effect to prevent conflicts
   useEffect(() => {
     console.log('=== SESSION CHANGE DETECTION ===');
     console.log('Previous session:', previousSessionIdRef.current);
     console.log('Current session:', currentSessionId);
     console.log('Current conversation ID:', currentConversationId);
 
-    // If session changed and we have an active conversation, end it immediately
-    if (previousSessionIdRef.current !== currentSessionId && currentConversationId) {
+    // If session changed and we have an active conversation, end it
+    if (previousSessionIdRef.current !== null && 
+        previousSessionIdRef.current !== currentSessionId && 
+        currentConversationId && 
+        !endingConversationRef.current) {
       console.log('🔄 Session changed - ending video conversation');
       safeEndVideoConversation();
     }
     
     // Update the ref for next comparison
     previousSessionIdRef.current = currentSessionId;
-  }, [currentSessionId, currentConversationId]);
+  }, [currentSessionId]);
 
-  // Watch for video mode changes and end conversation when switching to text mode
+  // Watch for video mode changes - single effect to prevent conflicts
   useEffect(() => {
     console.log('=== VIDEO MODE CHANGE DETECTION ===');
     console.log('Previous video mode:', previousVideoModeRef.current);
@@ -121,16 +131,19 @@ const StyleAdvice = ({
     console.log('Current conversation ID:', currentConversationId);
 
     // If we're switching FROM video mode TO text mode and have an active conversation
-    if (previousVideoModeRef.current === true && isVideoMode === false && currentConversationId) {
+    if (previousVideoModeRef.current === true && 
+        isVideoMode === false && 
+        currentConversationId && 
+        !endingConversationRef.current) {
       console.log('🔄 Detected switch from video to text mode - ending conversation');
       safeEndVideoConversation();
     }
     
     // Update the ref for next comparison
     previousVideoModeRef.current = isVideoMode;
-  }, [isVideoMode, currentConversationId]);
+  }, [isVideoMode]);
 
-  // Auto-start video conversation when switching to video mode (only if no active conversation)
+  // Auto-start video conversation when switching to video mode
   useEffect(() => {
     console.log('=== VIDEO MODE AUTO-START EFFECT ===');
     console.log('isVideoMode:', isVideoMode);
@@ -139,7 +152,6 @@ const StyleAdvice = ({
     console.log('isCreatingVideo:', isCreatingVideo);
     console.log('hasTriedAutoStart:', hasTriedAutoStart);
 
-    // Only auto-start if we're in video mode, don't have an active conversation, and haven't tried yet
     if (isVideoMode && !videoConversationUrl && !currentConversationId && !isCreatingVideo && !hasTriedAutoStart) {
       console.log('🎬 Auto-starting video chat...');
       setHasTriedAutoStart(true);
@@ -160,12 +172,12 @@ const StyleAdvice = ({
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
 
-  // Handle component unmount - always end active conversations
+  // Handle component unmount - single cleanup
   useEffect(() => {
     return () => {
-      if (currentConversationId) {
+      if (currentConversationId && !endingConversationRef.current) {
         console.log('🧹 Component unmounting - ending conversation:', currentConversationId);
-        // Use the Tavus hook directly for cleanup on unmount
+        endingConversationRef.current = currentConversationId;
         endConversation(currentConversationId).catch(console.error);
       }
     };
@@ -191,7 +203,7 @@ const StyleAdvice = ({
       // Wait for cleanup to complete
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Extract user name - try multiple sources
+      // Extract user name
       let userName = 'Style Enthusiast';
       if (user) {
         userName = user.user_metadata?.full_name || 
@@ -281,7 +293,7 @@ const StyleAdvice = ({
     console.log('🔄 Video mode changing to:', newVideoMode);
     
     // If switching to text mode and we have an active conversation, end it first
-    if (!newVideoMode && currentConversationId) {
+    if (!newVideoMode && currentConversationId && !endingConversationRef.current) {
       console.log('🛑 Manual switch to text mode - ending conversation:', currentConversationId);
       await safeEndVideoConversation();
     }
