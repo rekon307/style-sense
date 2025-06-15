@@ -4,7 +4,6 @@ import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Brain, Cpu } from "lucide-react";
 import { Message } from "@/types/chat";
 
 interface StyleAdviceProps {
@@ -18,12 +17,6 @@ interface StyleAdviceProps {
 const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onModelChange }: StyleAdviceProps) => {
   const [temperature, setTemperature] = useState<number>(0.5);
 
-  const getPersonalityLabel = (temp: number) => {
-    if (temp <= 0.3) return "Factual";
-    if (temp <= 0.6) return "Balanced";
-    return "Creative";
-  };
-
   return (
     <div className="flex h-full flex-col">
       <ChatHeader 
@@ -33,21 +26,6 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       />
       
       <div className="border-b border-slate-200/50 dark:border-slate-700/50 p-3 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Cpu className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Mode: {getPersonalityLabel(temperature)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Brain className="h-3 w-3 text-slate-500" />
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              Temp: {temperature}
-            </span>
-          </div>
-        </div>
-        
         <ToggleGroup 
           type="single" 
           value={temperature.toString()} 
