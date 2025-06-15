@@ -32,77 +32,72 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
     const isUser = message.role === 'user';
     const hasImage = message.visual_context && message.visual_context.length > 0;
     
-    console.log('=== RENDERING MESSAGE ===');
-    console.log('Message ID:', message.id);
-    console.log('Has visual context:', hasImage);
-    console.log('Visual context length:', message.visual_context?.length || 0);
-    
     return (
       <div 
         key={message.id || index} 
-        className={`flex gap-3 mb-4 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+        className={`flex gap-2 mb-4 ${isUser ? 'justify-end' : 'justify-start'}`}
       >
-        <Avatar className="w-8 h-8 flex-shrink-0">
-          <AvatarFallback className={isUser 
-            ? "bg-blue-500 text-white" 
-            : "bg-gray-600 text-white"
-          }>
-            {isUser ? (
-              <User className="h-4 w-4" />
-            ) : (
+        {!isUser && (
+          <Avatar className="w-8 h-8 flex-shrink-0 mt-1">
+            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs">
               <Sparkles className="h-4 w-4" />
-            )}
-          </AvatarFallback>
-        </Avatar>
+            </AvatarFallback>
+          </Avatar>
+        )}
         
         <div className={`flex flex-col max-w-[75%] ${isUser ? 'items-end' : 'items-start'}`}>
           {hasImage && (
-            <div className={`mb-2 ${isUser ? 'order-first' : 'order-first'}`}>
+            <div className="mb-2">
               <img 
                 src={message.visual_context} 
                 alt="Shared image" 
-                className="rounded-lg max-w-48 h-auto border border-gray-200"
+                className="rounded-xl max-w-48 h-auto border border-gray-200 dark:border-gray-700 shadow-sm"
                 onError={(e) => {
                   console.error('Error loading image:', message.visual_context);
                   e.currentTarget.style.display = 'none';
-                }}
-                onLoad={() => {
-                  console.log('Image loaded successfully');
                 }}
               />
             </div>
           )}
           
-          <div className={`px-4 py-2 rounded-2xl max-w-full break-words ${
+          <div className={`px-4 py-2 rounded-2xl max-w-full break-words shadow-sm ${
             isUser 
               ? 'bg-blue-500 text-white' 
-              : 'bg-white border border-gray-200 text-gray-900'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700'
           }`}>
-            {message.content}
+            <div className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</div>
           </div>
           
-          <span className={`text-xs text-gray-500 mt-1 ${isUser ? 'text-right' : 'text-left'}`}>
+          <div className={`text-xs text-gray-500 dark:text-gray-400 mt-1 px-1 ${isUser ? 'text-right' : 'text-left'}`}>
             {message.created_at ? new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
+          </div>
         </div>
+        
+        {isUser && (
+          <Avatar className="w-8 h-8 flex-shrink-0 mt-1">
+            <AvatarFallback className="bg-blue-500 text-white text-xs">
+              <User className="h-4 w-4" />
+            </AvatarFallback>
+          </Avatar>
+        )}
       </div>
     );
   };
 
   const renderThinkingIndicator = () => (
-    <div className="flex gap-3 mb-4">
-      <Avatar className="w-8 h-8 flex-shrink-0">
-        <AvatarFallback className="bg-gray-600 text-white">
+    <div className="flex gap-2 mb-4 justify-start">
+      <Avatar className="w-8 h-8 flex-shrink-0 mt-1">
+        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs">
           <Sparkles className="h-4 w-4" />
         </AvatarFallback>
       </Avatar>
       
       <div className="flex flex-col max-w-[75%] items-start">
-        <div className="px-4 py-2 rounded-2xl bg-white border border-gray-200">
+        <div className="px-4 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm">
           <div className="flex items-center gap-1">
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
           </div>
         </div>
       </div>
@@ -110,21 +105,21 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   );
 
   const renderEmptyState = () => (
-    <div className="text-center py-16 px-6">
-      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
-        <Sparkles className="h-8 w-8 text-blue-600" />
+    <div className="text-center py-12 px-6">
+      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+        <Sparkles className="h-8 w-8 text-white" />
       </div>
-      <h3 className="mb-3 text-xl font-semibold text-gray-900">
+      <h3 className="mb-3 text-xl font-semibold text-gray-900 dark:text-white">
         Hi, I'm Alex!
       </h3>
-      <p className="mx-auto mb-6 max-w-sm text-gray-600">
+      <p className="mx-auto mb-6 max-w-sm text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
         Your personal AI style advisor. Share a photo of your outfit and I'll help you improve your style.
       </p>
     </div>
   );
 
   return (
-    <div className="flex-1 bg-gray-50">
+    <div className="flex-1 bg-white dark:bg-gray-900 overflow-hidden">
       <ScrollArea className="h-full">
         <div className="p-4">
           {messages.length === 0 && !isAnalyzing ? (

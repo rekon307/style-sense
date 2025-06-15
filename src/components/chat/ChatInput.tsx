@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Send, Square, Camera } from "lucide-react";
+import { Mic, Send, Square, Paperclip, X } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useAlexState } from "@/contexts/AlexStateContext";
@@ -132,34 +132,34 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
   const isInputDisabled = status === 'analyzing';
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
+    <div className="border-t border-gray-100 dark:border-gray-800 p-4 bg-white dark:bg-gray-900">
       {selectedImage && (
         <div className="mb-3 relative inline-block">
           <img 
             src={selectedImage} 
             alt="Selected" 
-            className="max-w-32 max-h-32 rounded-xl"
+            className="max-w-32 max-h-32 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm"
           />
           <Button
             onClick={removeImage}
             size="sm"
-            variant="destructive"
-            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+            variant="secondary"
+            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full bg-gray-800 hover:bg-gray-900 text-white border-0"
           >
-            ×
+            <X className="h-3 w-3" />
           </Button>
         </div>
       )}
       
-      <div className="flex items-end gap-2">
+      <div className="flex items-end gap-3">
         <Button
           onClick={() => fileInputRef.current?.click()}
           size="sm"
           variant="ghost"
-          className="h-10 w-10 p-0 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="h-10 w-10 p-0 rounded-full text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-shrink-0"
           disabled={isInputDisabled}
         >
-          <Camera className="h-5 w-5" />
+          <Paperclip className="h-5 w-5" />
         </Button>
 
         <div className="flex-1 relative">
@@ -169,17 +169,17 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder={getPlaceholder()}
-            className="min-h-[40px] max-h-32 resize-none rounded-full border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-4 py-2 pr-12 text-sm"
+            className="min-h-[44px] max-h-32 resize-none rounded-3xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3 pr-12 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={isInputDisabled}
           />
           <Button
             onClick={handleMicClick}
             size="sm"
             variant="ghost"
-            className={`absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 rounded-full ${
+            className={`absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 rounded-full ${
               status === 'listening' 
-                ? 'bg-blue-100 text-blue-600 animate-pulse' 
-                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                ? 'bg-blue-500 text-white hover:bg-blue-600' 
+                : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
             }`}
             disabled={isInputDisabled}
           >
@@ -194,7 +194,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
         <Button
           onClick={handleSend}
           size="sm"
-          className="h-10 w-10 p-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white"
+          className="h-10 w-10 p-0 rounded-full bg-blue-500 hover:bg-blue-600 text-white flex-shrink-0 disabled:opacity-50"
           disabled={isInputDisabled || (!message.trim() && !selectedImage)}
         >
           <Send className="h-4 w-4" />

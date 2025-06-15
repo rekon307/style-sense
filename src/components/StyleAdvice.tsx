@@ -18,14 +18,15 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
   const [temperature, setTemperature] = useState<number>(0.5);
 
   return (
-    <div className="flex h-full flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-full flex-col bg-white dark:bg-gray-900">
       <ChatHeader 
         isAnalyzing={isAnalyzing}
         selectedModel={selectedModel}
         onModelChange={onModelChange}
       />
       
-      <div className="border-b border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-800">
+      <div className="border-b border-gray-100 dark:border-gray-800 px-4 py-3 bg-white dark:bg-gray-900">
+        <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">Response Style</div>
         <ToggleGroup 
           type="single" 
           value={temperature.toString()} 
@@ -34,21 +35,21 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         >
           <ToggleGroupItem 
             value="0.2" 
-            className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600"
+            className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:border-blue-500"
             variant="outline"
           >
-            Factual
+            Precise
           </ToggleGroupItem>
           <ToggleGroupItem 
             value="0.5" 
-            className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600"
+            className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:border-blue-500"
             variant="outline"
           >
             Balanced
           </ToggleGroupItem>
           <ToggleGroupItem 
             value="0.8" 
-            className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600"
+            className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:border-blue-500"
             variant="outline"
           >
             Creative
