@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Video, PhoneOff, Loader2, RotateCcw } from 'lucide-react';
+import { Video, PhoneOff, Loader2, RotateCcw, AlertCircle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 
 interface VideoConversationEmbedProps {
@@ -13,10 +13,26 @@ interface VideoConversationEmbedProps {
 const VideoConversationEmbed = ({ conversationUrl, onClose }: VideoConversationEmbedProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  const [timeoutReached, setTimeoutReached] = useState(false);
 
   useEffect(() => {
+    console.log('=== VIDEO EMBED STATE CHANGE ===');
+    console.log('Conversation URL:', conversationUrl);
+    console.log('Is loading:', isLoading);
+    
     if (conversationUrl) {
       setIsLoading(false);
+      setHasError(false);
+      setTimeoutReached(false);
+    } else {
+      // Set a timeout to show error if URL doesn't come within 30 seconds
+      const timeout = setTimeout(() => {
+        console.log('❌ Video conversation timeout reached');
+        setTimeoutReached(true);
+        setIsLoading(false);
+      }, 30000);
+
+      return () => clearTimeout(timeout);
     }
   }, [conversationUrl]);
 
@@ -38,6 +54,44 @@ const VideoConversationEmbed = ({ conversationUrl, onClose }: VideoConversationE
     }
   };
 
+  const handleRetry = () => {
+    console.log('🔄 Retrying video conversation...');
+    setTimeoutReached(false);
+    setHasError(false);
+    setIsLoading(true);
+    onClose(); // This will trigger a new conversation attempt
+  };
+
+  if (!conversationUrl && timeoutReached) {
+    return (
+      <div className="h-full flex items-center justify-center p-4">
+        <Card className="w-full max-w-md mx-auto">
+          <CardContent className="p-6 text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Video Chat Failed</h3>
+            <p className="text-muted-foreground mb-4">
+              Unable to start video conversation. This might be due to:
+            </p>
+            <ul className="text-sm text-muted-foreground mb-4 text-left">
+              <li>• Network connectivity issues</li>
+              <li>• Tavus API service unavailable</li>
+              <li>• Missing or invalid API configuration</li>
+            </ul>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={handleRetry} className="bg-blue-500 hover:bg-blue-600">
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+              <Button variant="outline" onClick={onClose}>
+                Back to Chat
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (!conversationUrl) {
     return (
       <div className="h-full flex items-center justify-center p-4">
@@ -45,9 +99,14 @@ const VideoConversationEmbed = ({ conversationUrl, onClose }: VideoConversationE
           <CardContent className="p-6 text-center">
             <Loader2 className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
             <h3 className="text-lg font-semibold mb-2">Starting Video Chat...</h3>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-4">
               Setting up your conversation with Alex
             </p>
+            <div className="flex gap-2 justify-center">
+              <Button variant="outline" onClick={onClose} size="sm">
+                Cancel
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -115,8 +174,12 @@ const VideoConversationEmbed = ({ conversationUrl, onClose }: VideoConversationE
           src={conversationUrl}
           className="w-full h-full border-0"
           allow="camera; microphone; fullscreen"
-          onLoad={() => setIsLoading(false)}
+          onLoad={() => {
+            console.log('✅ Video iframe loaded successfully');
+            setIsLoading(false);
+          }}
           onError={() => {
+            console.error('❌ Video iframe failed to load');
             setIsLoading(false);
             setHasError(true);
           }}
