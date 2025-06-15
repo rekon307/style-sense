@@ -14,14 +14,24 @@ serve(async (req) => {
 
   try {
     console.log('=== TAVUS INTEGRATION REQUEST ===');
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
+    
     const requestBody = await req.json();
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
+    
     const { action, data } = requestBody;
 
     // Get Tavus API key from Supabase environment variables
     const tavusApiKey = Deno.env.get('TAVUS_API_KEY');
     if (!tavusApiKey) {
       console.error('TAVUS_API_KEY environment variable not set in Supabase secrets');
-      throw new Error('Tavus API key not configured. Please add TAVUS_API_KEY to Supabase secrets.');
+      return new Response(JSON.stringify({ 
+        error: 'Tavus API key not configured. Please add TAVUS_API_KEY to Supabase secrets.'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log('Action:', action);
@@ -48,9 +58,13 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('=== TAVUS INTEGRATION ERROR ===', error);
+    console.error('=== TAVUS INTEGRATION ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
     return new Response(JSON.stringify({ 
-      error: error.message || 'An unexpected error occurred'
+      error: error.message || 'An unexpected error occurred',
+      details: error.stack
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -75,8 +89,9 @@ async function createConversation(data: any, apiKey: string) {
   };
 
   console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
+  console.log('Using API endpoint: https://api.tavus.io/v2/conversations');
 
-  const response = await fetch('https://tavusapi.com/v2/conversations', {
+  const response = await fetch('https://api.tavus.io/v2/conversations', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -85,6 +100,9 @@ async function createConversation(data: any, apiKey: string) {
     body: JSON.stringify(payload),
   });
 
+  console.log('Tavus API response status:', response.status);
+  console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Tavus conversation creation failed:', response.status, errorText);
@@ -92,7 +110,7 @@ async function createConversation(data: any, apiKey: string) {
   }
 
   const result = await response.json();
-  console.log('✅ Conversation created successfully:', result);
+  console.log('✅ Conversation created successfully:', JSON.stringify(result, null, 2));
   return result;
 }
 
@@ -110,8 +128,9 @@ async function generateVideo(data: any, apiKey: string) {
   };
 
   console.log('Generating video with payload:', JSON.stringify(payload, null, 2));
+  console.log('Using API endpoint: https://api.tavus.io/v1/requests');
 
-  const response = await fetch('https://tavusapi.com/v1/requests', {
+  const response = await fetch('https://api.tavus.io/v1/requests', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -120,6 +139,9 @@ async function generateVideo(data: any, apiKey: string) {
     body: JSON.stringify(payload),
   });
 
+  console.log('Tavus API response status:', response.status);
+  console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
+
   if (!response.ok) {
     const errorText = await response.text();
     console.error('Tavus video generation failed:', response.status, errorText);
@@ -127,21 +149,25 @@ async function generateVideo(data: any, apiKey: string) {
   }
 
   const result = await response.json();
-  console.log('✅ Video generation initiated:', result);
+  console.log('✅ Video generation initiated:', JSON.stringify(result, null, 2));
   return result;
 }
 
 async function getConversationStatus(conversationId: string, apiKey: string) {
   console.log('=== GETTING CONVERSATION STATUS ===');
   console.log('Conversation ID:', conversationId);
+  console.log('Using API endpoint: https://api.tavus.io/v2/conversations/' + conversationId);
 
-  const response = await fetch(`https://tavusapi.com/v2/conversations/${conversationId}`, {
+  const response = await fetch(`https://api.tavus.io/v2/conversations/${conversationId}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
   });
+
+  console.log('Tavus API response status:', response.status);
+  console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -150,6 +176,6 @@ async function getConversationStatus(conversationId: string, apiKey: string) {
   }
 
   const result = await response.json();
-  console.log('✅ Conversation status retrieved:', result);
+  console.log('✅ Conversation status retrieved:', JSON.stringify(result, null, 2));
   return result;
 }
