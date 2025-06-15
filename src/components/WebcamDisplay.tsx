@@ -1,7 +1,10 @@
 
-import { Camera, AlertCircle, Video } from "lucide-react";
+import { Camera, AlertCircle, Video, Play, Square } from "lucide-react";
 import { useEffect, useState, RefObject, useRef, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface WebcamDisplayProps {
   videoRef?: RefObject<HTMLVideoElement>;
@@ -166,104 +169,100 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
     };
   }, []);
 
-  const renderOverlay = () => {
-    if (isLoading) {
-      return (
-        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-2xl">
-          <div className="max-w-sm">
-            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Camera className="h-6 w-6 text-white animate-pulse" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Starting camera...</h3>
-            <p className="text-sm text-slate-300">Please allow camera access</p>
-          </div>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-2xl">
-          <div className="max-w-md px-4">
-            <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="h-6 w-6 text-white" />
-            </div>
-            <h3 className="text-lg font-semibold text-red-400 mb-3">Camera Error</h3>
-            <p className="text-sm text-slate-300">{error}</p>
-          </div>
-        </div>
-      );
-    }
-
-    if (!isActive) {
-      return (
-        <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-center text-white rounded-2xl">
-          <div className="max-w-sm">
-            <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <Video className="h-6 w-6 text-slate-400" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Camera off</h3>
-            <p className="text-sm text-slate-300">Press "Start" to begin</p>
-          </div>
-        </div>
-      );
-    }
-
-    return null;
-  };
-
   return (
-    <div className="h-full flex flex-col">
-      {/* Cleaner Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200/50 dark:border-slate-700/50">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-            <Camera className="h-3 w-3 text-white" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Webcam View</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Live camera feed</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5">
-            <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-              {isActive ? 'Active' : 'Inactive'}
-            </span>
+    <div className="h-full">
+      <Card className="h-full">
+        <CardContent className="p-0 h-full flex flex-col">
+          {/* Controls Header */}
+          <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center gap-3">
+              <Badge variant={isActive ? "default" : "secondary"} className="flex items-center gap-1">
+                <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                {isActive ? 'Live' : 'Offline'}
+              </Badge>
+              <span className="text-sm font-medium">Camera Feed</span>
+            </div>
+            
+            <Button
+              onClick={handleToggleWebcam}
+              variant={isActive ? "destructive" : "default"}
+              size="sm"
+              disabled={isLoading}
+              className="gap-2"
+            >
+              {isLoading ? (
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : isActive ? (
+                <Square className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
+              {isLoading ? "Starting..." : isActive ? "Stop" : "Start"}
+            </Button>
           </div>
           
-          <Button
-            onClick={handleToggleWebcam}
-            variant="outline"
-            size="sm"
-            disabled={isLoading}
-            className="h-8 px-3 text-xs font-medium"
-          >
-            {isActive ? "Stop" : "Start"}
-          </Button>
-        </div>
-      </div>
-      
-      {/* Improved Video Container */}
-      <div className="flex-1 p-3">
-        <div className="h-full bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl overflow-hidden relative shadow-inner">
-          <video
-            ref={videoRef}
-            autoPlay
-            muted
-            playsInline
-            className="w-full h-full object-cover"
-            style={{ 
-              transform: 'scaleX(-1)',
-              aspectRatio: '16/9'
-            }}
-          />
-          <canvas ref={canvasRef} className="hidden" />
-          {renderOverlay()}
-        </div>
-      </div>
+          {/* Video Container */}
+          <div className="flex-1 relative bg-muted/30">
+            {error && (
+              <div className="absolute top-4 left-4 right-4 z-10">
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              </div>
+            )}
+            
+            <div className="absolute inset-4">
+              <Card className="h-full overflow-hidden">
+                <CardContent className="p-0 h-full relative">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                    style={{ 
+                      transform: 'scaleX(-1)',
+                      aspectRatio: '16/9'
+                    }}
+                  />
+                  <canvas ref={canvasRef} className="hidden" />
+                  
+                  {/* Loading Overlay */}
+                  {isLoading && (
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                      <div className="text-center space-y-4">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                          <Camera className="h-6 w-6 text-primary animate-pulse" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">Starting Camera</h3>
+                          <p className="text-sm text-muted-foreground">Please allow camera access</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Inactive Overlay */}
+                  {!isActive && !isLoading && !error && (
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                      <div className="text-center space-y-4">
+                        <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto">
+                          <Video className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">Camera Offline</h3>
+                          <p className="text-sm text-muted-foreground">Click "Start" to begin</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 });

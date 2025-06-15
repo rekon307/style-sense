@@ -6,7 +6,10 @@ import ChatHistory from "@/components/ChatHistory";
 import AuthButton from "@/components/AuthButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { PanelLeft, PanelLeftClose, Sparkles } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { PanelLeft, PanelLeftClose, Sparkles, Video, Camera } from "lucide-react";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -64,15 +67,16 @@ const Index = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-        <div className="flex h-14 items-center justify-between px-4">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center justify-between px-4">
+          <div className="flex items-center gap-4">
             <Button
               onClick={() => setShowChatHistory(!showChatHistory)}
               variant="ghost"
               size="sm"
-              className="h-8 px-2"
+              className="h-9 w-9 p-0"
             >
               {showChatHistory ? (
                 <PanelLeftClose className="h-4 w-4" />
@@ -81,70 +85,117 @@ const Index = ({
               )}
             </Button>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600">
-                  <Sparkles className="h-4 w-4 text-white" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600">
+                  <Sparkles className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border border-white ${isAnalyzing ? 'bg-amber-500 animate-pulse' : 'bg-green-500'} dark:border-slate-900`}></div>
+                <Badge 
+                  variant={isAnalyzing ? "default" : "secondary"} 
+                  className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center ${
+                    isAnalyzing ? 'animate-pulse bg-amber-500' : 'bg-green-500'
+                  }`}
+                >
+                  <div className="h-2 w-2 rounded-full bg-white" />
+                </Badge>
               </div>
               <div>
-                <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                  AI Style
-                </h1>
+                <h1 className="text-xl font-bold">AI Style Assistant</h1>
+                <p className="text-sm text-muted-foreground">
+                  {isAnalyzing ? 'Analyzing...' : 'Ready to help'}
+                </p>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <AuthButton user={user} onAuthChange={onAuthChange} />
+            <Separator orientation="vertical" className="h-6" />
             <ThemeToggle />
           </div>
         </div>
       </header>
       
-      <div className="flex h-[calc(100vh-3.5rem)]">
-        <aside className={`${showChatHistory ? 'w-72' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-slate-200 dark:border-slate-800`}>
-          <div className="h-full bg-white dark:bg-slate-900">
-            <div className="p-4">
+      <div className="flex h-[calc(100vh-4rem)]">
+        {/* Sidebar */}
+        <aside className={`${showChatHistory ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r`}>
+          <div className="h-full bg-muted/30">
+            <div className="p-6">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold">Chat History</h2>
+                <p className="text-sm text-muted-foreground">Previous conversations</p>
+              </div>
               <ChatHistory onSessionChange={onSessionChange} />
             </div>
           </div>
         </aside>
         
         <main className="flex flex-1 gap-0">
-          <section className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-800">
-            {isVideoMode ? (
-              <div className="h-full">
-                {videoConversationUrl ? (
-                  <iframe
-                    src={videoConversationUrl}
-                    className="w-full h-full border-0"
-                    allow="camera; microphone; fullscreen"
-                    title="Video Chat with Alex"
-                  />
-                ) : (
-                  <div className="h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
-                    <div className="text-center">
-                      <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Sparkles className="h-8 w-8 text-white" />
+          {/* Main Content Area */}
+          <section className="flex-1 min-w-0 p-4">
+            <Card className="h-full">
+              <CardContent className="p-0 h-full">
+                {isVideoMode ? (
+                  <div className="h-full flex flex-col">
+                    <div className="flex items-center justify-between p-4 border-b bg-muted/50">
+                      <div className="flex items-center gap-2">
+                        <Video className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="font-semibold">Video Chat</h3>
+                          <p className="text-sm text-muted-foreground">Live conversation with Alex</p>
+                        </div>
                       </div>
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-                        Starting Video Chat...
-                      </h3>
-                      <p className="text-sm text-slate-600 dark:text-slate-400">
-                        Setting up your conversation with Alex
-                      </p>
+                      <Badge variant="default" className="bg-green-500">
+                        {videoConversationUrl ? 'Connected' : 'Connecting...'}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex-1">
+                      {videoConversationUrl ? (
+                        <iframe
+                          src={videoConversationUrl}
+                          className="w-full h-full border-0"
+                          allow="camera; microphone; fullscreen"
+                          title="Video Chat with Alex"
+                        />
+                      ) : (
+                        <div className="h-full flex items-center justify-center">
+                          <div className="text-center space-y-4">
+                            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                              <Video className="h-10 w-10 text-primary animate-pulse" />
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-semibold">Starting Video Chat</h3>
+                              <p className="text-muted-foreground">Setting up your conversation with Alex</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col">
+                    <div className="flex items-center justify-between p-4 border-b bg-muted/50">
+                      <div className="flex items-center gap-2">
+                        <Camera className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="font-semibold">Camera View</h3>
+                          <p className="text-sm text-muted-foreground">Live camera feed for style analysis</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-1 p-4">
+                      <WebcamDisplay ref={webcamRef} />
                     </div>
                   </div>
                 )}
-              </div>
-            ) : (
-              <WebcamDisplay ref={webcamRef} />
-            )}
+              </CardContent>
+            </Card>
           </section>
           
-          <section className="w-96 flex-shrink-0 border-l border-slate-200 dark:border-slate-800">
+          {/* Style Advice Panel */}
+          <section className="w-96 flex-shrink-0 border-l">
             <StyleAdvice 
               messages={messages} 
               isAnalyzing={isAnalyzing}
