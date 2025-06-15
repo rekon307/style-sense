@@ -101,9 +101,45 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
   return (
     <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
       <div className="p-4">
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {/* Main Input Area */}
-          <div className="relative">
+        <form onSubmit={handleSubmit}>
+          {/* Integrated Input Area with Icons */}
+          <div className="relative flex items-end gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-blue-400 transition-colors">
+            {/* Left side icons */}
+            <div className="flex items-center gap-1 pb-2">
+              {/* Image Upload Icon */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isAnalyzing}
+                className="h-8 w-8 p-0 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+              >
+                <ImageIcon className="h-5 w-5" />
+              </Button>
+
+              {/* Voice Recording Icon */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={toggleRecording}
+                disabled={isAnalyzing}
+                className={`h-8 w-8 p-0 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 ${
+                  isRecording 
+                    ? 'text-red-500 hover:text-red-600' 
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                }`}
+              >
+                {isRecording ? (
+                  <MicOff className="h-5 w-5" />
+                ) : (
+                  <Mic className="h-5 w-5" />
+                )}
+              </Button>
+            </div>
+
+            {/* Text Input */}
             <Textarea
               ref={textareaRef}
               value={message}
@@ -111,69 +147,32 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
               onKeyDown={handleKeyDown}
               placeholder={isAnalyzing ? "Alex is thinking..." : "Ask about your style..."}
               disabled={isAnalyzing}
-              className="min-h-[50px] max-h-[120px] resize-none pr-12 py-3 text-sm leading-relaxed bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
+              className="flex-1 min-h-[40px] max-h-[120px] resize-none border-0 bg-transparent px-0 py-2 text-sm leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0"
               rows={1}
             />
             
-            {/* Send Button - Positioned inside textarea */}
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!message.trim() || isAnalyzing}
-              className="absolute right-2 top-2 h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 transition-colors"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Action Buttons Row */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {/* Image Upload */}
+            {/* Send Button */}
+            <div className="pb-2">
               <Button
-                type="button"
-                variant="outline"
+                type="submit"
                 size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isAnalyzing}
-                className="h-9 px-3 text-xs font-medium border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                disabled={!message.trim() || isAnalyzing}
+                className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 transition-colors rounded-full"
               >
-                <ImageIcon className="h-4 w-4 mr-1.5" />
-                Upload
-              </Button>
-
-              {/* Voice Recording */}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={toggleRecording}
-                disabled={isAnalyzing}
-                className={`h-9 px-3 text-xs font-medium border-slate-200 dark:border-slate-700 transition-colors ${
-                  isRecording 
-                    ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400' 
-                    : 'hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                {isRecording ? (
-                  <MicOff className="h-4 w-4 mr-1.5" />
-                ) : (
-                  <Mic className="h-4 w-4 mr-1.5" />
-                )}
-                {isRecording ? 'Stop' : 'Voice'}
+                <Send className="h-4 w-4" />
               </Button>
             </div>
-
-            {/* Status Indicator */}
-            {isAnalyzing && (
-              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <div className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                  <span>Alex is thinking...</span>
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Status Indicator */}
+          {isAnalyzing && (
+            <div className="flex items-center justify-center gap-2 mt-3 text-xs text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                <span>Alex is thinking...</span>
+              </div>
+            </div>
+          )}
         </form>
 
         {/* Hidden file input */}
