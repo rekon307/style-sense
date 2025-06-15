@@ -42,7 +42,6 @@ const StyleAdvice = ({
   const previousSessionIdRef = useRef<string | null>(currentSessionId);
   const isInitialRenderRef = useRef<boolean>(true);
   const previousVideoModeRef = useRef<boolean | null>(null);
-  const componentMountedRef = useRef<boolean>(true);
   
   const { 
     createConversation, 
@@ -182,26 +181,6 @@ const StyleAdvice = ({
     console.log('🔗 Updating parent with video URL:', videoConversationUrl);
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
-
-  // Set component mounted flag
-  useEffect(() => {
-    componentMountedRef.current = true;
-    
-    return () => {
-      componentMountedRef.current = false;
-      console.log('🧹 Component unmounting, marking as unmounted');
-      
-      // Only end conversation on unmount if we're switching away from video mode
-      // or if the component is being truly destroyed (not just re-rendering)
-      if (!isVideoMode && currentConversationId && !endingConversationRef.current) {
-        console.log('🧹 Component unmounting while not in video mode - ending conversation:', currentConversationId);
-        endingConversationRef.current = currentConversationId;
-        endConversation(currentConversationId).catch(console.error);
-      } else if (currentConversationId) {
-        console.log('🧹 Component unmounting but staying in video mode - keeping conversation active');
-      }
-    };
-  }, [currentConversationId, endConversation, isVideoMode]);
 
   const handleStartVideoChat = async () => {
     if (isCreatingVideo || isCreatingConversation) {
