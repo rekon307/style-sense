@@ -27,7 +27,7 @@ const VideoConversation = ({ onClose }: VideoConversationProps) => {
       const conversation = await createConversation(
         "Style Sense Video Chat",
         "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
-        "p347dab0cef8"
+        "r4fa3e64f1"
       );
       
       if (conversation) {
