@@ -1,15 +1,15 @@
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sparkles, MessageSquare, Video } from "lucide-react";
 import { useAlexState } from "@/contexts/AlexStateContext";
 
 interface ChatHeaderProps {
   isAnalyzing: boolean;
-  selectedModel: string;
-  onModelChange: (model: string) => void;
+  isVideoMode: boolean;
+  onVideoModeChange: (isVideoMode: boolean) => void;
 }
 
-const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderProps) => {
+const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange }: ChatHeaderProps) => {
   const { status } = useAlexState();
 
   const getStatusIndicator = () => {
@@ -54,15 +54,26 @@ const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderPro
           </div>
         </div>
         
-        <Select value={selectedModel} onValueChange={onModelChange}>
-          <SelectTrigger className="h-8 w-32 text-xs border-gray-200 dark:border-gray-700">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="gpt-4o-mini">Style Mini</SelectItem>
-            <SelectItem value="gpt-4o">Style Pro</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Button
+            variant={!isVideoMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => onVideoModeChange(false)}
+            className="flex items-center gap-2 h-8 px-3 text-xs"
+          >
+            <MessageSquare className="h-3 w-3" />
+            Text Chat
+          </Button>
+          <Button
+            variant={isVideoMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => onVideoModeChange(true)}
+            className="flex items-center gap-2 h-8 px-3 text-xs bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            <Video className="h-3 w-3" />
+            Video Chat
+          </Button>
+        </div>
       </div>
     </div>
   );

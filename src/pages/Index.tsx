@@ -46,6 +46,7 @@ const Index = ({
     console.log('Cognitive Temperature:', temperature);
     console.log('Chain-of-Thought Mode: Active');
     
+    // Always use Style Mini (gpt-4o-mini) as the default and only model
     handleSendMessage(message, image, temperature);
   };
 
