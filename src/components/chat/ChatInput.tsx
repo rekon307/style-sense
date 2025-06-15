@@ -165,13 +165,13 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
         </div>
       )}
       
-      <div className="flex items-end gap-4">
+      <div className="flex items-end gap-3">
         <div className="flex flex-col gap-3">
           <Button
             onClick={() => fileInputRef.current?.click()}
             size="sm"
             variant="ghost"
-            className="h-12 w-12 p-0 rounded-2xl text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex-shrink-0 border border-gray-200 dark:border-gray-600 hover:border-blue-300 shadow-sm hover:shadow-md"
+            className="h-11 w-11 p-0 rounded-xl text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex-shrink-0 border border-gray-200 dark:border-gray-600 hover:border-blue-300 shadow-sm hover:shadow-md"
             disabled={isInputDisabled}
             title="Attach photo"
           >
@@ -186,15 +186,15 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder={getPlaceholder()}
-            className="min-h-[56px] max-h-36 resize-none rounded-2xl border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-6 py-4 pr-16 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 dark:placeholder:text-gray-400 transition-all duration-200 shadow-sm focus:shadow-md"
+            className="min-h-[48px] max-h-32 resize-none rounded-xl border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 pr-14 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 dark:placeholder:text-gray-400 transition-all duration-200 shadow-sm focus:shadow-md"
             disabled={isInputDisabled}
           />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
             <Button
               onClick={handleMicClick}
               size="sm"
               variant="ghost"
-              className={`h-10 w-10 p-0 rounded-xl transition-all duration-200 ${
+              className={`h-8 w-8 p-0 rounded-lg transition-all duration-200 ${
                 status === 'listening' 
                   ? 'bg-red-500 text-white hover:bg-red-600 shadow-lg animate-pulse' 
                   : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
@@ -214,14 +214,14 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
         <Button
           onClick={handleSend}
           size="sm"
-          className="h-12 w-12 p-0 rounded-2xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+          className="h-11 w-11 p-0 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
           disabled={isInputDisabled || (!message.trim() && !selectedImage)}
           title="Send message"
         >
           {isInputDisabled ? (
-            <Zap className="h-5 w-5 animate-pulse" />
+            <Zap className="h-4 w-4 animate-pulse" />
           ) : (
-            <Send className="h-5 w-5" />
+            <Send className="h-4 w-4" />
           )}
         </Button>
       </div>
