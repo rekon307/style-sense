@@ -94,12 +94,21 @@ async function createConversation(data: any, apiKey: string) {
     console.log('Cleanup failed, but continuing with conversation creation:', cleanupError.message);
   }
   
-  // Use the correct persona_id from your working template
+  // Enhanced payload with improved conversation settings
   const payload = {
-    persona_id: "p869ead8c67b"
+    persona_id: data.persona_id || "p869ead8c67b",
+    custom_greeting: data.custom_greeting || "Hello! I am Andrew, your personal AI-Stylist! I'm here to help you discover your unique style and provide personalized fashion advice.",
+    properties: {
+      max_call_duration: data.max_call_duration || 180, // 3 minutes default
+      participant_left_timeout: data.participant_left_timeout || 1, // 1 second
+      participant_absent_timeout: data.participant_absent_timeout || 30, // 30 seconds
+      enable_recording: data.enable_recording || false,
+      enable_closed_captions: data.enable_closed_captions !== undefined ? data.enable_closed_captions : true,
+      language: data.language || "en"
+    }
   };
 
-  console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
+  console.log('Creating conversation with enhanced payload:', JSON.stringify(payload, null, 2));
   console.log('Using API endpoint: https://tavusapi.com/v2/conversations');
 
   try {
@@ -135,6 +144,9 @@ async function createConversation(data: any, apiKey: string) {
         try {
           await cleanupConversations(apiKey);
           console.log('Retrying conversation creation after cleanup...');
+          
+          // Wait a bit before retry
+          await new Promise(resolve => setTimeout(resolve, 2000));
           
           // Retry the request
           const retryResponse = await fetch('https://tavusapi.com/v2/conversations', {
@@ -342,7 +354,7 @@ async function generateVideo(data: any, apiKey: string) {
   console.log('=== GENERATING TAVUS VIDEO ===');
   
   const payload = {
-    script: data.greeting || "Hello! I'm Alex, your AI style advisor. Let's talk about fashion!",
+    script: data.greeting || "Hello! I'm Andrew, your AI style advisor. Let's talk about fashion!",
     replica_id: data.replica_id || "r4fa3e64f1",
     background_url: data.background_url,
     webhook_url: data.callbackUrl || data.callback_url

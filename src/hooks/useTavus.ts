@@ -146,13 +146,19 @@ export const useTavus = () => {
       // Wait for cleanup
       await new Promise(resolve => setTimeout(resolve, 500));
       
+      // Enhanced request data with improved conversation settings
       const requestData = {
-        conversation_name: conversationName,
-        conversational_context: conversationalContext,
-        persona_id: personaId || "p869ead8c67b"
+        persona_id: personaId || "p869ead8c67b",
+        custom_greeting: `Hello ${participantName || 'there'}! I am Andrew, your personal AI-Stylist! I'm here to help you discover your unique style, analyze your outfits, and provide personalized fashion advice. ${conversationalContext ? `Let's talk about: ${conversationalContext}` : 'What would you like to explore about your style today?'}`,
+        max_call_duration: 300, // 5 minutes
+        participant_left_timeout: 1, // 1 second
+        participant_absent_timeout: 30, // 30 seconds
+        enable_recording: false,
+        enable_closed_captions: true,
+        language: "en"
       };
       
-      console.log('🚀 Sending conversation creation request:', requestData);
+      console.log('🚀 Sending enhanced conversation creation request:', requestData);
       
       const { data, error } = await supabase.functions.invoke('tavus-integration', {
         body: {
@@ -223,7 +229,7 @@ export const useTavus = () => {
       
       toast({
         title: "Video conversation ready",
-        description: `Welcome ${participantName || 'there'}! Your direct conversation with Alex is starting.`,
+        description: `Welcome ${participantName || 'there'}! Your direct conversation with Andrew is starting.`,
       });
 
       return data;
