@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
@@ -35,9 +35,19 @@ const StyleAdvice = ({
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isCreatingVideo, setIsCreatingVideo] = useState(false);
-  const { createConversation, endConversation, isCreatingConversation, isEndingConversation, cleanupOldConversations } = useTavus();
+  
+  const { 
+    createConversation, 
+    endConversation, 
+    endAllActiveConversations,
+    isCreatingConversation, 
+    isEndingConversation, 
+    cleanupOldConversations 
+  } = useTavus();
 
-  // Fixed temperature for precise mode only
+  // Track the current mode to detect changes
+  const previousVideoModeRef = useRef<boolean>(false);
+
   const temperature = 0.2;
 
   // Notify parent component of video mode changes
@@ -49,6 +59,49 @@ const StyleAdvice = ({
   useEffect(() => {
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
+
+  // Handle mode switching with proper cleanup
+  useEffect(() => {
+    const handleModeChange = async () => {
+      // If switching from video to text mode, end the conversation
+      if (previousVideoModeRef.current && !isVideoMode && currentConversationId) {
+        console.log('🔄 Switching from video to text - ending conversation');
+        try {
+          await endConversation(currentConversationId);
+          setVideoConversationUrl(null);
+          setCurrentConversationId(null);
+        } catch (error) {
+          console.error('Failed to end conversation when switching to text:', error);
+        }
+      }
+      
+      previousVideoModeRef.current = isVideoMode;
+    };
+
+    handleModeChange();
+  }, [isVideoMode, currentConversationId, endConversation]);
+
+  // Cleanup on unmount or session change
+  useEffect(() => {
+    return () => {
+      // Cleanup any active conversations when component unmounts
+      if (currentConversationId) {
+        endConversation(currentConversationId, false).catch(console.error);
+      }
+    };
+  }, []);
+
+  // Cleanup when session changes
+  useEffect(() => {
+    if (currentConversationId) {
+      console.log('🔄 Session changed - ending current conversation');
+      endConversation(currentConversationId, false).then(() => {
+        setVideoConversationUrl(null);
+        setCurrentConversationId(null);
+        setIsVideoMode(false);
+      }).catch(console.error);
+    }
+  }, [currentSessionId]);
 
   const handleStartVideoChat = async () => {
     if (isCreatingVideo || isCreatingConversation) {
@@ -63,14 +116,12 @@ const StyleAdvice = ({
       console.log('Current session ID:', currentSessionId);
       console.log('User:', user);
       
-      // First, cleanup any old conversations
-      console.log('Cleaning up old conversations before creating new one...');
-      await cleanupOldConversations();
+      // End any existing conversations first
+      await endAllActiveConversations();
       
       // Wait a moment for cleanup to complete
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Get user's name or use default
       const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Style Enthusiast';
       console.log('Using name for video chat:', userName);
       
@@ -105,7 +156,6 @@ const StyleAdvice = ({
     } catch (error) {
       console.error('❌ Failed to start video conversation:', error);
       
-      // If it's a concurrent conversation limit, try cleanup and show helpful message
       if (error.message && error.message.includes('maximum concurrent conversations')) {
         toast({
           title: "Video chat limit reached",
@@ -147,7 +197,6 @@ const StyleAdvice = ({
   const handleEndVideoCall = async () => {
     console.log('🛑 Ending video call');
     
-    // End the conversation on Tavus if we have a conversation ID
     if (currentConversationId) {
       console.log('🛑 Ending Tavus conversation:', currentConversationId);
       try {

@@ -1,5 +1,5 @@
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
 import ChatHistory from "@/components/ChatHistory";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PanelLeft, PanelLeftClose, Sparkles, Video, Camera, MessageSquare, Zap } from "lucide-react";
+import { useTavus } from "@/hooks/useTavus";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -44,6 +45,11 @@ const Index = ({
   const [showChatHistory, setShowChatHistory] = useState(true);
   const [isVideoMode, setIsVideoMode] = useState(false);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
+  
+  const { endAllActiveConversations } = useTavus();
+  
+  // Track previous session ID to detect changes
+  const previousSessionIdRef = useRef<string | null>(currentSessionId);
 
   const handleCognitiveMessage = (message: string, image?: string | null, temperature: number = 0.5) => {
     console.log('=== ALEX COGNITIVE PROCESSING ===');
@@ -64,6 +70,46 @@ const Index = ({
     console.log('🔗 Index: Video URL changed to:', url);
     setVideoConversationUrl(url);
   };
+
+  const handleSessionChange = async (sessionId: string | null) => {
+    console.log('🔄 Session changing from', previousSessionIdRef.current, 'to', sessionId);
+    
+    // If we're changing sessions and currently in video mode, end all conversations
+    if (previousSessionIdRef.current !== sessionId && isVideoMode) {
+      console.log('🛑 Session change detected - ending all active conversations');
+      try {
+        await endAllActiveConversations();
+        setIsVideoMode(false);
+        setVideoConversationUrl(null);
+      } catch (error) {
+        console.error('Failed to end conversations on session change:', error);
+      }
+    }
+    
+    previousSessionIdRef.current = sessionId;
+    onSessionChange(sessionId);
+  };
+
+  const handleAuthChange = async () => {
+    console.log('🛑 Auth change detected - ending all active conversations');
+    try {
+      await endAllActiveConversations();
+      setIsVideoMode(false);
+      setVideoConversationUrl(null);
+    } catch (error) {
+      console.error('Failed to end conversations on auth change:', error);
+    }
+    onAuthChange();
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (isVideoMode) {
+        endAllActiveConversations().catch(console.error);
+      }
+    };
+  }, []);
 
   return (
     <TooltipProvider>
@@ -104,7 +150,7 @@ const Index = ({
             </div>
             
             <div className="flex items-center gap-4">
-              <AuthButton user={user} onAuthChange={onAuthChange} />
+              <AuthButton user={user} onAuthChange={handleAuthChange} />
               <Separator orientation="vertical" className="h-6" />
               <ThemeToggle />
             </div>
@@ -120,45 +166,47 @@ const Index = ({
                   <MessageSquare className="h-4 w-4 text-blue-600" />
                   <h2 className="font-semibold text-gray-900 dark:text-white">Chat History</h2>
                 </div>
-                <ChatHistory onSessionChange={onSessionChange} />
+                <ChatHistory onSessionChange={handleSessionChange} />
               </div>
             </div>
           </aside>
           
           <main className="flex flex-1 gap-0">
-            {/* Main Content Area */}
-            <section className="flex-1 min-w-0 p-6">
-              <Card className="h-full border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl overflow-hidden">
-                <CardContent className="p-0 h-full">
-                  <div className="h-full flex flex-col">
-                    <div className="flex items-center justify-between p-6 border-b border-gray-100/50 dark:border-gray-800/50 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
-                          <Camera className="h-6 w-6 text-white" />
+            {/* Camera Section - Hide when in video mode */}
+            {!isVideoMode && (
+              <section className="flex-1 min-w-0 p-6">
+                <Card className="h-full border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl overflow-hidden">
+                  <CardContent className="p-0 h-full">
+                    <div className="h-full flex flex-col">
+                      <div className="flex items-center justify-between p-6 border-b border-gray-100/50 dark:border-gray-800/50 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+                            <Camera className="h-6 w-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Camera View</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Capture your style for analysis</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Camera View</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Capture your style for analysis</p>
+                        <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700 px-3 py-1 rounded-full font-medium">
+                          <Zap className="w-3 h-3 mr-2" />
+                          Ready
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 to-gray-900">
+                        <div className="h-full rounded-2xl overflow-hidden shadow-inner">
+                          <WebcamDisplay ref={webcamRef} />
                         </div>
                       </div>
-                      <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700 px-3 py-1 rounded-full font-medium">
-                        <Zap className="w-3 h-3 mr-2" />
-                        Ready
-                      </Badge>
                     </div>
-                    
-                    <div className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 to-gray-900">
-                      <div className="h-full rounded-2xl overflow-hidden shadow-inner">
-                        <WebcamDisplay ref={webcamRef} />
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </section>
+                  </CardContent>
+                </Card>
+              </section>
+            )}
             
-            {/* Chat Panel */}
-            <section className="w-96 flex-shrink-0 border-l border-white/20 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-6">
+            {/* Chat Panel - Full width when in video mode */}
+            <section className={`${isVideoMode ? 'flex-1' : 'w-96 flex-shrink-0'} border-l border-white/20 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-6`}>
               <StyleAdvice 
                 messages={messages} 
                 isAnalyzing={isAnalyzing}

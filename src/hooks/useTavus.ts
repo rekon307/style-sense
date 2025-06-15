@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -16,8 +16,16 @@ export const useTavus = () => {
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [isEndingConversation, setIsEndingConversation] = useState(false);
   const [currentConversation, setCurrentConversation] = useState<TavusConversation | null>(null);
+  
+  // Track active conversations to ensure proper cleanup
+  const activeConversationsRef = useRef<Set<string>>(new Set());
 
-  const endConversation = async (conversationId: string) => {
+  const endConversation = async (conversationId: string, showToast: boolean = true) => {
+    if (!conversationId) {
+      console.warn('No conversation ID provided for ending');
+      return;
+    }
+
     setIsEndingConversation(true);
     try {
       console.log('=== ENDING TAVUS CONVERSATION ===');
@@ -39,6 +47,9 @@ export const useTavus = () => {
 
       console.log('✅ Conversation ended:', data);
       
+      // Remove from active conversations tracking
+      activeConversationsRef.current.delete(conversationId);
+      
       // Update status in database
       await supabase
         .from('video_conversations')
@@ -48,23 +59,55 @@ export const useTavus = () => {
         })
         .eq('conversation_id', conversationId);
 
-      toast({
-        title: "Conversation ended",
-        description: "The video conversation has been properly closed.",
-      });
+      // Clear current conversation if it's the one we're ending
+      if (currentConversation?.conversation_id === conversationId) {
+        setCurrentConversation(null);
+      }
+
+      if (showToast) {
+        toast({
+          title: "Conversation ended",
+          description: "The video conversation has been properly closed.",
+        });
+      }
 
       return data;
     } catch (error) {
       console.error('Failed to end conversation:', error);
-      toast({
-        title: "Warning",
-        description: "Failed to properly end the conversation. It may still be active on Tavus.",
-        variant: "destructive",
-      });
+      if (showToast) {
+        toast({
+          title: "Warning",
+          description: "Failed to properly end the conversation. It may still be active on Tavus.",
+          variant: "destructive",
+        });
+      }
       throw error;
     } finally {
       setIsEndingConversation(false);
     }
+  };
+
+  const endAllActiveConversations = async () => {
+    console.log('=== ENDING ALL ACTIVE CONVERSATIONS ===');
+    const activeIds = Array.from(activeConversationsRef.current);
+    
+    if (activeIds.length === 0) {
+      console.log('No active conversations to end');
+      return;
+    }
+
+    const endPromises = activeIds.map(id => 
+      endConversation(id, false).catch(error => {
+        console.error(`Failed to end conversation ${id}:`, error);
+      })
+    );
+
+    await Promise.allSettled(endPromises);
+    
+    // Clear the tracking set
+    activeConversationsRef.current.clear();
+    
+    console.log(`✅ Attempted to end ${activeIds.length} active conversations`);
   };
 
   const cleanupOldConversations = async () => {
@@ -102,6 +145,9 @@ export const useTavus = () => {
     try {
       console.log('=== CREATING TAVUS CONVERSATION ===');
       
+      // First, end any existing active conversations to prevent conflicts
+      await endAllActiveConversations();
+      
       const { data, error } = await supabase.functions.invoke('tavus-integration', {
         body: {
           action: 'create_conversation',
@@ -115,7 +161,7 @@ export const useTavus = () => {
               participant_absent_timeout: 60,
               enable_recording: false,
               enable_transcription: true,
-              language: "English" // Use full language name
+              language: "English"
             }
           }
         }
@@ -124,7 +170,6 @@ export const useTavus = () => {
       if (error) {
         console.error('Error creating conversation:', error);
         
-        // If it's a concurrent conversation limit error, show a more helpful message
         if (error.message && error.message.includes('maximum concurrent conversations')) {
           toast({
             title: "Video chat limit reached",
@@ -142,6 +187,11 @@ export const useTavus = () => {
       }
 
       console.log('✅ Conversation created:', data);
+      
+      // Track this conversation as active
+      if (data.conversation_id) {
+        activeConversationsRef.current.add(data.conversation_id);
+      }
       
       // Save to database
       const { data: userData } = await supabase.auth.getUser();
@@ -174,7 +224,6 @@ export const useTavus = () => {
     } catch (error) {
       console.error('Failed to create conversation:', error);
       
-      // Don't show duplicate error toasts
       if (!error.message?.includes('maximum concurrent conversations')) {
         toast({
           title: "Error",
@@ -305,6 +354,7 @@ export const useTavus = () => {
   return {
     createConversation,
     endConversation,
+    endAllActiveConversations,
     generateVideo,
     getConversationStatus,
     loadVideoConversations,
