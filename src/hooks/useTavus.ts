@@ -34,7 +34,16 @@ export const useTavus = () => {
             conversation_name: conversationName,
             conversational_context: conversationalContext,
             persona_id: personaId || "p347dab0cef8",
-            participant_name: participantName
+            participant_name: participantName,
+            custom_greeting: `Hello ${participantName || 'there'}! I'm Alex, your AI style advisor. I can see you and I'm ready to help with your fashion questions. Feel free to ask me anything about style, outfits, or fashion trends!`,
+            properties: {
+              max_call_duration: 1800, // 30 minutes
+              participant_left_timeout: 60,
+              participant_absent_timeout: 60,
+              enable_recording: false,
+              enable_transcription: true,
+              language: "en"
+            }
           }
         }
       });
@@ -70,7 +79,7 @@ export const useTavus = () => {
       
       toast({
         title: "Video conversation ready",
-        description: "Your AI style advisor is ready for a video chat!",
+        description: `Welcome ${participantName}! Your direct conversation with Alex is starting.`,
       });
 
       return data;
@@ -116,7 +125,7 @@ export const useTavus = () => {
         throw error;
       }
 
-      console.log('✅ Video generation initiated:', data);
+      console.log('✅ Video generation response:', data);
       
       toast({
         title: "Video generation started",
