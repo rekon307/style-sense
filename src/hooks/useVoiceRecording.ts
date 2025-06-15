@@ -1,3 +1,4 @@
+
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 
@@ -73,10 +74,12 @@ export const useVoiceRecording = () => {
       const recognition = new SpeechRecognitionClass();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'en-US';
+      // Use auto-detection by not setting a specific language - browser will detect automatically
+      // This enables multi-language support while defaulting to user's system language
+      // recognition.lang = 'auto'; // Not supported by all browsers, so we omit it for auto-detection
 
       recognition.onstart = () => {
-        console.log('🎤 Voice recording started');
+        console.log('🎤 Voice recording started with auto-detection enabled');
         setIsListening(true);
         setLiveTranscript('');
       };

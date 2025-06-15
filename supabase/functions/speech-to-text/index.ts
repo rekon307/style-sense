@@ -43,13 +43,14 @@ serve(async (req) => {
   }
 
   try {
-    const { audio } = await req.json()
+    const { audio, language } = await req.json()
     
     if (!audio) {
       throw new Error('No audio data provided')
     }
 
     console.log('Processing audio transcription request, audio size:', audio.length);
+    console.log('Language preference:', language || 'auto-detect');
 
     // Process audio in chunks to prevent memory issues
     const binaryAudio = processBase64Chunks(audio)
@@ -59,10 +60,19 @@ serve(async (req) => {
     const blob = new Blob([binaryAudio], { type: 'audio/webm' })
     formData.append('file', blob, 'audio.webm')
     formData.append('model', 'whisper-1')
-    // Removed the hardcoded language parameter to enable auto-detection
+    
+    // Enable auto-detection by omitting language parameter or use provided language
+    // Whisper automatically detects language when no language is specified
+    if (language && language !== 'auto') {
+      formData.append('language', language)
+      console.log('Using specified language:', language);
+    } else {
+      console.log('Using auto-detection for optimal language recognition');
+    }
+    
     formData.append('response_format', 'json')
 
-    console.log('Sending request to OpenAI Whisper API with auto language detection...');
+    console.log('Sending request to OpenAI Whisper API...');
 
     // Send to OpenAI
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -81,12 +91,12 @@ serve(async (req) => {
 
     const result = await response.json()
     console.log('Transcription successful:', result.text);
-    console.log('Detected language:', result.language);
+    console.log('Detected language:', result.language || 'unknown');
 
     return new Response(
       JSON.stringify({ 
         text: result.text,
-        language: result.language 
+        language: result.language || 'unknown'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
