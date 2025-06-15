@@ -42,7 +42,7 @@ const Index = ({
 }: IndexProps) => {
   const webcamRef = useRef<WebcamDisplayRef>(null);
   const [showChatHistory, setShowChatHistory] = useState(true);
-  const [isVideoMode, setIsVideoMode] = useState<boolean>(false); // Changed to false for text mode default
+  const [isVideoMode, setIsVideoMode] = useState<boolean>(true); // Changed to true for video mode default
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   
   const { endAllActiveConversations } = useTavus();
@@ -92,7 +92,7 @@ const Index = ({
     console.log('🛑 Auth change detected - ending all active conversations');
     try {
       await endAllActiveConversations();
-      setIsVideoMode(false); // Reset to text mode
+      setIsVideoMode(true); // Keep video mode as default even after auth change
       setVideoConversationUrl(null);
     } catch (error) {
       console.error('Failed to end conversations on auth change:', error);
