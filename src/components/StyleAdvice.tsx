@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
@@ -39,8 +38,8 @@ const StyleAdvice = ({
   const [hasTriedAutoStart, setHasTriedAutoStart] = useState(false);
   
   const endingConversationRef = useRef<string | null>(null);
-  const previousVideoModeRef = useRef<boolean>(isVideoMode);
   const previousSessionIdRef = useRef<string | null>(currentSessionId);
+  const isInitialRenderRef = useRef<boolean>(true);
   
   const { 
     createConversation, 
@@ -97,13 +96,22 @@ const StyleAdvice = ({
     }
   };
 
-  // Watch for session changes
+  // Watch for session changes - only end conversation if we actually had one and session changed
   useEffect(() => {
     console.log('=== SESSION CHANGE DETECTION ===');
+    console.log('Is initial render:', isInitialRenderRef.current);
     console.log('Previous session:', previousSessionIdRef.current);
     console.log('Current session:', currentSessionId);
     console.log('Current conversation ID:', currentConversationId);
 
+    // Skip on initial render
+    if (isInitialRenderRef.current) {
+      isInitialRenderRef.current = false;
+      previousSessionIdRef.current = currentSessionId;
+      return;
+    }
+
+    // Only end conversation if session actually changed AND we have an active conversation
     if (previousSessionIdRef.current !== null && 
         previousSessionIdRef.current !== currentSessionId && 
         currentConversationId && 
@@ -113,25 +121,21 @@ const StyleAdvice = ({
     }
     
     previousSessionIdRef.current = currentSessionId;
-  }, [currentSessionId]);
+  }, [currentSessionId, currentConversationId]);
 
-  // Watch for video mode changes
+  // Watch for video mode changes - only end when switching FROM video TO text
   useEffect(() => {
     console.log('=== VIDEO MODE CHANGE DETECTION ===');
-    console.log('Previous video mode:', previousVideoModeRef.current);
-    console.log('Current video mode:', isVideoMode);
+    console.log('Is video mode:', isVideoMode);
     console.log('Current conversation ID:', currentConversationId);
 
-    if (previousVideoModeRef.current === true && 
-        isVideoMode === false && 
-        currentConversationId && 
-        !endingConversationRef.current) {
-      console.log('🔄 Detected switch from video to text mode - ending conversation');
+    // Only end conversation when explicitly switching FROM video mode TO text mode
+    // and we have an active conversation
+    if (!isVideoMode && currentConversationId && !endingConversationRef.current) {
+      console.log('🔄 Switching from video to text mode - ending conversation');
       safeEndVideoConversation();
     }
-    
-    previousVideoModeRef.current = isVideoMode;
-  }, [isVideoMode]);
+  }, [isVideoMode, currentConversationId]);
 
   // Auto-start video conversation when switching to video mode
   useEffect(() => {
@@ -162,7 +166,7 @@ const StyleAdvice = ({
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
 
-  // Handle component unmount
+  // Handle component unmount - only end if we have an active conversation
   useEffect(() => {
     return () => {
       if (currentConversationId && !endingConversationRef.current) {
@@ -186,10 +190,12 @@ const StyleAdvice = ({
       console.log('Current session ID:', currentSessionId);
       console.log('User object:', user);
       
-      console.log('🧹 Cleaning up existing conversations...');
-      await endAllActiveConversations();
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Only clean up if we have existing conversations
+      if (currentConversationId) {
+        console.log('🧹 Cleaning up existing conversation...');
+        await endAllActiveConversations();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
       
       let userName = 'Style Enthusiast';
       if (user) {
@@ -277,6 +283,7 @@ const StyleAdvice = ({
   const handleVideoModeChange = async (newVideoMode: boolean) => {
     console.log('🔄 Video mode changing to:', newVideoMode);
     
+    // Don't end conversation when switching TO video mode, only when switching FROM video mode
     if (!newVideoMode && currentConversationId && !endingConversationRef.current) {
       console.log('🛑 Manual switch to text mode - ending conversation:', currentConversationId);
       await safeEndVideoConversation();
