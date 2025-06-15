@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Video, VideoOff, Phone, PhoneOff, Loader2 } from 'lucide-react';
+import { Video, VideoOff, Phone, PhoneOff, Loader2, ExternalLink } from 'lucide-react';
 import { useTavus } from '@/hooks/useTavus';
 import { toast } from '@/components/ui/use-toast';
 
@@ -21,17 +21,18 @@ const VideoConversation = ({ onClose }: VideoConversationProps) => {
   } = useTavus();
 
   const [conversationStatus, setConversationStatus] = useState<string>('idle');
-  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
 
   const handleStartConversation = async () => {
     try {
       const conversation = await createConversation(
         "Style Sense Video Chat",
-        "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques."
+        "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
+        "p347dab0cef8"
       );
       
       if (conversation) {
         setConversationStatus('active');
+        console.log('Conversation URL:', conversation.conversation_url);
       }
     } catch (error) {
       console.error('Failed to start conversation:', error);
@@ -46,6 +47,12 @@ const VideoConversation = ({ onClose }: VideoConversationProps) => {
       description: "Thanks for chatting with Alex!",
     });
     onClose?.();
+  };
+
+  const handleOpenInNewTab = () => {
+    if (currentConversation?.conversation_url) {
+      window.open(currentConversation.conversation_url, '_blank');
+    }
   };
 
   const checkConversationStatus = async () => {
@@ -107,7 +114,7 @@ const VideoConversation = ({ onClose }: VideoConversationProps) => {
                 {isCreatingConversation ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Setting up video...
+                    Creating conversation...
                   </>
                 ) : (
                   <>
@@ -120,46 +127,43 @@ const VideoConversation = ({ onClose }: VideoConversationProps) => {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="bg-black rounded-lg aspect-video flex items-center justify-center relative">
-              {currentConversation.conversation_url ? (
-                <iframe
-                  src={currentConversation.conversation_url}
-                  className="w-full h-full rounded-lg"
-                  allow="camera; microphone"
-                  title="Tavus Video Conversation"
-                />
-              ) : (
-                <div className="text-center text-white">
-                  <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
-                  <p>Connecting to Alex...</p>
-                </div>
-              )}
+            <div className="bg-gradient-to-br from-green-50 to-blue-50 dark:from-green-950/20 dark:to-blue-950/20 p-6 rounded-lg text-center">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Video className="h-8 w-8 text-green-500" />
+                <h3 className="text-lg font-semibold">Video Chat Ready!</h3>
+              </div>
               
-              {/* Video Controls Overlay */}
-              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+              <p className="text-muted-foreground mb-4">
+                Your video conversation with Alex is ready. Click the button below to join the video call.
+              </p>
+              
+              <div className="flex gap-3 justify-center">
                 <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsVideoEnabled(!isVideoEnabled)}
-                  className="bg-black/50 hover:bg-black/70 text-white"
+                  onClick={handleOpenInNewTab}
+                  className="bg-green-500 hover:bg-green-600 text-white"
                 >
-                  {isVideoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Join Video Call
                 </Button>
+                
                 <Button
-                  variant="destructive"
-                  size="sm"
+                  variant="outline"
                   onClick={handleEndConversation}
-                  className="bg-red-500/80 hover:bg-red-600"
+                  className="border-red-200 text-red-600 hover:bg-red-50"
                 >
-                  <PhoneOff className="h-4 w-4" />
+                  <PhoneOff className="h-4 w-4 mr-2" />
+                  End Session
                 </Button>
               </div>
-            </div>
-            
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                You're now connected with Alex for your personalized style consultation!
-              </p>
+              
+              {currentConversation.conversation_url && (
+                <div className="mt-4 p-3 bg-white dark:bg-slate-800 rounded border text-sm">
+                  <p className="text-muted-foreground mb-2">Conversation URL:</p>
+                  <code className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded break-all">
+                    {currentConversation.conversation_url}
+                  </code>
+                </div>
+              )}
             </div>
           </div>
         )}

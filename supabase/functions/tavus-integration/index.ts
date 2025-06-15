@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -79,7 +78,7 @@ async function createConversation(data: any, apiKey: string) {
   console.log('=== CREATING TAVUS CONVERSATION ===');
   
   const payload = {
-    replica_id: data.replica_id || "r4fa3e64f1",
+    persona_id: data.persona_id || "p347dab0cef8",
     conversation_name: data.conversation_name || "Style Advice Session",
     conversational_context: data.conversational_context || "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
     callback_url: data.callback_url,
@@ -93,12 +92,10 @@ async function createConversation(data: any, apiKey: string) {
 
   console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
   console.log('Using API endpoint: https://tavusapi.com/v2/conversations');
-  console.log('API Key format check:', apiKey.startsWith('tvs-') ? 'Correct format' : 'Incorrect format - should start with tvs-');
 
   try {
-    // Create AbortController for timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     const response = await fetch('https://tavusapi.com/v2/conversations', {
       method: 'POST',
