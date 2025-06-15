@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -148,7 +147,7 @@ async function createConversation(data: any, apiKey: string) {
     participant_absent_timeout: data.properties?.participant_absent_timeout || 60,
     enable_recording: data.properties?.enable_recording || false,
     enable_transcription: data.properties?.enable_transcription || true,
-    language: "English" // Use full language name, not ISO code
+    language: "English" // Always use full language name, not ISO code
   };
 
   console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
