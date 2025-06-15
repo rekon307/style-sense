@@ -42,14 +42,15 @@ export const useMessages = (currentSessionId: string | null) => {
         }
         
         const sessionMessages: Message[] = data?.map(msg => {
-          console.log('=== MESSAGE LOADED ===');
+          console.log('=== MESSAGE LOADED FROM DB ===');
           console.log('Message ID:', msg.id);
           console.log('Role:', msg.role);
           console.log('Content preview:', msg.content.substring(0, 50));
           console.log('Has visual context:', !!msg.visual_context);
           if (msg.visual_context) {
             console.log('Visual context length:', msg.visual_context.length);
-            console.log('Visual context preview:', msg.visual_context.substring(0, 50));
+            console.log('Visual context type:', msg.visual_context.startsWith('data:image/') ? 'base64 image' : 'other');
+            console.log('Visual context preview:', msg.visual_context.substring(0, 100) + '...');
           }
           
           return {
