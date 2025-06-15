@@ -77,9 +77,17 @@ serve(async (req) => {
 async function createConversation(data: any, apiKey: string) {
   console.log('=== CREATING TAVUS CONVERSATION ===');
   
-  // Simplified payload matching the curl example you provided
+  // Updated payload to use replica_id instead of persona_id based on API error
   const payload = {
-    persona_id: data.persona_id || "p347dab0cef8"
+    replica_id: data.replica_id || "r4fa3e64f1",
+    conversation_name: data.conversation_name || "Style Sense Video Chat",
+    conversational_context: data.conversational_context || "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
+    properties: {
+      max_call_duration: 600,
+      participant_left_timeout: 60,
+      participant_absent_timeout: 60,
+      enable_recording: false
+    }
   };
 
   console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
