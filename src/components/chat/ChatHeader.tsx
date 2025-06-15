@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Sparkles, MessageSquare, Video, Zap } from "lucide-react";
+import { Sparkles, MessageSquare, Video, Zap, Brain } from "lucide-react";
 import { useAlexState } from "@/contexts/AlexStateContext";
 
 interface ChatHeaderProps {
@@ -55,48 +55,51 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
   };
 
   return (
-    <div className="border-b border-gray-100/50 dark:border-gray-800/50 bg-gradient-to-r from-white/80 to-gray-50/80 dark:from-gray-900/80 dark:to-gray-800/80 backdrop-blur-sm px-6 py-4">
+    <div className="border-b border-gray-100/50 dark:border-gray-800/50 bg-gradient-to-r from-white/90 to-gray-50/90 dark:from-gray-900/90 dark:to-gray-800/90 backdrop-blur-sm px-6 py-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg">
+              <Brain className="w-7 h-7 text-white" />
             </div>
-            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-900 ${getStatusIndicator()}`}></div>
+            <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-3 border-white dark:border-gray-900 ${getStatusIndicator()}`}></div>
           </div>
           <div>
-            <h3 className="font-bold text-gray-900 dark:text-white text-lg">Alex</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
-              <Zap className="w-3 h-3" />
+            <h3 className="font-bold text-gray-900 dark:text-white text-xl flex items-center gap-2">
+              Alex
+              <Sparkles className="w-5 h-5 text-purple-500" />
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2 mt-1">
+              <Zap className="w-4 h-4" />
               {getStatusText()}
             </p>
           </div>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-3 bg-gray-100/80 dark:bg-gray-800/80 p-2 rounded-xl">
           <Button
-            variant={!isVideoMode ? "default" : "outline"}
+            variant={!isVideoMode ? "default" : "ghost"}
             size="sm"
             onClick={handleTextModeClick}
             disabled={isAnalyzing}
-            className={`flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-xl transition-all duration-200 ${
+            className={`flex items-center gap-2 h-11 px-5 text-sm font-medium rounded-xl transition-all duration-200 ${
               !isVideoMode 
                 ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl' 
-                : 'hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700'
+                : 'hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-300'
             }`}
           >
             <MessageSquare className="h-4 w-4" />
             Text Chat
           </Button>
           <Button
-            variant={isVideoMode ? "default" : "outline"}
+            variant={isVideoMode ? "default" : "ghost"}
             size="sm"
             onClick={handleVideoModeClick}
             disabled={isAnalyzing}
-            className={`flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-xl transition-all duration-200 ${
+            className={`flex items-center gap-2 h-11 px-5 text-sm font-medium rounded-xl transition-all duration-200 ${
               isVideoMode 
                 ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-xl' 
-                : 'hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700'
+                : 'hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-300'
             }`}
           >
             <Video className="h-4 w-4" />

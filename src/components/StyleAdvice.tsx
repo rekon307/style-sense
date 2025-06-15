@@ -31,7 +31,7 @@ const StyleAdvice = ({
   onVideoModeChange,
   onVideoUrlChange
 }: StyleAdviceProps) => {
-  const [isVideoMode, setIsVideoMode] = useState<boolean>(false);
+  const [isVideoMode, setIsVideoMode] = useState<boolean>(true); // Default to video mode
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isCreatingVideo, setIsCreatingVideo] = useState(false);
@@ -46,9 +46,16 @@ const StyleAdvice = ({
   } = useTavus();
 
   // Track the current mode to detect changes
-  const previousVideoModeRef = useRef<boolean>(false);
+  const previousVideoModeRef = useRef<boolean>(true);
 
   const temperature = 0.2;
+
+  // Auto-start video conversation when component mounts in video mode
+  useEffect(() => {
+    if (isVideoMode && !videoConversationUrl && !isCreatingVideo && user) {
+      handleStartVideoChat();
+    }
+  }, [isVideoMode, user]);
 
   // Notify parent component of video mode changes
   useEffect(() => {
@@ -98,7 +105,6 @@ const StyleAdvice = ({
       endConversation(currentConversationId, false).then(() => {
         setVideoConversationUrl(null);
         setCurrentConversationId(null);
-        setIsVideoMode(false);
       }).catch(console.error);
     }
   }, [currentSessionId]);
@@ -211,16 +217,20 @@ const StyleAdvice = ({
     setVideoConversationUrl(null);
     setCurrentConversationId(null);
     setIsVideoMode(false);
+    onVideoModeChange?.(false);
   };
 
   return (
-    <div className="flex h-full flex-col bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-800/50 shadow-2xl overflow-hidden">
-      <ChatHeader 
-        isAnalyzing={isAnalyzing || isCreatingConversation || isEndingConversation || isCreatingVideo}
-        isVideoMode={isVideoMode}
-        onVideoModeChange={handleVideoModeToggle}
-        onStartVideoChat={handleStartVideoChat}
-      />
+    <div className="flex h-full flex-col bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-800/50 shadow-2xl overflow-hidden">
+      {/* Only show ChatHeader in text mode since video mode is controlled by the main header */}
+      {!isVideoMode && (
+        <ChatHeader 
+          isAnalyzing={isAnalyzing || isCreatingConversation || isEndingConversation || isCreatingVideo}
+          isVideoMode={isVideoMode}
+          onVideoModeChange={handleVideoModeToggle}
+          onStartVideoChat={handleStartVideoChat}
+        />
+      )}
       
       {isVideoMode ? (
         <div className="flex-1 overflow-hidden">
