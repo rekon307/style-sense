@@ -16,20 +16,22 @@ interface DailyVideoFrameProps {
   conversationUrl: string | null;
   onClose: () => void;
   onRetry?: () => void;
+  isLoading?: boolean;
 }
 
-const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameProps) => {
-  const [isLoading, setIsLoading] = useState(true);
+const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false }: DailyVideoFrameProps) => {
+  const [isFrameLoading, setIsFrameLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [timeoutReached, setTimeoutReached] = useState(false);
   const [callFrame, setCallFrame] = useState<any>(null);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     console.log('=== DAILY VIDEO FRAME SETUP ===');
     console.log('Conversation URL:', conversationUrl);
-    console.log('URL length:', conversationUrl?.length);
+    console.log('Is Loading:', isLoading);
     console.log('URL valid:', conversationUrl && conversationUrl.startsWith('https://'));
 
     // Clear any existing timeout
@@ -38,22 +40,20 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
       timeoutRef.current = null;
     }
 
-    if (conversationUrl && containerRef.current) {
-      console.log('✅ URL available, initializing Daily frame');
+    if (conversationUrl && containerRef.current && !isLoading) {
+      console.log('✅ URL available and not loading, initializing Daily frame');
       setTimeoutReached(false);
       setHasError(false);
-      setIsLoading(true);
+      setIsFrameLoading(true);
       initializeDailyFrame();
-    } else if (!conversationUrl) {
-      console.log('⏳ Waiting for conversation URL...');
-      setIsLoading(true);
-      setHasError(false);
+    } else if (!conversationUrl && !isLoading) {
+      console.log('⏳ No URL and not loading - showing timeout');
+      setIsFrameLoading(false);
       
       // Set a timeout to show error if URL doesn't come within 30 seconds
       timeoutRef.current = setTimeout(() => {
         console.log('❌ Video conversation timeout reached');
         setTimeoutReached(true);
-        setIsLoading(false);
       }, 30000);
     }
 
@@ -73,7 +73,35 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
         }
       }
     };
-  }, [conversationUrl]);
+  }, [conversationUrl, isLoading]);
+
+  const loadDailyScript = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (window.DailyIframe) {
+        setIsScriptLoaded(true);
+        resolve();
+        return;
+      }
+
+      if (isScriptLoaded) {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/@daily-co/daily-js';
+      script.onload = () => {
+        console.log('✅ Daily.co script loaded successfully');
+        setIsScriptLoaded(true);
+        resolve();
+      };
+      script.onerror = () => {
+        console.error('❌ Failed to load Daily.co script');
+        reject(new Error('Failed to load Daily.co script'));
+      };
+      document.head.appendChild(script);
+    });
+  };
 
   const initializeDailyFrame = async () => {
     try {
@@ -84,10 +112,15 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
 
       console.log('🔗 Validating conversation URL:', conversationUrl);
 
-      // Load Daily.co script dynamically
+      // Load Daily.co script
+      console.log('📥 Loading Daily.co script...');
+      await loadDailyScript();
+
+      // Wait a moment for script to initialize
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       if (!window.DailyIframe) {
-        console.log('📥 Loading Daily.co script...');
-        await loadDailyScript();
+        throw new Error('Daily.co script failed to initialize');
       }
 
       console.log('🎥 Initializing Daily call frame with URL:', conversationUrl);
@@ -110,14 +143,14 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
       // Set up event listeners
       frame.on('loaded', () => {
         console.log('✅ Daily frame loaded successfully');
-        setIsLoading(false);
+        setIsFrameLoading(false);
         setHasError(false);
         setTimeoutReached(false);
       });
 
       frame.on('error', (event: any) => {
         console.error('❌ Daily frame error:', event);
-        setIsLoading(false);
+        setIsFrameLoading(false);
         setHasError(true);
         toast({
           title: "Video error",
@@ -157,7 +190,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
       
     } catch (error) {
       console.error('❌ Failed to initialize Daily frame:', error);
-      setIsLoading(false);
+      setIsFrameLoading(false);
       setHasError(true);
       toast({
         title: "Connection failed",
@@ -165,27 +198,6 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
         variant: "destructive",
       });
     }
-  };
-
-  const loadDailyScript = (): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      if (window.DailyIframe) {
-        resolve();
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://unpkg.com/@daily-co/daily-js';
-      script.onload = () => {
-        console.log('✅ Daily.co script loaded successfully');
-        resolve();
-      };
-      script.onerror = () => {
-        console.error('❌ Failed to load Daily.co script');
-        reject(new Error('Failed to load Daily.co script'));
-      };
-      document.head.appendChild(script);
-    });
   };
 
   const handleEndCall = () => {
@@ -209,7 +221,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
     console.log('🔄 Retrying video conversation...');
     setTimeoutReached(false);
     setHasError(false);
-    setIsLoading(true);
+    setIsFrameLoading(true);
     
     if (onRetry) {
       onRetry();
@@ -220,6 +232,32 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
     }
   };
 
+  // Show loading state while creating conversation
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center p-4">
+        <Card className="w-full max-w-md mx-auto">
+          <CardContent className="p-6 text-center">
+            <Loader2 className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
+            <h3 className="text-lg font-semibold mb-2">Creating Video Chat...</h3>
+            <p className="text-muted-foreground mb-4">
+              Setting up your conversation with Alex
+            </p>
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
+              <div className="bg-blue-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <Button variant="outline" onClick={onClose} size="sm">
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show timeout error
   if (!conversationUrl && timeoutReached) {
     return (
       <div className="h-full flex items-center justify-center p-4">
@@ -251,6 +289,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
     );
   }
 
+  // Show waiting for URL
   if (!conversationUrl) {
     return (
       <div className="h-full flex items-center justify-center p-4">
@@ -262,7 +301,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
               Setting up your conversation with Alex
             </p>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
-              <div className="bg-blue-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+              <div className="bg-blue-500 h-2 rounded-full animate-pulse" style={{ width: '30%' }}></div>
             </div>
             <div className="flex gap-2 justify-center">
               <Button variant="outline" onClick={onClose} size="sm">
@@ -293,7 +332,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
               size="sm"
               onClick={handleRetry}
               className="h-9 px-3 text-xs"
-              disabled={isLoading}
+              disabled={isFrameLoading}
             >
               <RotateCcw className="h-3 w-3 mr-1" />
               Reload
@@ -313,7 +352,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameP
 
       {/* Video Frame Container */}
       <div className="flex-1 relative">
-        {isLoading && (
+        {isFrameLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-800 z-10">
             <div className="text-center">
               <Loader2 className="h-8 w-8 text-blue-500 mx-auto mb-3 animate-spin" />

@@ -57,30 +57,15 @@ const StyleAdvice = ({
     console.log('videoConversationUrl:', videoConversationUrl);
     console.log('isCreatingVideo:', isCreatingVideo);
     console.log('user:', !!user);
-    console.log('user object:', user);
-    console.log('currentConversation:', currentConversation);
     console.log('hasTriedAutoStart:', hasTriedAutoStart);
 
-    // Check if user is properly authenticated
-    if (!user) {
-      console.log('❌ No authenticated user - cannot start video chat');
-      if (isVideoMode) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to start a video chat.",
-          variant: "destructive",
-        });
-      }
-      return;
-    }
-
-    // Auto-start video chat if conditions are met
-    if (isVideoMode && !videoConversationUrl && !isCreatingVideo && !currentConversation && !hasTriedAutoStart) {
+    // Only auto-start if we're in video mode and haven't tried yet
+    if (isVideoMode && !videoConversationUrl && !isCreatingVideo && !hasTriedAutoStart) {
       console.log('🎬 Auto-starting video chat...');
       setHasTriedAutoStart(true);
       handleStartVideoChat();
     }
-  }, [isVideoMode, user, videoConversationUrl, isCreatingVideo, currentConversation, hasTriedAutoStart]);
+  }, [isVideoMode, videoConversationUrl, isCreatingVideo, hasTriedAutoStart]);
 
   // Reset auto-start flag when switching modes or sessions
   useEffect(() => {
@@ -110,36 +95,28 @@ const StyleAdvice = ({
     }
 
     console.log('=== STARTING VIDEO CHAT ===');
-    
-    if (!user) {
-      console.error('❌ No authenticated user for video chat');
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to start a video chat.",
-        variant: "destructive",
-      });
-      onVideoModeChange?.(false);
-      return;
-    }
-
     setIsCreatingVideo(true);
     
     try {
       console.log('Current session ID:', currentSessionId);
-      console.log('User details:', {
-        id: user?.id,
-        email: user?.email,
-        metadata: user?.user_metadata
-      });
+      console.log('User object:', user);
       
-      // End any existing conversations first to prevent conflicts
+      // Clean up any existing conversations first
       console.log('🧹 Cleaning up existing conversations...');
       await endAllActiveConversations();
       
-      // Wait a moment for cleanup to complete
+      // Wait for cleanup to complete
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Style Enthusiast';
+      // Extract user name - try multiple sources
+      let userName = 'Style Enthusiast';
+      if (user) {
+        userName = user.user_metadata?.full_name || 
+                  user.user_metadata?.name || 
+                  user.email?.split('@')[0] || 
+                  'Style Enthusiast';
+      }
+      
       console.log('👤 Using name for video chat:', userName);
       
       const conversationalContext = `You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. The user's name is ${userName}. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques. Address the user by their name when appropriate.`;
@@ -181,9 +158,17 @@ const StyleAdvice = ({
       setCurrentConversation(null);
       setHasTriedAutoStart(false); // Allow retry
       
+      let errorMessage = "Failed to start video conversation. Please try again.";
+      if (error.message?.includes('Authentication required')) {
+        errorMessage = "Please sign in to start a video chat.";
+        onVideoModeChange?.(false);
+      } else if (error.message?.includes('maximum concurrent conversations')) {
+        errorMessage = "Video chat limit reached. Please wait a moment and try again.";
+      }
+      
       toast({
         title: "Video chat error",
-        description: error.message || "Failed to start video conversation. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -233,15 +218,10 @@ const StyleAdvice = ({
     setCurrentConversationId(null);
     setCurrentConversation(null);
     
-    if (user) {
+    // Start the video chat again
+    setTimeout(() => {
       handleStartVideoChat();
-    } else {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to start a video chat.",
-        variant: "destructive",
-      });
-    }
+    }, 500);
   };
 
   if (isVideoMode) {
@@ -252,6 +232,7 @@ const StyleAdvice = ({
             conversationUrl={videoConversationUrl}
             onClose={handleEndVideoCall}
             onRetry={handleRetryVideoChat}
+            isLoading={isCreatingVideo || isCreatingConversation}
           />
         </div>
       </div>
