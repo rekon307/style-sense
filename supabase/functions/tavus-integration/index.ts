@@ -96,6 +96,10 @@ async function createConversation(data: any, apiKey: string) {
   console.log('API Key format check:', apiKey.startsWith('tvs-') ? 'Correct format' : 'Incorrect format - should start with tvs-');
 
   try {
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
     const response = await fetch('https://tavusapi.com/v2/conversations', {
       method: 'POST',
       headers: {
@@ -103,7 +107,10 @@ async function createConversation(data: any, apiKey: string) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     console.log('Tavus API response status:', response.status);
     console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
@@ -124,6 +131,11 @@ async function createConversation(data: any, apiKey: string) {
     console.error('Error name:', fetchError.name);
     console.error('Error message:', fetchError.message);
     console.error('Error cause:', fetchError.cause);
+    
+    if (fetchError.name === 'AbortError') {
+      throw new Error('Request timed out after 30 seconds. Please check your network connection and try again.');
+    }
+    
     throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
   }
 }
@@ -142,6 +154,9 @@ async function generateVideo(data: any, apiKey: string) {
   console.log('Using API endpoint: https://tavusapi.com/v2/videos');
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     const response = await fetch('https://tavusapi.com/v2/videos', {
       method: 'POST',
       headers: {
@@ -149,7 +164,10 @@ async function generateVideo(data: any, apiKey: string) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     console.log('Tavus API response status:', response.status);
     console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
@@ -170,6 +188,11 @@ async function generateVideo(data: any, apiKey: string) {
     console.error('Error name:', fetchError.name);
     console.error('Error message:', fetchError.message);
     console.error('Error cause:', fetchError.cause);
+    
+    if (fetchError.name === 'AbortError') {
+      throw new Error('Request timed out after 30 seconds. Please check your network connection and try again.');
+    }
+    
     throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
   }
 }
@@ -180,13 +203,19 @@ async function getConversationStatus(conversationId: string, apiKey: string) {
   console.log('Using API endpoint: https://tavusapi.com/v2/conversations/' + conversationId);
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     const response = await fetch(`https://tavusapi.com/v2/conversations/${conversationId}`, {
       method: 'GET',
       headers: {
         'x-api-key': apiKey,
         'Content-Type': 'application/json',
       },
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     console.log('Tavus API response status:', response.status);
     console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
@@ -207,6 +236,11 @@ async function getConversationStatus(conversationId: string, apiKey: string) {
     console.error('Error name:', fetchError.name);
     console.error('Error message:', fetchError.message);
     console.error('Error cause:', fetchError.cause);
+    
+    if (fetchError.name === 'AbortError') {
+      throw new Error('Request timed out after 30 seconds. Please check your network connection and try again.');
+    }
+    
     throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
   }
 }
