@@ -1,3 +1,4 @@
+
 import { Camera, AlertCircle, Video } from "lucide-react";
 import { useEffect, useState, RefObject, useRef, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
@@ -89,11 +90,11 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
       
       if (err instanceof Error) {
         if (err.name === 'NotAllowedError') {
-          setError('Accesul la cameră este necesar. Te rog permite accesul și încearcă din nou.');
+          setError('Camera access is required. Please allow access and try again.');
         } else if (err.name === 'NotFoundError') {
-          setError('Nu s-a găsit nicio cameră. Te rog conectează o cameră și încearcă din nou.');
+          setError('No camera found. Please connect a camera and try again.');
         } else {
-          setError('Eroare la accesarea camerei. Verifică setările browser-ului.');
+          setError('Error accessing camera. Check your browser settings.');
         }
       }
     }
@@ -162,8 +163,8 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
               <Camera className="h-6 w-6 text-white animate-pulse" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Pornesc camera...</h3>
-            <p className="text-sm text-slate-300">Te rog permite accesul la cameră</p>
+            <h3 className="text-lg font-semibold mb-2">Starting camera...</h3>
+            <p className="text-sm text-slate-300">Please allow camera access</p>
           </div>
         </div>
       );
@@ -176,7 +177,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center mx-auto mb-4">
               <AlertCircle className="h-6 w-6 text-white" />
             </div>
-            <h3 className="text-lg font-semibold text-red-400 mb-3">Eroare cameră</h3>
+            <h3 className="text-lg font-semibold text-red-400 mb-3">Camera Error</h3>
             <p className="text-sm text-slate-300">{error}</p>
           </div>
         </div>
@@ -190,8 +191,8 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             <div className="w-12 h-12 bg-slate-700 rounded-xl flex items-center justify-center mx-auto mb-4">
               <Video className="h-6 w-6 text-slate-400" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">Camera oprită</h3>
-            <p className="text-sm text-slate-300">Apasă "Pornește" pentru a începe</p>
+            <h3 className="text-lg font-semibold mb-2">Camera off</h3>
+            <p className="text-sm text-slate-300">Press "Start" to begin</p>
           </div>
         </div>
       );
@@ -218,7 +219,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
           <div className="flex items-center gap-1.5">
             <div className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
             <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-              {isActive ? 'Activ' : 'Inactiv'}
+              {isActive ? 'Active' : 'Inactive'}
             </span>
           </div>
           
@@ -229,7 +230,7 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
             disabled={isLoading}
             className="h-8 px-3 text-xs font-medium"
           >
-            {isActive ? "Oprește" : "Pornește"}
+            {isActive ? "Stop" : "Start"}
           </Button>
         </div>
       </div>

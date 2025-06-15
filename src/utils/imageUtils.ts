@@ -59,17 +59,18 @@ export const isWebcamAvailable = (): boolean => {
       return false;
     }
 
-    const isReady = videoElement.videoWidth > 0 && 
-                   videoElement.videoHeight > 0 && 
-                   videoElement.readyState >= 2 && 
-                   !videoElement.paused &&
-                   !!videoElement.srcObject;
+    // Check if video has valid stream and is actually playing
+    const hasValidStream = !!videoElement.srcObject;
+    const hasValidDimensions = videoElement.videoWidth > 0 && videoElement.videoHeight > 0;
+    const isPlaying = !videoElement.paused && !videoElement.ended && videoElement.readyState >= 2;
+    
+    const isReady = hasValidStream && hasValidDimensions && isPlaying;
 
     console.log('=== WEBCAM AVAILABILITY CHECK ===');
     console.log('Video dimensions:', videoElement.videoWidth, 'x', videoElement.videoHeight);
     console.log('Ready state:', videoElement.readyState);
     console.log('Paused:', videoElement.paused);
-    console.log('Has stream:', !!videoElement.srcObject);
+    console.log('Has stream:', hasValidStream);
     console.log('Is available:', isReady);
 
     return isReady;
