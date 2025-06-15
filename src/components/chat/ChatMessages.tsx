@@ -25,18 +25,33 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
 
   // Scroll to bottom whenever messages change or when analyzing starts/stops
   useEffect(() => {
-    scrollToBottom();
-  }, [messages.length, isAnalyzing]);
-
-  // Also scroll after a short delay to ensure content is rendered
-  useEffect(() => {
-    const timer = setTimeout(scrollToBottom, 100);
+    console.log('=== CHAT MESSAGES EFFECT ===');
+    console.log('Messages count:', messages.length);
+    console.log('Is analyzing:', isAnalyzing);
+    
+    // Small delay to ensure DOM has updated
+    const timer = setTimeout(() => {
+      scrollToBottom();
+    }, 50);
+    
     return () => clearTimeout(timer);
   }, [messages, isAnalyzing]);
+
+  // Additional scroll effect with longer delay for content rendering
+  useEffect(() => {
+    const timer = setTimeout(scrollToBottom, 200);
+    return () => clearTimeout(timer);
+  }, [messages.length]);
 
   const renderMessage = (message: Message, index: number) => {
     const isUser = message.role === 'user';
     const hasImage = message.visual_context && message.visual_context.length > 0;
+    
+    console.log('=== RENDERING MESSAGE ===');
+    console.log('Message ID:', message.id);
+    console.log('Role:', message.role);
+    console.log('Content preview:', message.content.substring(0, 50));
+    console.log('Has image:', hasImage);
     
     return (
       <div 
@@ -133,6 +148,10 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
     </div>
   );
 
+  console.log('=== CHAT MESSAGES RENDER ===');
+  console.log('Total messages to render:', messages.length);
+  console.log('Is analyzing:', isAnalyzing);
+
   return (
     <div className="flex-1 bg-gradient-to-b from-gray-50/30 to-white dark:from-gray-900/30 dark:to-gray-900 overflow-hidden">
       <ScrollArea ref={scrollAreaRef} className="h-full">
@@ -141,7 +160,10 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
             renderEmptyState()
           ) : (
             <>
-              {messages.map((message, index) => renderMessage(message, index))}
+              {messages.map((message, index) => {
+                console.log(`Rendering message ${index + 1}/${messages.length}:`, message.id, message.role);
+                return renderMessage(message, index);
+              })}
               {isAnalyzing && renderThinkingIndicator()}
             </>
           )}

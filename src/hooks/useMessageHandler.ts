@@ -67,13 +67,15 @@ export const useMessageHandler = ({
       created_at: new Date().toISOString()
     };
 
-    // Add user message to UI immediately with proper state update
     console.log('=== ADDING USER MESSAGE TO UI ===');
     console.log('User message:', userMessage);
     
+    // Add user message to UI immediately - using functional update to ensure state consistency
     setMessages(prevMessages => {
       const newMessages = [...prevMessages, userMessage];
-      console.log('Updated messages count:', newMessages.length);
+      console.log('Previous messages count:', prevMessages.length);
+      console.log('New messages count:', newMessages.length);
+      console.log('Added user message ID:', userMessage.id);
       return newMessages;
     });
     
@@ -103,6 +105,7 @@ export const useMessageHandler = ({
 
       // Call style advisor API with current messages including the new user message
       console.log('=== CALLING STYLE ADVISOR API ===');
+      // Use the current messages state plus the new user message
       const currentMessages = [...messages, userMessage];
       console.log('Sending to API:', {
         messagesCount: currentMessages.length,
@@ -194,11 +197,11 @@ const processStreamingResponse = async (
           if (parsed.content) {
             assistantContent += parsed.content;
             
-            // Update the assistant message content
+            // Update the assistant message content using functional update
             setMessages(prev => {
               const newMessages = [...prev];
               const lastMessage = newMessages[newMessages.length - 1];
-              if (lastMessage && lastMessage.role === 'assistant') {
+              if (lastMessage && lastMessage.role === 'assistant' && lastMessage.id === assistantMessage.id) {
                 lastMessage.content = assistantContent;
               }
               return newMessages;
