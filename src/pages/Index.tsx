@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { PanelLeft, PanelLeftClose, Sparkles, Video, Camera, MessageSquare, Zap, Users } from "lucide-react";
+import { PanelLeft, PanelLeftClose, Sparkles, Video, Camera, MessageSquare, Zap, Users, Brain } from "lucide-react";
 import { useTavus } from "@/hooks/useTavus";
 
 interface Message {
@@ -43,7 +43,7 @@ const Index = ({
 }: IndexProps) => {
   const webcamRef = useRef<WebcamDisplayRef>(null);
   const [showChatHistory, setShowChatHistory] = useState(true);
-  const [isVideoMode, setIsVideoMode] = useState(true); // Default to video mode
+  const [isVideoMode, setIsVideoMode] = useState<boolean>(true);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   
   const { endAllActiveConversations } = useTavus();
@@ -93,7 +93,7 @@ const Index = ({
     console.log('🛑 Auth change detected - ending all active conversations');
     try {
       await endAllActiveConversations();
-      setIsVideoMode(true); // Reset to default video mode
+      setIsVideoMode(true);
       setVideoConversationUrl(null);
     } catch (error) {
       console.error('Failed to end conversations on auth change:', error);
@@ -113,10 +113,10 @@ const Index = ({
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-        {/* Unified Header with All Controls */}
+        {/* Unified Header */}
         <header className="sticky top-0 z-50 border-b border-white/20 dark:border-gray-800/50 bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl shadow-lg">
           <div className="container flex h-20 items-center justify-between px-6">
-            {/* Left Side - Logo and Navigation */}
+            {/* Left Side */}
             <div className="flex items-center gap-6">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -124,7 +124,7 @@ const Index = ({
                     onClick={() => setShowChatHistory(!showChatHistory)}
                     variant="ghost"
                     size="sm"
-                    className="h-10 w-10 p-0 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200"
+                    className="h-12 w-12 p-0 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200"
                   >
                     {showChatHistory ? (
                       <PanelLeftClose className="h-5 w-5" />
@@ -139,14 +139,14 @@ const Index = ({
               </Tooltip>
               
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 shadow-lg">
-                  <Sparkles className="h-6 w-6 text-white" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 shadow-lg">
+                  <Brain className="h-7 w-7 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Style AI</h1>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Alex AI</h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                    <Users className="w-3 h-3" />
-                    Powered by Alex
+                    <Sparkles className="w-3 h-3" />
+                    Style Advisor
                   </p>
                 </div>
               </div>
@@ -159,13 +159,13 @@ const Index = ({
                 size="sm"
                 onClick={() => handleVideoModeChange(true)}
                 disabled={isAnalyzing}
-                className={`flex items-center gap-2 h-10 px-6 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`flex items-center gap-2 h-12 px-6 text-sm font-medium rounded-xl transition-all duration-200 ${
                   isVideoMode 
                     ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-xl' 
                     : 'hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-300'
                 }`}
               >
-                <Video className="h-4 w-4" />
+                <Video className="h-5 w-5" />
                 Video Chat
               </Button>
               <Button
@@ -173,28 +173,32 @@ const Index = ({
                 size="sm"
                 onClick={() => handleVideoModeChange(false)}
                 disabled={isAnalyzing}
-                className={`flex items-center gap-2 h-10 px-6 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`flex items-center gap-2 h-12 px-6 text-sm font-medium rounded-xl transition-all duration-200 ${
                   !isVideoMode 
                     ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl' 
                     : 'hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-300'
                 }`}
               >
-                <MessageSquare className="h-4 w-4" />
+                <MessageSquare className="h-5 w-5" />
                 Text Chat
               </Button>
             </div>
             
-            {/* Right Side - User Controls */}
+            {/* Right Side */}
             <div className="flex items-center gap-4">
-              <AuthButton user={user} onAuthChange={handleAuthChange} />
+              <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700 px-4 py-2 rounded-full font-medium">
+                <Zap className="w-4 h-4 mr-2" />
+                Ready
+              </Badge>
               <Separator orientation="vertical" className="h-8" />
+              <AuthButton user={user} onAuthChange={handleAuthChange} />
               <ThemeToggle />
             </div>
           </div>
         </header>
         
         <div className="flex h-[calc(100vh-5rem)]">
-          {/* Modern Sidebar */}
+          {/* Sidebar */}
           <aside className={`${showChatHistory ? 'w-80' : 'w-0'} transition-all duration-300 ease-in-out overflow-hidden border-r border-white/20 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm`}>
             <div className="h-full">
               <div className="p-6 border-b border-gray-100/50 dark:border-gray-800/50">
@@ -225,6 +229,7 @@ const Index = ({
                       user={user}
                       onVideoModeChange={handleVideoModeChange}
                       onVideoUrlChange={handleVideoUrlChange}
+                      isVideoMode={isVideoMode}
                     />
                   </CardContent>
                 </Card>
@@ -247,10 +252,6 @@ const Index = ({
                               <p className="text-sm text-gray-600 dark:text-gray-400">Capture your style for analysis</p>
                             </div>
                           </div>
-                          <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700 px-4 py-2 rounded-full font-medium">
-                            <Zap className="w-4 h-4 mr-2" />
-                            Ready
-                          </Badge>
                         </div>
                         
                         <div className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 to-gray-900">
@@ -275,6 +276,7 @@ const Index = ({
                     user={user}
                     onVideoModeChange={handleVideoModeChange}
                     onVideoUrlChange={handleVideoUrlChange}
+                    isVideoMode={isVideoMode}
                   />
                 </section>
               </>

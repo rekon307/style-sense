@@ -18,6 +18,7 @@ interface StyleAdviceProps {
   user?: any;
   onVideoModeChange?: (isVideoMode: boolean) => void;
   onVideoUrlChange?: (url: string | null) => void;
+  isVideoMode: boolean;
 }
 
 const StyleAdvice = ({ 
@@ -29,9 +30,9 @@ const StyleAdvice = ({
   currentSessionId, 
   user,
   onVideoModeChange,
-  onVideoUrlChange
+  onVideoUrlChange,
+  isVideoMode
 }: StyleAdviceProps) => {
-  const [isVideoMode, setIsVideoMode] = useState<boolean>(true); // Default to video mode
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isCreatingVideo, setIsCreatingVideo] = useState(false);
@@ -42,69 +43,47 @@ const StyleAdvice = ({
     endAllActiveConversations,
     isCreatingConversation, 
     isEndingConversation, 
-    cleanupOldConversations 
+    currentConversation,
+    setCurrentConversation
   } = useTavus();
-
-  // Track the current mode to detect changes
-  const previousVideoModeRef = useRef<boolean>(true);
 
   const temperature = 0.2;
 
-  // Auto-start video conversation when component mounts in video mode
+  // Auto-start video conversation when switching to video mode
   useEffect(() => {
-    if (isVideoMode && !videoConversationUrl && !isCreatingVideo && user) {
+    console.log('=== VIDEO MODE EFFECT ===');
+    console.log('isVideoMode:', isVideoMode);
+    console.log('videoConversationUrl:', videoConversationUrl);
+    console.log('isCreatingVideo:', isCreatingVideo);
+    console.log('user:', !!user);
+
+    if (isVideoMode && !videoConversationUrl && !isCreatingVideo && user && !currentConversation) {
+      console.log('Auto-starting video chat...');
       handleStartVideoChat();
     }
-  }, [isVideoMode, user]);
+  }, [isVideoMode, user, videoConversationUrl, isCreatingVideo, currentConversation]);
 
-  // Notify parent component of video mode changes
-  useEffect(() => {
-    onVideoModeChange?.(isVideoMode);
-  }, [isVideoMode, onVideoModeChange]);
-
-  // Notify parent component of video URL changes
+  // Update parent with video URL changes
   useEffect(() => {
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
 
-  // Handle mode switching with proper cleanup
+  // Cleanup when switching from video to text mode
   useEffect(() => {
-    const handleModeChange = async () => {
-      // If switching from video to text mode, end the conversation
-      if (previousVideoModeRef.current && !isVideoMode && currentConversationId) {
-        console.log('🔄 Switching from video to text - ending conversation');
-        try {
-          await endConversation(currentConversationId);
-          setVideoConversationUrl(null);
-          setCurrentConversationId(null);
-        } catch (error) {
-          console.error('Failed to end conversation when switching to text:', error);
-        }
-      }
-      
-      previousVideoModeRef.current = isVideoMode;
-    };
+    if (!isVideoMode && currentConversationId) {
+      console.log('🔄 Switching to text mode - ending video conversation');
+      handleEndVideoCall();
+    }
+  }, [isVideoMode]);
 
-    handleModeChange();
-  }, [isVideoMode, currentConversationId, endConversation]);
-
-  // Cleanup on unmount or session change
-  useEffect(() => {
-    return () => {
-      // Cleanup any active conversations when component unmounts
-      if (currentConversationId) {
-        endConversation(currentConversationId, false).catch(console.error);
-      }
-    };
-  }, []);
-
-  // Cleanup when session changes
+  // Cleanup on session change
   useEffect(() => {
     if (currentConversationId) {
       console.log('🔄 Session changed - ending current conversation');
       endConversation(currentConversationId, false).then(() => {
         setVideoConversationUrl(null);
         setCurrentConversationId(null);
+        setCurrentConversation(null);
       }).catch(console.error);
     }
   }, [currentSessionId]);
@@ -145,8 +124,10 @@ const StyleAdvice = ({
       if (conversation?.conversation_url && conversation?.conversation_id) {
         setVideoConversationUrl(conversation.conversation_url);
         setCurrentConversationId(conversation.conversation_id);
+        
         console.log('✅ Video conversation URL set:', conversation.conversation_url);
         console.log('✅ Video conversation ID set:', conversation.conversation_id);
+        
         toast({
           title: "Video chat ready!",
           description: `Welcome ${userName}! Your video chat with Alex is starting.`,
@@ -162,42 +143,14 @@ const StyleAdvice = ({
     } catch (error) {
       console.error('❌ Failed to start video conversation:', error);
       
-      if (error.message && error.message.includes('maximum concurrent conversations')) {
-        toast({
-          title: "Video chat limit reached",
-          description: "Cleaning up previous sessions. Please wait a moment and try again.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to start video conversation. Please try again in a moment.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Error",
+        description: "Failed to start video conversation. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsCreatingVideo(false);
     }
-  };
-
-  const handleVideoModeToggle = async (newVideoMode: boolean) => {
-    console.log('🔄 Video mode toggle:', { from: isVideoMode, to: newVideoMode });
-    
-    if (newVideoMode && !videoConversationUrl && !isCreatingVideo) {
-      // Switching to video mode - create new conversation
-      await handleStartVideoChat();
-    } else if (!newVideoMode && currentConversationId) {
-      // Switching from video to text - end the video conversation
-      try {
-        await endConversation(currentConversationId);
-        setVideoConversationUrl(null);
-        setCurrentConversationId(null);
-      } catch (error) {
-        console.error('Failed to end conversation:', error);
-      }
-    }
-    
-    setIsVideoMode(newVideoMode);
   };
 
   const handleEndVideoCall = async () => {
@@ -216,46 +169,38 @@ const StyleAdvice = ({
     // Clear all video call state
     setVideoConversationUrl(null);
     setCurrentConversationId(null);
-    setIsVideoMode(false);
+    setCurrentConversation(null);
     onVideoModeChange?.(false);
   };
 
-  return (
-    <div className="flex h-full flex-col bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-800/50 shadow-2xl overflow-hidden">
-      {/* Only show ChatHeader in text mode since video mode is controlled by the main header */}
-      {!isVideoMode && (
-        <ChatHeader 
-          isAnalyzing={isAnalyzing || isCreatingConversation || isEndingConversation || isCreatingVideo}
-          isVideoMode={isVideoMode}
-          onVideoModeChange={handleVideoModeToggle}
-          onStartVideoChat={handleStartVideoChat}
-        />
-      )}
-      
-      {isVideoMode ? (
+  if (isVideoMode) {
+    return (
+      <div className="flex h-full flex-col bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-800/50 shadow-2xl overflow-hidden">
         <div className="flex-1 overflow-hidden">
           <DailyVideoFrame 
             conversationUrl={videoConversationUrl}
             onClose={handleEndVideoCall}
           />
         </div>
-      ) : (
-        <>
-          <div className="flex-1 overflow-hidden">
-            <ChatMessages 
-              messages={messages}
-              isAnalyzing={isAnalyzing}
-            />
-          </div>
-          <div className="flex-shrink-0">
-            <ChatInput 
-              isAnalyzing={isAnalyzing}
-              onSendMessage={onSendMessage}
-              temperature={temperature}
-            />
-          </div>
-        </>
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full flex-col bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-800/50 shadow-2xl overflow-hidden">
+      <div className="flex-1 overflow-hidden">
+        <ChatMessages 
+          messages={messages}
+          isAnalyzing={isAnalyzing}
+        />
+      </div>
+      <div className="flex-shrink-0">
+        <ChatInput 
+          isAnalyzing={isAnalyzing}
+          onSendMessage={onSendMessage}
+          temperature={temperature}
+        />
+      </div>
     </div>
   );
 };
