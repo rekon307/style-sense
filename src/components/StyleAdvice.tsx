@@ -56,41 +56,52 @@ const StyleAdvice = ({
     console.log('videoConversationUrl:', videoConversationUrl);
     console.log('isCreatingVideo:', isCreatingVideo);
     console.log('user:', !!user);
+    console.log('currentConversation:', currentConversation);
 
     if (isVideoMode && !videoConversationUrl && !isCreatingVideo && user && !currentConversation) {
-      console.log('Auto-starting video chat...');
+      console.log('🎬 Auto-starting video chat...');
       handleStartVideoChat();
     }
   }, [isVideoMode, user, videoConversationUrl, isCreatingVideo, currentConversation]);
 
   // Update parent with video URL changes
   useEffect(() => {
+    console.log('🔗 Updating parent with video URL:', videoConversationUrl);
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
 
   // Cleanup when switching from video to text mode
   useEffect(() => {
     if (!isVideoMode && currentConversationId) {
-      console.log('🔄 Switching to text mode - ending video conversation');
+      console.log('🔄 Switching to text mode - ending video conversation:', currentConversationId);
       handleEndVideoCall();
     }
-  }, [isVideoMode]);
+  }, [isVideoMode, currentConversationId]);
 
   // Cleanup on session change
   useEffect(() => {
-    if (currentConversationId) {
-      console.log('🔄 Session changed - ending current conversation');
-      endConversation(currentConversationId, false).then(() => {
-        setVideoConversationUrl(null);
-        setCurrentConversationId(null);
-        setCurrentConversation(null);
-      }).catch(console.error);
+    if (currentConversationId && currentSessionId) {
+      console.log('🔄 Session changed - current conversation:', currentConversationId, 'session:', currentSessionId);
+      // Only end if we have a different session or no session
+      const shouldEnd = true; // For now, always end on session change for safety
+      
+      if (shouldEnd) {
+        console.log('🛑 Ending conversation due to session change');
+        endConversation(currentConversationId, false).then(() => {
+          console.log('✅ Conversation ended due to session change');
+          setVideoConversationUrl(null);
+          setCurrentConversationId(null);
+          setCurrentConversation(null);
+        }).catch(error => {
+          console.error('❌ Failed to end conversation on session change:', error);
+        });
+      }
     }
   }, [currentSessionId]);
 
   const handleStartVideoChat = async () => {
     if (isCreatingVideo || isCreatingConversation) {
-      console.log('Already creating video conversation, skipping...');
+      console.log('⏳ Already creating video conversation, skipping...');
       return;
     }
 
@@ -101,25 +112,34 @@ const StyleAdvice = ({
       console.log('Current session ID:', currentSessionId);
       console.log('User:', user);
       
-      // End any existing conversations first
+      // End any existing conversations first to prevent conflicts
+      console.log('🧹 Cleaning up existing conversations...');
       await endAllActiveConversations();
       
       // Wait a moment for cleanup to complete
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Style Enthusiast';
-      console.log('Using name for video chat:', userName);
+      console.log('👤 Using name for video chat:', userName);
+      
+      const conversationalContext = `You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. The user's name is ${userName}. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques. Address the user by their name when appropriate.`;
+      
+      console.log('🎯 Creating conversation with context for:', userName);
       
       const conversation = await createConversation(
         "Style Sense Video Chat",
-        `You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. The user's name is ${userName}. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques. Address the user by their name when appropriate.`,
-        "p347dab0cef8",
+        conversationalContext,
+        "p869ead8c67b", // Using the correct persona_id
         currentSessionId || undefined,
         userName
       );
       
       console.log('=== VIDEO CONVERSATION CREATED ===');
-      console.log('Conversation:', conversation);
+      console.log('Full conversation response:', conversation);
+      console.log('Conversation ID:', conversation?.conversation_id);
+      console.log('Conversation URL:', conversation?.conversation_url);
+      console.log('Status:', conversation?.status);
+      console.log('Created at:', conversation?.created_at);
       
       if (conversation?.conversation_url && conversation?.conversation_id) {
         setVideoConversationUrl(conversation.conversation_url);
@@ -133,18 +153,19 @@ const StyleAdvice = ({
           description: `Welcome ${userName}! Your video chat with Alex is starting.`,
         });
       } else {
-        console.error('❌ No conversation URL or ID returned');
-        toast({
-          title: "Error",
-          description: "Failed to get video conversation details. Please try again.",
-          variant: "destructive",
-        });
+        console.error('❌ Invalid conversation response:', conversation);
+        throw new Error('No conversation URL or ID returned from Tavus API');
       }
     } catch (error) {
       console.error('❌ Failed to start video conversation:', error);
       
+      // Clear any partial state
+      setVideoConversationUrl(null);
+      setCurrentConversationId(null);
+      setCurrentConversation(null);
+      
       toast({
-        title: "Error",
+        title: "Video chat error",
         description: "Failed to start video conversation. Please try again.",
         variant: "destructive",
       });
@@ -155,14 +176,27 @@ const StyleAdvice = ({
 
   const handleEndVideoCall = async () => {
     console.log('🛑 Ending video call');
+    console.log('Current conversation ID:', currentConversationId);
+    console.log('Current conversation URL:', videoConversationUrl);
     
     if (currentConversationId) {
       console.log('🛑 Ending Tavus conversation:', currentConversationId);
       try {
-        await endConversation(currentConversationId);
-        console.log('✅ Tavus conversation ended successfully');
+        const result = await endConversation(currentConversationId);
+        console.log('✅ Tavus conversation ended successfully:', result);
+        
+        toast({
+          title: "Video chat ended",
+          description: "Your video conversation has been properly closed.",
+        });
       } catch (error) {
         console.error('❌ Failed to end Tavus conversation:', error);
+        
+        toast({
+          title: "Warning",
+          description: "Failed to properly end video conversation. It may still be active.",
+          variant: "destructive",
+        });
       }
     }
     
@@ -171,7 +205,21 @@ const StyleAdvice = ({
     setCurrentConversationId(null);
     setCurrentConversation(null);
     onVideoModeChange?.(false);
+    
+    console.log('🧹 Video call state cleared');
   };
+
+  // Log current state for debugging
+  useEffect(() => {
+    console.log('=== STYLE ADVICE STATE ===');
+    console.log('isVideoMode:', isVideoMode);
+    console.log('videoConversationUrl:', videoConversationUrl);
+    console.log('currentConversationId:', currentConversationId);
+    console.log('isCreatingVideo:', isCreatingVideo);
+    console.log('isCreatingConversation:', isCreatingConversation);
+    console.log('isEndingConversation:', isEndingConversation);
+    console.log('currentConversation:', currentConversation);
+  }, [isVideoMode, videoConversationUrl, currentConversationId, isCreatingVideo, isCreatingConversation, isEndingConversation, currentConversation]);
 
   if (isVideoMode) {
     return (

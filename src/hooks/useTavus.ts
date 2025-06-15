@@ -22,7 +22,7 @@ export const useTavus = () => {
 
   const endConversation = async (conversationId: string, showToast: boolean = true) => {
     if (!conversationId) {
-      console.warn('No conversation ID provided for ending');
+      console.warn('⚠️ No conversation ID provided for ending');
       return;
     }
 
@@ -30,6 +30,7 @@ export const useTavus = () => {
     try {
       console.log('=== ENDING TAVUS CONVERSATION ===');
       console.log('Conversation ID:', conversationId);
+      console.log('Show toast:', showToast);
       
       const { data, error } = await supabase.functions.invoke('tavus-integration', {
         body: {
@@ -41,26 +42,38 @@ export const useTavus = () => {
       });
 
       if (error) {
-        console.error('Error ending conversation:', error);
+        console.error('❌ Error ending conversation:', error);
         throw error;
       }
 
-      console.log('✅ Conversation ended:', data);
+      console.log('✅ Conversation ended successfully:', data);
       
       // Remove from active conversations tracking
       activeConversationsRef.current.delete(conversationId);
+      console.log('🗑️ Removed from active tracking:', conversationId);
       
       // Update status in database
-      await supabase
-        .from('video_conversations')
-        .update({ 
-          status: 'ended',
-          updated_at: new Date().toISOString()
-        })
-        .eq('conversation_id', conversationId);
+      try {
+        const { error: dbError } = await supabase
+          .from('video_conversations')
+          .update({ 
+            status: 'ended',
+            updated_at: new Date().toISOString()
+          })
+          .eq('conversation_id', conversationId);
+
+        if (dbError) {
+          console.error('⚠️ Failed to update conversation status in DB:', dbError);
+        } else {
+          console.log('✅ Updated conversation status in database');
+        }
+      } catch (dbError) {
+        console.error('⚠️ Database update error:', dbError);
+      }
 
       // Clear current conversation if it's the one we're ending
       if (currentConversation?.conversation_id === conversationId) {
+        console.log('🧹 Clearing current conversation state');
         setCurrentConversation(null);
       }
 
@@ -73,7 +86,7 @@ export const useTavus = () => {
 
       return data;
     } catch (error) {
-      console.error('Failed to end conversation:', error);
+      console.error('❌ Failed to end conversation:', error);
       if (showToast) {
         toast({
           title: "Warning",
@@ -92,13 +105,15 @@ export const useTavus = () => {
     const activeIds = Array.from(activeConversationsRef.current);
     
     if (activeIds.length === 0) {
-      console.log('No active conversations to end');
+      console.log('✅ No active conversations to end');
       return;
     }
 
+    console.log('🛑 Ending active conversations:', activeIds);
+
     const endPromises = activeIds.map(id => 
       endConversation(id, false).catch(error => {
-        console.error(`Failed to end conversation ${id}:`, error);
+        console.error(`❌ Failed to end conversation ${id}:`, error);
       })
     );
 
@@ -122,14 +137,14 @@ export const useTavus = () => {
       });
 
       if (error) {
-        console.error('Error cleaning up conversations:', error);
+        console.error('❌ Error cleaning up conversations:', error);
         return false;
       }
 
       console.log('✅ Cleanup result:', data);
       return true;
     } catch (error) {
-      console.error('Failed to cleanup conversations:', error);
+      console.error('❌ Failed to cleanup conversations:', error);
       return false;
     }
   };
@@ -144,23 +159,35 @@ export const useTavus = () => {
     setIsCreatingConversation(true);
     try {
       console.log('=== CREATING TAVUS CONVERSATION ===');
+      console.log('Conversation name:', conversationName);
+      console.log('Persona ID:', personaId);
+      console.log('Session ID:', sessionId);
+      console.log('Participant name:', participantName);
+      console.log('Context length:', conversationalContext?.length);
       
       // First, end any existing active conversations to prevent conflicts
       await endAllActiveConversations();
       
+      // Wait for cleanup
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const requestData = {
+        conversation_name: conversationName,
+        conversational_context: conversationalContext,
+        persona_id: personaId || "p869ead8c67b"
+      };
+      
+      console.log('🚀 Sending conversation creation request:', requestData);
+      
       const { data, error } = await supabase.functions.invoke('tavus-integration', {
         body: {
           action: 'create_conversation',
-          data: {
-            conversation_name: conversationName,
-            conversational_context: conversationalContext,
-            persona_id: "p869ead8c67b" // Use the correct persona_id from your template
-          }
+          data: requestData
         }
       });
 
       if (error) {
-        console.error('Error creating conversation:', error);
+        console.error('❌ Error creating conversation:', error);
         
         if (error.message && error.message.includes('maximum concurrent conversations')) {
           toast({
@@ -178,31 +205,49 @@ export const useTavus = () => {
         throw error;
       }
 
-      console.log('✅ Conversation created:', data);
+      console.log('✅ Conversation created successfully:', data);
+      console.log('Response structure:', {
+        conversation_id: data.conversation_id,
+        conversation_url: data.conversation_url,
+        status: data.status,
+        created_at: data.created_at
+      });
+      
+      // Validate response
+      if (!data.conversation_id || !data.conversation_url) {
+        console.error('❌ Invalid conversation response - missing required fields');
+        throw new Error('Invalid conversation response from Tavus API');
+      }
       
       // Track this conversation as active
       if (data.conversation_id) {
         activeConversationsRef.current.add(data.conversation_id);
+        console.log('📝 Added to active tracking:', data.conversation_id);
+        console.log('Total active conversations:', activeConversationsRef.current.size);
       }
       
       // Save to database
-      const { data: userData } = await supabase.auth.getUser();
-      const { error: dbError } = await supabase
-        .from('video_conversations')
-        .insert([{
-          conversation_id: data.conversation_id,
-          conversation_name: data.conversation_name || conversationName,
-          conversation_url: data.conversation_url,
-          status: data.status,
-          callback_url: data.callback_url || null,
-          user_id: userData.user?.id || null,
-          session_id: sessionId || null
-        }]);
+      try {
+        const { data: userData } = await supabase.auth.getUser();
+        const { error: dbError } = await supabase
+          .from('video_conversations')
+          .insert([{
+            conversation_id: data.conversation_id,
+            conversation_name: data.conversation_name || conversationName,
+            conversation_url: data.conversation_url,
+            status: data.status,
+            callback_url: data.callback_url || null,
+            user_id: userData.user?.id || null,
+            session_id: sessionId || null
+          }]);
 
-      if (dbError) {
-        console.error('Error saving conversation to database:', dbError);
-      } else {
-        console.log('✅ Conversation saved to database');
+        if (dbError) {
+          console.error('⚠️ Error saving conversation to database:', dbError);
+        } else {
+          console.log('✅ Conversation saved to database');
+        }
+      } catch (dbError) {
+        console.error('⚠️ Database save error:', dbError);
       }
 
       setCurrentConversation(data);
@@ -214,7 +259,7 @@ export const useTavus = () => {
 
       return data;
     } catch (error) {
-      console.error('Failed to create conversation:', error);
+      console.error('❌ Failed to create conversation:', error);
       
       if (!error.message?.includes('maximum concurrent conversations')) {
         toast({
