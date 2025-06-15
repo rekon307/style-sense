@@ -144,10 +144,23 @@ const Index = ({
                             <p className="text-sm text-gray-600 dark:text-gray-400">AI-powered style consultation</p>
                           </div>
                         </div>
-                        <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700 px-3 py-1 rounded-full font-medium">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                          {videoConversationUrl ? 'Connected' : 'Connecting...'}
-                        </Badge>
+                        <div className="flex items-center gap-4">
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleVideoModeChange(false)}
+                              className="flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                              Switch to Text Chat
+                            </Button>
+                          </div>
+                          <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700 px-3 py-1 rounded-full font-medium">
+                            <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                            {videoConversationUrl ? 'Connected' : 'Connecting...'}
+                          </Badge>
+                        </div>
                       </div>
                       
                       <div className="flex-1 bg-gradient-to-br from-gray-900 to-black rounded-b-3xl overflow-hidden">
@@ -192,10 +205,23 @@ const Index = ({
                             <p className="text-sm text-gray-600 dark:text-gray-400">Capture your style for analysis</p>
                           </div>
                         </div>
-                        <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700 px-3 py-1 rounded-full font-medium">
-                          <Zap className="w-3 h-3 mr-2" />
-                          Ready
-                        </Badge>
+                        <div className="flex items-center gap-4">
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleVideoModeChange(true)}
+                              className="flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-green-50 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800"
+                            >
+                              <Video className="h-4 w-4" />
+                              Switch to Video Chat
+                            </Button>
+                          </div>
+                          <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700 px-3 py-1 rounded-full font-medium">
+                            <Zap className="w-3 h-3 mr-2" />
+                            Ready
+                          </Badge>
+                        </div>
                       </div>
                       
                       <div className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 to-gray-900">
