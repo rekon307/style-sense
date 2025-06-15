@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 
@@ -38,7 +37,6 @@ export const useVoiceRecording = () => {
     }
 
     setIsListening(false);
-    setLiveTranscript('');
     onSpeechEndRef.current = null;
     
     setTimeout(() => {
@@ -46,7 +44,6 @@ export const useVoiceRecording = () => {
     }, 100);
   }, []);
 
-  // Add a new function to clear transcript manually
   const clearTranscript = useCallback(() => {
     console.log('🧹 Clearing transcript manually...');
     setLiveTranscript('');
@@ -76,17 +73,12 @@ export const useVoiceRecording = () => {
       const recognition = new SpeechRecognitionClass();
       recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = 'ro-RO';
+      recognition.lang = 'en-US';
 
       recognition.onstart = () => {
-        console.log('🎤 Alex is listening - real-time cognitive mode');
+        console.log('🎤 Voice recording started');
         setIsListening(true);
         setLiveTranscript('');
-        
-        toast({
-          title: "Alex ascultă în timp real",
-          description: "Vorbește natural. Alex analizează continuu cu arhitectura sa cognitivă.",
-        });
       };
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -111,16 +103,21 @@ export const useVoiceRecording = () => {
           pauseTimerRef.current = null;
         }
 
-        // Enhanced smart pause detection - 1.5 seconds for cognitive processing
+        // Smart pause detection - 2 seconds for natural conversation flow
         if (fullTranscript) {
           pauseTimerRef.current = setTimeout(() => {
             if (fullTranscript && onSpeechEndRef.current && !isCleanupRef.current) {
-              console.log('🧠 Cognitive pause detected, processing:', fullTranscript);
+              console.log('🎤 Speech completed, processing:', fullTranscript);
               const callback = onSpeechEndRef.current;
-              cleanup(); // This will clear the transcript
+              // Keep the transcript visible and don't clear it immediately
+              setIsListening(false);
               callback(fullTranscript);
+              // Clear transcript after a short delay to show what was said
+              setTimeout(() => {
+                setLiveTranscript('');
+              }, 1000);
             }
-          }, 1500);
+          }, 2000);
         }
       };
 
@@ -129,8 +126,8 @@ export const useVoiceRecording = () => {
         
         if (event.error !== 'aborted' && !isCleanupRef.current) {
           toast({
-            title: "Eroare la recunoașterea vocală",
-            description: `A apărut o problemă: ${event.error}. Încearcă din nou.`,
+            title: "Speech recognition error",
+            description: `Something went wrong: ${event.error}. Please try again.`,
             variant: "destructive",
           });
         }
@@ -152,8 +149,8 @@ export const useVoiceRecording = () => {
       console.error('❌ Error starting speech recognition:', error);
       cleanup();
       toast({
-        title: "Eroare la pornirea recunoașterii vocale",
-        description: "Verifică permisiunile pentru microfon.",
+        title: "Error starting voice recording",
+        description: "Please check microphone permissions.",
         variant: "destructive",
       });
     }

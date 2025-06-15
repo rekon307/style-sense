@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Send, Square, Paperclip, X, Image, Zap } from "lucide-react";
+import { Mic, Send, Square, Paperclip, X, Image } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useAlexState } from "@/contexts/AlexStateContext";
@@ -44,17 +44,17 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
     }
   }, [isAnalyzing, setStatus, status]);
 
+  // Show live transcript in the input field while listening
   useEffect(() => {
-    if (liveTranscript) {
+    if (isListening && liveTranscript) {
       setMessage(liveTranscript);
     }
-  }, [liveTranscript]);
+  }, [liveTranscript, isListening]);
 
   const clearInput = () => {
     console.log('🧹 Clearing chat input...');
     setMessage("");
     setSelectedImage(null);
-    clearTranscript();
     
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -71,9 +71,10 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
       return;
     }
 
-    console.log('📤 Sending message and clearing input...');
+    console.log('📤 Sending message...');
     onSendMessage(message.trim(), selectedImage, temperature);
     clearInput();
+    clearTranscript();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -91,9 +92,14 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
     } else {
       startListening((finalTranscript: string) => {
         if (finalTranscript.trim()) {
-          console.log('🎤 Voice message completed, sending and clearing...');
-          onSendMessage(finalTranscript.trim(), selectedImage, temperature);
-          setSelectedImage(null);
+          console.log('🎤 Voice message completed, sending...');
+          // Don't clear the input immediately - let user see what was transcribed
+          setMessage(finalTranscript.trim());
+          // Auto-send after voice input like Gemini/BOLT
+          setTimeout(() => {
+            onSendMessage(finalTranscript.trim(), selectedImage, temperature);
+            clearInput();
+          }, 500);
         }
       });
     }
@@ -133,8 +139,8 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
 
   const getPlaceholder = () => {
     if (status === 'listening') return 'Listening...';
-    if (status === 'analyzing') return 'Alex is thinking...';
-    return 'Ask Alex about your style...';
+    if (status === 'analyzing') return 'Andrew is thinking...';
+    return 'Ask Andrew about your style...';
   };
 
   const isInputDisabled = status === 'analyzing';
@@ -216,11 +222,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
           disabled={isInputDisabled || (!message.trim() && !selectedImage)}
           title="Send message"
         >
-          {isInputDisabled ? (
-            <Zap className="h-4 w-4 animate-pulse" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
+          <Send className="h-4 w-4" />
         </Button>
       </div>
 

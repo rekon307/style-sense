@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Sparkles, MessageSquare, Video, Zap, Brain } from "lucide-react";
+import { MessageSquare, Video, User } from "lucide-react";
 import { useAlexState } from "@/contexts/AlexStateContext";
 
 interface ChatHeaderProps {
@@ -27,7 +27,7 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
   };
 
   const getStatusText = () => {
-    if (isAnalyzing) return 'processing...';
+    if (isAnalyzing) return 'ready';
     
     switch (status) {
       case 'listening':
@@ -60,17 +60,15 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
         <div className="flex items-center gap-4">
           <div className="relative">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg">
-              <Brain className="w-7 h-7 text-white" />
+              <User className="w-7 h-7 text-white" />
             </div>
             <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-3 border-white dark:border-gray-900 ${getStatusIndicator()}`}></div>
           </div>
           <div>
-            <h3 className="font-bold text-gray-900 dark:text-white text-xl flex items-center gap-2">
+            <h3 className="font-bold text-gray-900 dark:text-white text-xl">
               Andrew
-              <Sparkles className="w-5 h-5 text-purple-500" />
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-2 mt-1">
-              <Zap className="w-4 h-4" />
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               {getStatusText()}
             </p>
           </div>
