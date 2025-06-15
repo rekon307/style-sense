@@ -22,7 +22,9 @@ export const useMessages = (currentSessionId: string | null) => {
 
       setIsLoading(true);
       try {
-        console.log('Loading messages for session:', currentSessionId);
+        console.log('=== LOADING MESSAGES FOR SESSION ===');
+        console.log('Session ID:', currentSessionId);
+        
         const { data, error } = await supabase
           .from('chat_messages')
           .select('id, role, content, visual_context, created_at')
@@ -39,15 +41,30 @@ export const useMessages = (currentSessionId: string | null) => {
           throw error;
         }
         
-        const sessionMessages: Message[] = data?.map(msg => ({
-          id: msg.id,
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-          visual_context: msg.visual_context,
-          created_at: msg.created_at
-        })) || [];
+        const sessionMessages: Message[] = data?.map(msg => {
+          console.log('=== MESSAGE LOADED ===');
+          console.log('Message ID:', msg.id);
+          console.log('Role:', msg.role);
+          console.log('Content preview:', msg.content.substring(0, 50));
+          console.log('Has visual context:', !!msg.visual_context);
+          if (msg.visual_context) {
+            console.log('Visual context length:', msg.visual_context.length);
+            console.log('Visual context preview:', msg.visual_context.substring(0, 50));
+          }
+          
+          return {
+            id: msg.id,
+            role: msg.role as 'user' | 'assistant',
+            content: msg.content,
+            visual_context: msg.visual_context,
+            created_at: msg.created_at
+          };
+        }) || [];
         
-        console.log('Loaded messages:', sessionMessages.length);
+        console.log('=== TOTAL MESSAGES LOADED ===');
+        console.log('Total messages:', sessionMessages.length);
+        console.log('Messages with images:', sessionMessages.filter(m => m.visual_context).length);
+        
         setMessages(sessionMessages);
       } catch (error) {
         console.error('Failed to load session messages:', error);

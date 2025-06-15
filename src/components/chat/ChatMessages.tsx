@@ -24,7 +24,6 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   };
 
   useEffect(() => {
-    // Small delay to ensure DOM updates before scrolling
     const timer = setTimeout(scrollToBottom, 100);
     return () => clearTimeout(timer);
   }, [messages, isAnalyzing]);
@@ -32,6 +31,15 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   const renderMessage = (message: Message, index: number) => {
     const isUser = message.role === 'user';
     const hasImage = message.visual_context && message.visual_context.length > 0;
+    
+    console.log('=== RENDERING MESSAGE ===');
+    console.log('Message index:', index);
+    console.log('Is user:', isUser);
+    console.log('Has image:', hasImage);
+    if (hasImage) {
+      console.log('Image data length:', message.visual_context?.length);
+      console.log('Image starts with:', message.visual_context?.substring(0, 30));
+    }
     
     return (
       <div 
@@ -53,6 +61,27 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
         </Avatar>
         
         <div className={`flex flex-col max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
+          {/* Show image first if it exists and it's a user message */}
+          {hasImage && isUser && (
+            <div className="mb-2 max-w-60 animate-scale-in">
+              <img 
+                src={message.visual_context} 
+                alt="Shared image" 
+                className="rounded-lg max-w-full h-auto border border-slate-200 dark:border-slate-700 transition-transform duration-200 hover:scale-105"
+                onLoad={() => console.log('✅ Image loaded successfully')}
+                onError={(e) => {
+                  console.error('❌ Image failed to load:', e);
+                  console.error('Image src:', message.visual_context?.substring(0, 100));
+                }}
+              />
+              <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                <Camera className="h-3 w-3" />
+                Image shared
+              </p>
+            </div>
+          )}
+          
+          {/* Message content */}
           <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words transition-all duration-300 hover:shadow-md ${
             isUser 
               ? 'bg-blue-600 text-white rounded-br-md' 
@@ -61,17 +90,7 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
             {message.content}
           </div>
           
-          {hasImage && isUser && (
-            <div className="mt-2 max-w-40 animate-scale-in">
-              <img 
-                src={message.visual_context} 
-                alt="Shared image" 
-                className="rounded-lg max-w-full h-auto border border-slate-200 dark:border-slate-700 transition-transform duration-200 hover:scale-105"
-              />
-              <p className="text-xs text-slate-500 mt-1">📷 Image sent</p>
-            </div>
-          )}
-          
+          {/* Timestamp */}
           <div className={`text-xs text-slate-500 dark:text-slate-400 mt-1 ${isUser ? 'text-right' : 'text-left'}`}>
             {isUser ? 'You' : 'Alex AI'} • {message.created_at ? new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
