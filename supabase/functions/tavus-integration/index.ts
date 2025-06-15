@@ -77,7 +77,7 @@ serve(async (req) => {
 async function createConversation(data: any, apiKey: string) {
   console.log('=== CREATING TAVUS CONVERSATION ===');
   
-  // Updated payload to use replica_id instead of persona_id based on API error
+  // Simplified payload to match working Postman request
   const payload = {
     replica_id: data.replica_id || "r4fa3e64f1",
     conversation_name: data.conversation_name || "Style Sense Video Chat",
@@ -92,16 +92,20 @@ async function createConversation(data: any, apiKey: string) {
 
   console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
   console.log('Using API endpoint: https://tavusapi.com/v2/conversations');
+  console.log('API Key being used:', apiKey.substring(0, 8) + '...');
 
   try {
+    // Increase timeout to 60 seconds and add retry logic
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
+    console.log('Making request to Tavus API...');
     const response = await fetch('https://tavusapi.com/v2/conversations', {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
         'Content-Type': 'application/json',
+        'User-Agent': 'Supabase-Edge-Function/1.0',
       },
       body: JSON.stringify(payload),
       signal: controller.signal,
@@ -130,7 +134,7 @@ async function createConversation(data: any, apiKey: string) {
     console.error('Error cause:', fetchError.cause);
     
     if (fetchError.name === 'AbortError') {
-      throw new Error('Request timed out after 30 seconds. Please check your network connection and try again.');
+      throw new Error('Request timed out after 60 seconds. The Tavus API may be experiencing delays. Please try again.');
     }
     
     throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
@@ -152,13 +156,14 @@ async function generateVideo(data: any, apiKey: string) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     const response = await fetch('https://tavusapi.com/v2/videos', {
       method: 'POST',
       headers: {
         'x-api-key': apiKey,
         'Content-Type': 'application/json',
+        'User-Agent': 'Supabase-Edge-Function/1.0',
       },
       body: JSON.stringify(payload),
       signal: controller.signal,
@@ -187,7 +192,7 @@ async function generateVideo(data: any, apiKey: string) {
     console.error('Error cause:', fetchError.cause);
     
     if (fetchError.name === 'AbortError') {
-      throw new Error('Request timed out after 30 seconds. Please check your network connection and try again.');
+      throw new Error('Request timed out after 60 seconds. Please check your network connection and try again.');
     }
     
     throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
@@ -201,13 +206,14 @@ async function getConversationStatus(conversationId: string, apiKey: string) {
 
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     const response = await fetch(`https://tavusapi.com/v2/conversations/${conversationId}`, {
       method: 'GET',
       headers: {
         'x-api-key': apiKey,
         'Content-Type': 'application/json',
+        'User-Agent': 'Supabase-Edge-Function/1.0',
       },
       signal: controller.signal,
     });
@@ -235,7 +241,7 @@ async function getConversationStatus(conversationId: string, apiKey: string) {
     console.error('Error cause:', fetchError.cause);
     
     if (fetchError.name === 'AbortError') {
-      throw new Error('Request timed out after 30 seconds. Please check your network connection and try again.');
+      throw new Error('Request timed out after 60 seconds. Please check your network connection and try again.');
     }
     
     throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
