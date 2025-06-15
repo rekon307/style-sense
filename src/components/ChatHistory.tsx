@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -159,11 +158,11 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
   };
 
   return (
-    <Card className="h-full flex flex-col bg-white border-gray-200">
-      <CardHeader className="pb-4 border-b border-gray-200">
-        <CardTitle className="flex items-center justify-between text-gray-900">
+    <Card className="h-full flex flex-col bg-gray-900 dark:bg-gray-900 border-gray-700 dark:border-gray-700">
+      <CardHeader className="pb-4 border-b border-gray-700 dark:border-gray-700">
+        <CardTitle className="flex items-center justify-between text-white dark:text-white">
           <div className="flex items-center gap-2">
-            <MessageSquareText className="h-5 w-5 text-blue-500" />
+            <MessageSquareText className="h-5 w-5 text-blue-400" />
             <span className="font-semibold">Chats</span>
           </div>
         </CardTitle>
@@ -184,12 +183,12 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
             {isLoading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading chats...</p>
+                <p className="text-gray-400">Loading chats...</p>
               </div>
             ) : sessionPreviews.length === 0 ? (
               <div className="text-center py-12">
-                <MessageSquareText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 font-medium mb-2">No conversations yet</p>
+                <MessageSquareText className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+                <p className="text-gray-300 font-medium mb-2">No conversations yet</p>
                 <p className="text-sm text-gray-500">
                   Start a new chat to see your conversation history
                 </p>
@@ -201,8 +200,8 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
                   onClick={() => handleSessionClick(session.id)}
                   className={`group p-3 rounded-lg cursor-pointer transition-all border ${
                     currentSessionId === session.id
-                      ? 'bg-blue-50 border-blue-200'
-                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                      ? 'bg-blue-600/20 border-blue-500/50'
+                      : 'bg-gray-800/50 border-gray-700 hover:bg-gray-800'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -216,8 +215,8 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className={`text-sm font-medium truncate ${
                             currentSessionId === session.id
-                              ? 'text-blue-900'
-                              : 'text-gray-900'
+                              ? 'text-blue-300'
+                              : 'text-gray-200'
                           }`}>
                             {session.title}
                           </h4>
@@ -225,7 +224,7 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
                             <Image className="h-3 w-3 text-gray-500 flex-shrink-0" />
                           )}
                         </div>
-                        <p className="text-xs text-gray-600 truncate mb-1">
+                        <p className="text-xs text-gray-400 truncate mb-1">
                           {session.lastMessage}
                         </p>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -241,7 +240,7 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
                       onClick={(e) => handleDeleteSession(e, session.id)}
                       variant="ghost"
                       size="sm"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-red-50 hover:text-red-600"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0 hover:bg-red-500/20 hover:text-red-400 text-gray-500"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
