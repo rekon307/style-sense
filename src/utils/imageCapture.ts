@@ -179,6 +179,8 @@ export const forcePhotoCapture = (): string | null => {
     console.log('- Dimensions:', video.videoWidth, 'x', video.videoHeight);
     console.log('- Ready state:', video.readyState);
     console.log('- Has stream:', !!video.srcObject);
+    console.log('- Paused:', video.paused);
+    console.log('- Current time:', video.currentTime);
     
     if (video.videoWidth > 0 && video.videoHeight > 0 && video.readyState >= 2) {
       try {
@@ -193,12 +195,25 @@ export const forcePhotoCapture = (): string | null => {
           
           console.log('=== FORCE CAPTURE SUCCESS ===');
           console.log('Image length:', dataURL.length);
-          return dataURL;
+          console.log('Image starts with:', dataURL.substring(0, 30));
+          
+          // Validate the image contains actual data
+          if (dataURL.length > 1000) { // Basic check for meaningful image data
+            return dataURL;
+          } else {
+            console.log('❌ Image too small, likely empty');
+          }
         }
       } catch (error) {
         console.error('Force capture failed for video', i + 1, ':', error);
         continue;
       }
+    } else {
+      console.log(`❌ Video ${i + 1} not suitable:`, {
+        hasValidDimensions: video.videoWidth > 0 && video.videoHeight > 0,
+        hasGoodReadyState: video.readyState >= 2,
+        readyState: video.readyState
+      });
     }
   }
   

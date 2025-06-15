@@ -2,7 +2,7 @@
 import { toast } from '@/components/ui/use-toast';
 import { Message } from '@/types/chat';
 import { createChatSession, saveMessageToSession, loadVisualHistory } from '@/utils/sessionManager';
-import { captureImageFromWebcam } from '@/utils/imageUtils';
+import { forcePhotoCapture } from '@/utils/imageCapture';
 import { callStyleAdvisor } from '@/utils/styleAdvisorApi';
 
 interface UseMessageHandlerProps {
@@ -32,11 +32,38 @@ export const useMessageHandler = ({
 
     console.log('=== STARTING MESSAGE PROCESSING ===');
     console.log('Message:', message);
-    console.log('Has image:', !!image);
+    console.log('Has manual image:', !!image);
     console.log('Temperature:', temperature);
 
+    // Try to capture photo automatically if no manual image provided
+    let finalImage = image;
+    if (!image) {
+      console.log('=== ATTEMPTING AUTOMATIC PHOTO CAPTURE ===');
+      try {
+        const capturedPhoto = forcePhotoCapture();
+        if (capturedPhoto) {
+          finalImage = capturedPhoto;
+          console.log('✅ PHOTO CAPTURED SUCCESSFULLY');
+          console.log('Captured image length:', capturedPhoto.length);
+          console.log('Image preview:', capturedPhoto.substring(0, 50) + '...');
+        } else {
+          console.log('❌ PHOTO CAPTURE FAILED - NO IMAGE RETURNED');
+        }
+      } catch (error) {
+        console.error('❌ PHOTO CAPTURE ERROR:', error);
+      }
+    }
+
+    console.log('=== FINAL IMAGE STATUS ===');
+    console.log('Using image:', !!finalImage);
+    console.log('Image source:', image ? 'manual upload' : finalImage ? 'auto capture' : 'none');
+
     // Add user message to UI immediately
-    const userMessage: Message = { role: 'user', content: message };
+    const userMessage: Message = { 
+      role: 'user', 
+      content: message,
+      visual_context: finalImage 
+    };
     const updatedMessages: Message[] = [...messages, userMessage];
     setMessages(updatedMessages);
     setIsAnalyzing(true);
@@ -45,24 +72,42 @@ export const useMessageHandler = ({
       // Ensure we have a session
       let sessionId = currentSessionId;
       if (!sessionId) {
+        console.log('=== CREATING NEW SESSION ===');
         sessionId = await createChatSession();
         if (!sessionId) throw new Error('Failed to create session');
         setCurrentSessionId(sessionId);
+        console.log('New session created:', sessionId);
       }
 
       // Save user message to database
-      const saved = await saveMessageToSession(sessionId, 'user', message, image);
+      console.log('=== SAVING MESSAGE TO DATABASE ===');
+      const saved = await saveMessageToSession(sessionId, 'user', message, finalImage);
       if (!saved) throw new Error('Failed to save message');
+      console.log('Message saved successfully');
 
       // Load visual history for context
+      console.log('=== LOADING VISUAL HISTORY ===');
       const visualHistory = await loadVisualHistory(sessionId);
+      console.log('Visual history loaded:', visualHistory.length, 'items');
 
       // Call style advisor API
-      const response = await callStyleAdvisor(updatedMessages, temperature, image, visualHistory);
+      console.log('=== CALLING STYLE ADVISOR API ===');
+      console.log('Sending to API:', {
+        messagesCount: updatedMessages.length,
+        hasCurrentImage: !!finalImage,
+        visualHistoryCount: visualHistory.length,
+        temperature
+      });
+
+      const response = await callStyleAdvisor(updatedMessages, temperature, finalImage, visualHistory);
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('❌ API ERROR RESPONSE:', response.status, errorText);
+        throw new Error(`API error: ${response.status} - ${errorText}`);
       }
+
+      console.log('✅ API RESPONSE OK - PROCESSING STREAM');
 
       // Handle streaming response
       await processStreamingResponse(response, sessionId, setMessages);
@@ -95,13 +140,18 @@ const processStreamingResponse = async (
   let buffer = '';
   let assistantContent = '';
 
+  console.log('=== STARTING STREAM PROCESSING ===');
+
   // Add assistant message placeholder
   const assistantMessage: Message = { role: 'assistant', content: '' };
   setMessages(prev => [...prev, assistantMessage]);
 
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
+    if (done) {
+      console.log('=== STREAM COMPLETED ===');
+      break;
+    }
 
     buffer += decoder.decode(value, { stream: true });
     const lines = buffer.split('\n');
@@ -114,7 +164,10 @@ const processStreamingResponse = async (
         try {
           const parsed = JSON.parse(data);
           
-          if (parsed.error) throw new Error(parsed.error);
+          if (parsed.error) {
+            console.error('❌ STREAM ERROR:', parsed.error);
+            throw new Error(parsed.error);
+          }
           
           if (parsed.content) {
             assistantContent += parsed.content;
@@ -137,7 +190,9 @@ const processStreamingResponse = async (
 
   // Save assistant response to database
   if (assistantContent) {
+    console.log('=== SAVING ASSISTANT RESPONSE ===');
     await saveMessageToSession(sessionId, 'assistant', assistantContent);
+    console.log('Assistant response saved');
   }
 };
 
