@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
@@ -6,7 +5,7 @@ import ChatHistory from "@/components/ChatHistory";
 import AuthButton from "@/components/AuthButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { PanelLeft, PanelLeftClose, Sparkles, Cpu } from "lucide-react";
+import { PanelLeft, PanelLeftClose, Sparkles } from "lucide-react";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -73,16 +72,13 @@ const Index = ({
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600">
                   <Sparkles className="h-4 w-4 text-white" />
                 </div>
-                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border border-white bg-green-500 dark:border-slate-900">
-                  <Cpu className="h-1.5 w-1.5 text-white m-0.5" />
-                </div>
+                <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border border-white ${isAnalyzing ? 'bg-amber-500 animate-pulse' : 'bg-green-500'} dark:border-slate-900`}></div>
               </div>
               <div>
                 <h1 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-                  AI Style - Alex
+                  AI Style
                 </h1>
                 <div className="flex items-center gap-1.5">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Cognitive Architecture</p>
                   <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></div>
                   <p className="text-xs text-green-600 dark:text-green-400">Active</p>
                 </div>
