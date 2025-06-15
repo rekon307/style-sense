@@ -38,7 +38,8 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         "Style Sense Video Chat",
         `You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. The user's name is ${userName}. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques. Address the user by their name when appropriate.`,
         "p347dab0cef8",
-        currentSessionId || undefined
+        currentSessionId || undefined,
+        userName // Pass the participant name
       );
       
       console.log('=== VIDEO CONVERSATION CREATED ===');
