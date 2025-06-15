@@ -102,9 +102,9 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
       <div className="p-4">
         <form onSubmit={handleSubmit}>
           {/* Integrated Input Area with Icons */}
-          <div className="relative flex items-end gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-blue-400 transition-colors">
+          <div className="relative flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-blue-400 transition-colors">
             {/* Left side icons */}
-            <div className="flex items-center gap-1 pb-2">
+            <div className="flex items-center gap-1">
               {/* Image Upload Icon */}
               <Button
                 type="button"
@@ -116,26 +116,6 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
               >
                 <ImageIcon className="h-5 w-5" />
               </Button>
-
-              {/* Voice Recording Icon */}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={toggleRecording}
-                disabled={isAnalyzing}
-                className={`h-8 w-8 p-0 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 ${
-                  isRecording 
-                    ? 'text-red-500 hover:text-red-600' 
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                }`}
-              >
-                {isRecording ? (
-                  <MicOff className="h-5 w-5" />
-                ) : (
-                  <Mic className="h-5 w-5" />
-                )}
-              </Button>
             </div>
 
             {/* Text Input */}
@@ -146,12 +126,12 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
               onKeyDown={handleKeyDown}
               placeholder={isAnalyzing ? "Alex is thinking..." : "Ask about your style..."}
               disabled={isAnalyzing}
-              className="flex-1 min-h-[40px] max-h-[120px] resize-none border-0 bg-transparent px-0 py-2 text-sm leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0"
+              className="flex-1 min-h-[32px] max-h-[120px] resize-none border-0 bg-transparent px-0 py-1 text-sm leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0"
               rows={1}
             />
             
-            {/* Right side icons container - fixed alignment */}
-            <div className="flex items-center gap-1 pb-2">
+            {/* Right side icons container */}
+            <div className="flex items-center gap-1">
               {/* Voice Recording Icon */}
               <Button
                 type="button"
