@@ -114,9 +114,7 @@ const Index = ({
         
         <main className="flex flex-1 gap-0">
           <section className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-800">
-            {!isVideoMode ? (
-              <WebcamDisplay ref={webcamRef} />
-            ) : (
+            {isVideoMode ? (
               <div className="h-full">
                 {videoConversationUrl ? (
                   <iframe
@@ -141,6 +139,8 @@ const Index = ({
                   </div>
                 )}
               </div>
+            ) : (
+              <WebcamDisplay ref={webcamRef} />
             )}
           </section>
           

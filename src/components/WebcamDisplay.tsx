@@ -101,8 +101,12 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
   };
 
   const stopWebcam = () => {
+    console.log('=== STOPPING WEBCAM ===');
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach(track => {
+        console.log('Stopping track:', track.kind);
+        track.stop();
+      });
       streamRef.current = null;
       setStream(null);
       if (videoRef.current) {
@@ -146,10 +150,17 @@ const WebcamDisplay = forwardRef<WebcamDisplayRef, WebcamDisplayProps>(({ videoR
   }, []);
 
   useEffect(() => {
+    console.log('=== WEBCAM COMPONENT MOUNTED ===');
     startWebcam();
+    
     return () => {
+      console.log('=== WEBCAM COMPONENT UNMOUNTING ===');
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        console.log('Cleaning up webcam stream on unmount');
+        streamRef.current.getTracks().forEach(track => {
+          console.log('Stopping track on unmount:', track.kind);
+          track.stop();
+        });
         streamRef.current = null;
       }
     };
