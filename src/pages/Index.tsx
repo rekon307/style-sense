@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
@@ -112,6 +111,7 @@ const Index = ({
               selectedModel={selectedModel}
               onModelChange={onModelChange}
               currentSessionId={currentSessionId}
+              user={user}
             />
           </section>
         </main>

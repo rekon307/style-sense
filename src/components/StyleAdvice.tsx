@@ -15,9 +15,10 @@ interface StyleAdviceProps {
   selectedModel: string;
   onModelChange: (model: string) => void;
   currentSessionId: string | null;
+  user?: any;
 }
 
-const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onModelChange, currentSessionId }: StyleAdviceProps) => {
+const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onModelChange, currentSessionId, user }: StyleAdviceProps) => {
   const [temperature, setTemperature] = useState<number>(0.5);
   const [isVideoMode, setIsVideoMode] = useState<boolean>(false);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
@@ -27,10 +28,15 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
     try {
       console.log('=== STARTING VIDEO CHAT ===');
       console.log('Current session ID:', currentSessionId);
+      console.log('User:', user);
+      
+      // Get user's name or use default
+      const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Style Enthusiast';
+      console.log('Using name for video chat:', userName);
       
       const conversation = await createConversation(
         "Style Sense Video Chat",
-        "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
+        `You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. The user's name is ${userName}. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques. Address the user by their name when appropriate.`,
         "p347dab0cef8",
         currentSessionId || undefined
       );
@@ -41,6 +47,10 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       if (conversation?.conversation_url) {
         setVideoConversationUrl(conversation.conversation_url);
         console.log('✅ Video conversation URL set:', conversation.conversation_url);
+        toast({
+          title: "Video chat ready!",
+          description: `Welcome ${userName}! Your video chat with Alex is starting.`,
+        });
       } else {
         console.error('❌ No conversation URL returned');
         toast({
