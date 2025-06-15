@@ -3,7 +3,7 @@ import { useState } from "react";
 import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
-import VideoConversation from "./VideoConversation";
+import VideoConversationEmbed from "./VideoConversationEmbed";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Message } from "@/types/chat";
 
@@ -13,11 +13,34 @@ interface StyleAdviceProps {
   onSendMessage: (message: string, image?: string | null, temperature?: number) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
+  currentSessionId: string | null;
 }
 
-const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onModelChange }: StyleAdviceProps) => {
+const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onModelChange, currentSessionId }: StyleAdviceProps) => {
   const [temperature, setTemperature] = useState<number>(0.5);
   const [isVideoMode, setIsVideoMode] = useState<boolean>(false);
+  const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
+
+  const handleStartVideoChat = async () => {
+    // Import useTavus hook
+    const { useTavus } = await import("@/hooks/useTavus");
+    const { createConversation } = useTavus();
+    
+    try {
+      const conversation = await createConversation(
+        "Style Sense Video Chat",
+        "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
+        "p347dab0cef8",
+        currentSessionId || undefined
+      );
+      
+      if (conversation?.conversation_url) {
+        setVideoConversationUrl(conversation.conversation_url);
+      }
+    } catch (error) {
+      console.error('Failed to start video conversation:', error);
+    }
+  };
 
   return (
     <div className="flex h-full flex-col bg-white dark:bg-gray-900">
@@ -25,6 +48,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         isAnalyzing={isAnalyzing}
         isVideoMode={isVideoMode}
         onVideoModeChange={setIsVideoMode}
+        onStartVideoChat={handleStartVideoChat}
       />
       
       {/* Response Style - only show in text mode */}
@@ -65,9 +89,13 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       {/* Content Area */}
       <div className="flex-1 overflow-hidden">
         {isVideoMode ? (
-          <div className="h-full flex items-center justify-center p-4">
-            <VideoConversation onClose={() => setIsVideoMode(false)} />
-          </div>
+          <VideoConversationEmbed 
+            conversationUrl={videoConversationUrl}
+            onClose={() => {
+              setIsVideoMode(false);
+              setVideoConversationUrl(null);
+            }}
+          />
         ) : (
           <>
             <ChatMessages 

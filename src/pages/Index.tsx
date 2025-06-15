@@ -111,6 +111,7 @@ const Index = ({
               onSendMessage={handleCognitiveMessage}
               selectedModel={selectedModel}
               onModelChange={onModelChange}
+              currentSessionId={currentSessionId}
             />
           </section>
         </main>

@@ -7,9 +7,10 @@ interface ChatHeaderProps {
   isAnalyzing: boolean;
   isVideoMode: boolean;
   onVideoModeChange: (isVideoMode: boolean) => void;
+  onStartVideoChat: () => void;
 }
 
-const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange }: ChatHeaderProps) => {
+const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoChat }: ChatHeaderProps) => {
   const { status } = useAlexState();
 
   const getStatusIndicator = () => {
@@ -36,6 +37,13 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange }: ChatHeaderP
       default:
         return 'online';
     }
+  };
+
+  const handleVideoModeClick = () => {
+    if (!isVideoMode) {
+      onStartVideoChat();
+    }
+    onVideoModeChange(true);
   };
 
   return (
@@ -67,7 +75,7 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange }: ChatHeaderP
           <Button
             variant={isVideoMode ? "default" : "outline"}
             size="sm"
-            onClick={() => onVideoModeChange(true)}
+            onClick={handleVideoModeClick}
             className="flex items-center gap-2 h-8 px-3 text-xs bg-blue-500 hover:bg-blue-600 text-white"
           >
             <Video className="h-3 w-3" />
