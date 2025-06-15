@@ -105,16 +105,20 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   );
 
   const renderEmptyState = () => (
-    <div className="text-center py-12 px-6">
-      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
-        <Sparkles className="h-8 w-8 text-white" />
+    <div className="py-12 px-6">
+      <div className="flex items-start gap-3">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex-shrink-0">
+          <Sparkles className="h-8 w-8 text-white" />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+            Hi, I'm Alex!
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+            Your personal AI style advisor. Share a photo of your outfit and I'll help you improve your style.
+          </p>
+        </div>
       </div>
-      <h3 className="mb-3 text-xl font-semibold text-gray-900 dark:text-white">
-        Hi, I'm Alex!
-      </h3>
-      <p className="mx-auto mb-6 max-w-sm text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-        Your personal AI style advisor. Share a photo of your outfit and I'll help you improve your style.
-      </p>
     </div>
   );
 
