@@ -1,5 +1,6 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, Camera, ImageIcon, User } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Message } from "@/types/chat";
@@ -10,14 +11,22 @@ interface ChatMessagesProps {
 }
 
 const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: "smooth",
+        block: "end"
+      });
+    }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // Small delay to ensure DOM updates before scrolling
+    const timer = setTimeout(scrollToBottom, 100);
+    return () => clearTimeout(timer);
   }, [messages, isAnalyzing]);
 
   const renderMessage = (message: Message, index: number) => {
@@ -25,7 +34,11 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
     const hasImage = message.visual_context && message.visual_context.length > 0;
     
     return (
-      <div key={message.id || index} className={`flex gap-3 mb-6 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+      <div 
+        key={message.id || index} 
+        className={`flex gap-3 mb-6 animate-fade-in ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+        style={{ animationDelay: `${index * 0.1}s` }}
+      >
         <Avatar className="w-8 h-8 flex-shrink-0">
           <AvatarFallback className={isUser 
             ? "bg-blue-600 text-white text-xs" 
@@ -40,7 +53,7 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
         </Avatar>
         
         <div className={`flex flex-col max-w-[80%] ${isUser ? 'items-end' : 'items-start'}`}>
-          <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
+          <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words transition-all duration-300 hover:shadow-md ${
             isUser 
               ? 'bg-blue-600 text-white rounded-br-md' 
               : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-bl-md'
@@ -49,11 +62,11 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
           </div>
           
           {hasImage && isUser && (
-            <div className="mt-2 max-w-40">
+            <div className="mt-2 max-w-40 animate-scale-in">
               <img 
                 src={message.visual_context} 
                 alt="Shared image" 
-                className="rounded-lg max-w-full h-auto border border-slate-200 dark:border-slate-700"
+                className="rounded-lg max-w-full h-auto border border-slate-200 dark:border-slate-700 transition-transform duration-200 hover:scale-105"
               />
               <p className="text-xs text-slate-500 mt-1">📷 Image sent</p>
             </div>
@@ -68,7 +81,7 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   };
 
   const renderThinkingIndicator = () => (
-    <div className="flex gap-3 mb-6">
+    <div className="flex gap-3 mb-6 animate-fade-in">
       <Avatar className="w-8 h-8 flex-shrink-0">
         <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white text-xs">
           <Sparkles className="h-4 w-4" />
@@ -94,7 +107,7 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   );
 
   const renderEmptyState = () => (
-    <div className="text-center py-12">
+    <div className="text-center py-12 animate-fade-in">
       <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30">
         <Sparkles className="h-8 w-8 text-blue-600 dark:text-blue-400" />
       </div>
@@ -105,11 +118,11 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
         Your personal AI style advisor, ready to help you improve your wardrobe with personalized recommendations.
       </p>
       <div className="mx-auto grid max-w-sm grid-cols-1 gap-3">
-        <div className="flex items-center gap-3 rounded-lg bg-slate-50/50 dark:bg-slate-800/30 p-3">
+        <div className="flex items-center gap-3 rounded-lg bg-slate-50/50 dark:bg-slate-800/30 p-3 transition-colors hover:bg-slate-100/50 dark:hover:bg-slate-700/30">
           <Camera className="h-4 w-4 text-slate-600 dark:text-slate-400" />
           <span className="text-sm text-slate-600 dark:text-slate-400">Camera captures automatically</span>
         </div>
-        <div className="flex items-center gap-3 rounded-lg bg-slate-50/50 dark:bg-slate-800/30 p-3">
+        <div className="flex items-center gap-3 rounded-lg bg-slate-50/50 dark:bg-slate-800/30 p-3 transition-colors hover:bg-slate-100/50 dark:hover:bg-slate-700/30">
           <ImageIcon className="h-4 w-4 text-slate-600 dark:text-slate-400" />
           <span className="text-sm text-slate-600 dark:text-slate-400">Or upload manually</span>
         </div>
@@ -118,17 +131,19 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   );
 
   return (
-    <div className="flex-1 overflow-y-auto px-6 py-6">
-      {messages.length === 0 && !isAnalyzing ? (
-        renderEmptyState()
-      ) : (
-        <>
-          {messages.map((message, index) => renderMessage(message, index))}
-          {isAnalyzing && renderThinkingIndicator()}
-        </>
-      )}
-      <div ref={messagesEndRef} />
-    </div>
+    <ScrollArea className="flex-1 px-6">
+      <div className="py-6">
+        {messages.length === 0 && !isAnalyzing ? (
+          renderEmptyState()
+        ) : (
+          <>
+            {messages.map((message, index) => renderMessage(message, index))}
+            {isAnalyzing && renderThinkingIndicator()}
+          </>
+        )}
+        <div ref={messagesEndRef} className="h-1" />
+      </div>
+    </ScrollArea>
   );
 };
 
