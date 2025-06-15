@@ -30,7 +30,6 @@ export const useTavus = () => {
     try {
       console.log('=== ENDING TAVUS CONVERSATION ===');
       console.log('Conversation ID:', conversationId);
-      console.log('Show toast:', showToast);
       
       const { data, error } = await supabase.functions.invoke('tavus-integration', {
         body: {
@@ -125,30 +124,6 @@ export const useTavus = () => {
     console.log(`✅ Attempted to end ${activeIds.length} active conversations`);
   };
 
-  const cleanupOldConversations = async () => {
-    try {
-      console.log('=== CLEANING UP OLD CONVERSATIONS ===');
-      
-      const { data, error } = await supabase.functions.invoke('tavus-integration', {
-        body: {
-          action: 'cleanup_conversations',
-          data: {}
-        }
-      });
-
-      if (error) {
-        console.error('❌ Error cleaning up conversations:', error);
-        return false;
-      }
-
-      console.log('✅ Cleanup result:', data);
-      return true;
-    } catch (error) {
-      console.error('❌ Failed to cleanup conversations:', error);
-      return false;
-    }
-  };
-
   const createConversation = async (
     conversationName?: string,
     conversationalContext?: string,
@@ -206,15 +181,9 @@ export const useTavus = () => {
       }
 
       console.log('✅ Conversation created successfully:', data);
-      console.log('Response structure:', {
-        conversation_id: data.conversation_id,
-        conversation_url: data.conversation_url,
-        status: data.status,
-        created_at: data.created_at
-      });
       
       // Validate response
-      if (!data.conversation_id || !data.conversation_url) {
+      if (!data?.conversation_id || !data?.conversation_url) {
         console.error('❌ Invalid conversation response - missing required fields');
         throw new Error('Invalid conversation response from Tavus API');
       }
@@ -385,6 +354,30 @@ export const useTavus = () => {
     } catch (error) {
       console.error('Failed to load video conversations:', error);
       return [];
+    }
+  };
+
+  const cleanupOldConversations = async () => {
+    try {
+      console.log('=== CLEANING UP OLD CONVERSATIONS ===');
+      
+      const { data, error } = await supabase.functions.invoke('tavus-integration', {
+        body: {
+          action: 'cleanup_conversations',
+          data: {}
+        }
+      });
+
+      if (error) {
+        console.error('❌ Error cleaning up conversations:', error);
+        return false;
+      }
+
+      console.log('✅ Cleanup result:', data);
+      return true;
+    } catch (error) {
+      console.error('❌ Failed to cleanup conversations:', error);
+      return false;
     }
   };
 
