@@ -95,6 +95,53 @@ export type Database = {
         }
         Relationships: []
       }
+      video_conversations: {
+        Row: {
+          callback_url: string | null
+          conversation_id: string
+          conversation_name: string | null
+          conversation_url: string
+          created_at: string
+          id: string
+          session_id: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          callback_url?: string | null
+          conversation_id: string
+          conversation_name?: string | null
+          conversation_url: string
+          created_at?: string
+          id?: string
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          callback_url?: string | null
+          conversation_id?: string
+          conversation_name?: string | null
+          conversation_url?: string
+          created_at?: string
+          id?: string
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_conversations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

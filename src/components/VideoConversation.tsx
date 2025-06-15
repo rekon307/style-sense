@@ -1,37 +1,56 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Video, VideoOff, Phone, PhoneOff, Loader2, ExternalLink } from 'lucide-react';
+import { Video, VideoOff, Phone, PhoneOff, Loader2, ExternalLink, History } from 'lucide-react';
 import { useTavus } from '@/hooks/useTavus';
 import { toast } from '@/components/ui/use-toast';
 
 interface VideoConversationProps {
   onClose?: () => void;
+  currentSessionId?: string | null;
 }
 
-const VideoConversation = ({ onClose }: VideoConversationProps) => {
+const VideoConversation = ({ onClose, currentSessionId }: VideoConversationProps) => {
   const {
     createConversation,
     getConversationStatus,
+    loadVideoConversations,
     isCreatingConversation,
     currentConversation,
     setCurrentConversation
   } = useTavus();
 
   const [conversationStatus, setConversationStatus] = useState<string>('idle');
+  const [videoHistory, setVideoHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (currentSessionId) {
+      loadVideoHistory();
+    }
+  }, [currentSessionId]);
+
+  const loadVideoHistory = async () => {
+    if (currentSessionId) {
+      const conversations = await loadVideoConversations(currentSessionId);
+      setVideoHistory(conversations);
+    }
+  };
 
   const handleStartConversation = async () => {
     try {
       const conversation = await createConversation(
         "Style Sense Video Chat",
         "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
-        "p347dab0cef8"
+        "p347dab0cef8",
+        currentSessionId || undefined
       );
       
       if (conversation) {
         setConversationStatus('active');
         console.log('Conversation URL:', conversation.conversation_url);
+        await loadVideoHistory(); // Refresh history
       }
     } catch (error) {
       console.error('Failed to start conversation:', error);
@@ -52,6 +71,12 @@ const VideoConversation = ({ onClose }: VideoConversationProps) => {
     if (currentConversation?.conversation_url) {
       window.open(currentConversation.conversation_url, '_blank');
     }
+  };
+
+  const handleRejoinConversation = (conversation: any) => {
+    setCurrentConversation(conversation);
+    setConversationStatus(conversation.status);
+    window.open(conversation.conversation_url, '_blank');
   };
 
   const checkConversationStatus = async () => {
@@ -82,6 +107,15 @@ const VideoConversation = ({ onClose }: VideoConversationProps) => {
     }
   };
 
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    } catch (error) {
+      return 'Unknown date';
+    }
+  };
+
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader className="text-center">
@@ -97,6 +131,41 @@ const VideoConversation = ({ onClose }: VideoConversationProps) => {
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* Video History Section */}
+        {videoHistory.length > 0 && (
+          <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+            <div className="flex items-center gap-2 mb-3">
+              <History className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300">Previous Video Sessions</h4>
+            </div>
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {videoHistory.map((conversation) => (
+                <div key={conversation.id} className="flex items-center justify-between bg-white dark:bg-slate-700 p-2 rounded text-xs">
+                  <div>
+                    <p className="font-medium">{conversation.conversation_name}</p>
+                    <p className="text-slate-500">{formatDate(conversation.created_at)}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={`${getStatusColor(conversation.status)} text-white text-xs`}>
+                      {conversation.status}
+                    </Badge>
+                    {conversation.status === 'active' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRejoinConversation(conversation)}
+                        className="text-xs"
+                      >
+                        Rejoin
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {!currentConversation ? (
           <div className="text-center space-y-4">
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 p-6 rounded-lg">

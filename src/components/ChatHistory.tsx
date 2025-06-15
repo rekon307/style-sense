@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Plus, Trash2, Clock, MessageSquareText, Image } from "lucide-react";
+import { Plus, Trash2, Clock, MessageSquareText, Image, Video } from "lucide-react";
 import { useChatHistory } from "@/hooks/useChatHistory";
+import { useVideoHistory } from "@/hooks/useVideoHistory";
 import { toast } from "@/components/ui/use-toast";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +21,7 @@ interface SessionPreview {
   updated_at: string;
   messageCount: number;
   hasImages: boolean;
+  hasVideo: boolean;
   lastMessage: string;
 }
 
@@ -33,7 +35,13 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
     switchToSession 
   } = useChatHistory();
 
+  const { videoConversations, loadVideoConversations } = useVideoHistory();
+
   const [sessionPreviews, setSessionPreviews] = useState<SessionPreview[]>([]);
+
+  useEffect(() => {
+    loadVideoConversations();
+  }, []);
 
   useEffect(() => {
     const loadSessionPreviews = async () => {
@@ -61,10 +69,16 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
               .not('visual_context', 'is', null)
               .limit(1);
 
+            // Check for video conversations in this session
+            const sessionVideoConversations = videoConversations.filter(
+              vc => vc.session_id === session.id
+            );
+
             return {
               ...session,
               messageCount: count || 0,
               hasImages: (imagesData?.length || 0) > 0,
+              hasVideo: sessionVideoConversations.length > 0,
               lastMessage: messages?.[0]?.content?.substring(0, 60) + (messages?.[0]?.content?.length > 60 ? '...' : '') || 'No messages yet'
             };
           } catch (error) {
@@ -73,6 +87,7 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
               ...session,
               messageCount: 0,
               hasImages: false,
+              hasVideo: false,
               lastMessage: 'Error loading preview'
             };
           }
@@ -83,7 +98,7 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
     };
 
     loadSessionPreviews();
-  }, [sessions]);
+  }, [sessions, videoConversations]);
 
   const handleNewChat = async () => {
     try {
@@ -221,9 +236,14 @@ const ChatHistory = ({ onSessionChange }: ChatHistoryProps) => {
                           }`}>
                             {session.title}
                           </h4>
-                          {session.hasImages && (
-                            <Image className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                          )}
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            {session.hasImages && (
+                              <Image className="h-3 w-3 text-muted-foreground" />
+                            )}
+                            {session.hasVideo && (
+                              <Video className="h-3 w-3 text-muted-foreground" />
+                            )}
+                          </div>
                         </div>
                         <p className="text-xs text-muted-foreground truncate mb-1">
                           {session.lastMessage}

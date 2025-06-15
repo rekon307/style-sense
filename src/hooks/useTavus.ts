@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -6,6 +7,9 @@ interface TavusConversation {
   conversation_id: string;
   conversation_url: string;
   status: string;
+  conversation_name?: string;
+  callback_url?: string;
+  created_at?: string;
 }
 
 export const useTavus = () => {
@@ -16,7 +20,8 @@ export const useTavus = () => {
   const createConversation = async (
     conversationName?: string,
     conversationalContext?: string,
-    personaId?: string
+    personaId?: string,
+    sessionId?: string
   ) => {
     setIsCreatingConversation(true);
     try {
@@ -39,6 +44,27 @@ export const useTavus = () => {
       }
 
       console.log('✅ Conversation created:', data);
+      
+      // Save to database
+      const { data: userData } = await supabase.auth.getUser();
+      const { error: dbError } = await supabase
+        .from('video_conversations')
+        .insert([{
+          conversation_id: data.conversation_id,
+          conversation_name: data.conversation_name || conversationName,
+          conversation_url: data.conversation_url,
+          status: data.status,
+          callback_url: data.callback_url || null,
+          user_id: userData.user?.id || null,
+          session_id: sessionId || null
+        }]);
+
+      if (dbError) {
+        console.error('Error saving conversation to database:', dbError);
+      } else {
+        console.log('✅ Conversation saved to database');
+      }
+
       setCurrentConversation(data);
       
       toast({
@@ -129,6 +155,16 @@ export const useTavus = () => {
       }
 
       console.log('✅ Conversation status:', data);
+      
+      // Update status in database
+      await supabase
+        .from('video_conversations')
+        .update({ 
+          status: data.status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('conversation_id', conversationId);
+
       return data;
     } catch (error) {
       console.error('Failed to get conversation status:', error);
@@ -136,10 +172,39 @@ export const useTavus = () => {
     }
   };
 
+  const loadVideoConversations = async (sessionId?: string) => {
+    try {
+      console.log('=== LOADING VIDEO CONVERSATIONS ===');
+      
+      let query = supabase
+        .from('video_conversations')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (sessionId) {
+        query = query.eq('session_id', sessionId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error loading video conversations:', error);
+        throw error;
+      }
+
+      console.log('✅ Video conversations loaded:', data?.length || 0);
+      return data || [];
+    } catch (error) {
+      console.error('Failed to load video conversations:', error);
+      return [];
+    }
+  };
+
   return {
     createConversation,
     generateVideo,
     getConversationStatus,
+    loadVideoConversations,
     isCreatingConversation,
     isGeneratingVideo,
     currentConversation,
