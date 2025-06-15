@@ -106,20 +106,20 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   );
 
   const renderEmptyState = () => (
-    <div className="py-16 px-6">
-      <div className="flex items-start gap-4">
-        <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex-shrink-0 shadow-2xl">
-          <Sparkles className="h-10 w-10 text-white" />
+    <div className="py-8 px-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex-shrink-0 shadow-xl">
+          <Sparkles className="h-8 w-8 text-white" />
         </div>
         <div className="flex-1">
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Hi, I'm Alex!
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+          <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-3 text-sm">
             Your personal AI style advisor. Share a photo of your outfit and I'll help you elevate your style with personalized recommendations.
           </p>
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            <Zap className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+            <Zap className="w-3 h-3" />
             <span>Ready to analyze your style</span>
           </div>
         </div>
@@ -130,7 +130,7 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   return (
     <div className="flex-1 bg-gradient-to-b from-gray-50/50 to-white dark:from-gray-900/50 dark:to-gray-900 overflow-hidden">
       <ScrollArea className="h-full">
-        <div className="p-6">
+        <div className="p-4">
           {messages.length === 0 && !isAnalyzing ? (
             renderEmptyState()
           ) : (

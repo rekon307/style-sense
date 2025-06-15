@@ -43,7 +43,7 @@ const Index = ({
 }: IndexProps) => {
   const webcamRef = useRef<WebcamDisplayRef>(null);
   const [showChatHistory, setShowChatHistory] = useState(true);
-  const [isVideoMode, setIsVideoMode] = useState<boolean>(true);
+  const [isVideoMode, setIsVideoMode] = useState<boolean>(false); // Changed to false for text mode default
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   
   const { endAllActiveConversations } = useTavus();
@@ -93,7 +93,7 @@ const Index = ({
     console.log('🛑 Auth change detected - ending all active conversations');
     try {
       await endAllActiveConversations();
-      setIsVideoMode(true);
+      setIsVideoMode(false); // Reset to text mode
       setVideoConversationUrl(null);
     } catch (error) {
       console.error('Failed to end conversations on auth change:', error);
@@ -235,9 +235,9 @@ const Index = ({
                 </Card>
               </section>
             ) : (
-              /* Text Mode - Split Layout */
+              /* Text Mode - Split Layout as shown in screenshot */
               <>
-                {/* Camera Section */}
+                {/* Camera Section - Main Area */}
                 <section className="flex-1 min-w-0 p-6">
                   <Card className="h-full border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl overflow-hidden">
                     <CardContent className="p-0 h-full">
@@ -264,8 +264,8 @@ const Index = ({
                   </Card>
                 </section>
                 
-                {/* Chat Panel */}
-                <section className="w-96 flex-shrink-0 border-l border-white/20 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-6">
+                {/* Chat Panel - Right Side (as shown in screenshot) */}
+                <section className="w-96 flex-shrink-0 p-6 pr-6">
                   <StyleAdvice 
                     messages={messages} 
                     isAnalyzing={isAnalyzing}
