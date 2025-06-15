@@ -40,7 +40,7 @@ export const useTavus = () => {
               participant_absent_timeout: 60,
               enable_recording: false,
               enable_transcription: true,
-              language: "en"
+              language: "English" // Use full language name
             }
           }
         }

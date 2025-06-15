@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -140,14 +141,14 @@ async function createConversation(data: any, apiKey: string) {
     payload.conversational_context = data.conversational_context;
   }
 
-  // Add conversation properties but exclude unsupported fields
+  // Add conversation properties with correct format - use "English" instead of "en"
   payload.properties = {
     max_call_duration: data.properties?.max_call_duration || 1800, // 30 minutes
     participant_left_timeout: data.properties?.participant_left_timeout || 60,
     participant_absent_timeout: data.properties?.participant_absent_timeout || 60,
     enable_recording: data.properties?.enable_recording || false,
     enable_transcription: data.properties?.enable_transcription || true,
-    language: data.properties?.language || "en"
+    language: "English" // Use full language name, not ISO code
   };
 
   console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
