@@ -43,6 +43,9 @@ serve(async (req) => {
       case 'create_conversation':
         response = await createConversation(data, tavusApiKey);
         break;
+      case 'end_conversation':
+        response = await endConversation(data.conversation_id, tavusApiKey);
+        break;
       case 'generate_video':
         response = await generateVideo(data, tavusApiKey);
         break;
@@ -79,6 +82,54 @@ serve(async (req) => {
     });
   }
 });
+
+async function endConversation(conversationId: string, apiKey: string) {
+  console.log('=== ENDING TAVUS CONVERSATION ===');
+  console.log('Conversation ID:', conversationId);
+  console.log('Using API endpoint: https://tavusapi.com/v2/conversations/' + conversationId + '/end');
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    const response = await fetch(`https://tavusapi.com/v2/conversations/${conversationId}/end`, {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    console.log('Tavus API response status:', response.status);
+    console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
+
+    const responseText = await response.text();
+    console.log('Raw Tavus API response:', responseText);
+
+    if (!response.ok) {
+      console.error('Failed to end conversation:', response.status, responseText);
+      throw new Error(`Failed to end conversation: ${response.status} - ${responseText}`);
+    }
+
+    const result = responseText ? JSON.parse(responseText) : { success: true };
+    console.log('✅ Conversation ended successfully:', JSON.stringify(result, null, 2));
+    return result;
+  } catch (fetchError) {
+    console.error('=== FETCH ERROR DETAILS ===');
+    console.error('Error name:', fetchError.name);
+    console.error('Error message:', fetchError.message);
+    console.error('Error cause:', fetchError.cause);
+    
+    if (fetchError.name === 'AbortError') {
+      throw new Error('Request timed out after 30 seconds. Please check your network connection and try again.');
+    }
+    
+    throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
+  }
+}
 
 async function cleanupConversations(apiKey: string) {
   console.log('=== CLEANING UP OLD CONVERSATIONS ===');

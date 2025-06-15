@@ -14,7 +14,58 @@ interface TavusConversation {
 export const useTavus = () => {
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [isEndingConversation, setIsEndingConversation] = useState(false);
   const [currentConversation, setCurrentConversation] = useState<TavusConversation | null>(null);
+
+  const endConversation = async (conversationId: string) => {
+    setIsEndingConversation(true);
+    try {
+      console.log('=== ENDING TAVUS CONVERSATION ===');
+      console.log('Conversation ID:', conversationId);
+      
+      const { data, error } = await supabase.functions.invoke('tavus-integration', {
+        body: {
+          action: 'end_conversation',
+          data: {
+            conversation_id: conversationId
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Error ending conversation:', error);
+        throw error;
+      }
+
+      console.log('✅ Conversation ended:', data);
+      
+      // Update status in database
+      await supabase
+        .from('video_conversations')
+        .update({ 
+          status: 'ended',
+          updated_at: new Date().toISOString()
+        })
+        .eq('conversation_id', conversationId);
+
+      toast({
+        title: "Conversation ended",
+        description: "The video conversation has been properly closed.",
+      });
+
+      return data;
+    } catch (error) {
+      console.error('Failed to end conversation:', error);
+      toast({
+        title: "Warning",
+        description: "Failed to properly end the conversation. It may still be active on Tavus.",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setIsEndingConversation(false);
+    }
+  };
 
   const cleanupOldConversations = async () => {
     try {
@@ -253,12 +304,14 @@ export const useTavus = () => {
 
   return {
     createConversation,
+    endConversation,
     generateVideo,
     getConversationStatus,
     loadVideoConversations,
     cleanupOldConversations,
     isCreatingConversation,
     isGeneratingVideo,
+    isEndingConversation,
     currentConversation,
     setCurrentConversation
   };

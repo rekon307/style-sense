@@ -33,8 +33,10 @@ const StyleAdvice = ({
 }: StyleAdviceProps) => {
   const [isVideoMode, setIsVideoMode] = useState<boolean>(true);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [preservedVideoUrl, setPreservedVideoUrl] = useState<string | null>(null);
-  const { createConversation, isCreatingConversation, cleanupOldConversations } = useTavus();
+  const [preservedConversationId, setPreservedConversationId] = useState<string | null>(null);
+  const { createConversation, endConversation, isCreatingConversation, isEndingConversation, cleanupOldConversations } = useTavus();
 
   // Fixed temperature for precise mode only
   const temperature = 0.2;
@@ -89,19 +91,22 @@ const StyleAdvice = ({
       console.log('=== VIDEO CONVERSATION CREATED ===');
       console.log('Conversation:', conversation);
       
-      if (conversation?.conversation_url) {
+      if (conversation?.conversation_url && conversation?.conversation_id) {
         setVideoConversationUrl(conversation.conversation_url);
+        setCurrentConversationId(conversation.conversation_id);
         setPreservedVideoUrl(conversation.conversation_url);
+        setPreservedConversationId(conversation.conversation_id);
         console.log('✅ Video conversation URL set:', conversation.conversation_url);
+        console.log('✅ Video conversation ID set:', conversation.conversation_id);
         toast({
           title: "Video chat ready!",
           description: `Welcome ${userName}! Your video chat with Alex is starting.`,
         });
       } else {
-        console.error('❌ No conversation URL returned');
+        console.error('❌ No conversation URL or ID returned');
         toast({
           title: "Error",
-          description: "Failed to get video conversation URL. Please try again.",
+          description: "Failed to get video conversation details. Please try again.",
           variant: "destructive",
         });
       }
@@ -135,29 +140,51 @@ const StyleAdvice = ({
     console.log('🔄 Video mode toggle:', { from: isVideoMode, to: newVideoMode, hasUrl: !!videoConversationUrl });
     
     if (!newVideoMode && videoConversationUrl) {
-      // Switching from video to text - preserve the URL
+      // Switching from video to text - preserve the URL and conversation ID
       console.log('💾 Preserving video URL for later restore:', videoConversationUrl);
+      console.log('💾 Preserving conversation ID:', currentConversationId);
       setPreservedVideoUrl(videoConversationUrl);
+      setPreservedConversationId(currentConversationId);
       // Don't clear videoConversationUrl immediately to avoid triggering new conversation
     } else if (newVideoMode && !videoConversationUrl && !preservedVideoUrl && !isCreatingConversation) {
       // Switching to video mode with no existing conversation
       handleStartVideoChat();
+    } else if (newVideoMode && preservedVideoUrl && preservedConversationId) {
+      // Restore preserved conversation
+      setVideoConversationUrl(preservedVideoUrl);
+      setCurrentConversationId(preservedConversationId);
     }
     
     setIsVideoMode(newVideoMode);
   };
 
-  const handleEndVideoCall = () => {
+  const handleEndVideoCall = async () => {
     console.log('🛑 Ending video call');
+    
+    // End the conversation on Tavus if we have a conversation ID
+    if (currentConversationId) {
+      console.log('🛑 Ending Tavus conversation:', currentConversationId);
+      try {
+        await endConversation(currentConversationId);
+        console.log('✅ Tavus conversation ended successfully');
+      } catch (error) {
+        console.error('❌ Failed to end Tavus conversation:', error);
+        // Don't block the UI cleanup even if Tavus ending fails
+      }
+    }
+    
+    // Clear all video call state
     setVideoConversationUrl(null);
+    setCurrentConversationId(null);
     setPreservedVideoUrl(null);
+    setPreservedConversationId(null);
     setIsVideoMode(false);
   };
 
   return (
     <div className="flex h-full flex-col bg-white dark:bg-gray-900">
       <ChatHeader 
-        isAnalyzing={isAnalyzing || isCreatingConversation}
+        isAnalyzing={isAnalyzing || isCreatingConversation || isEndingConversation}
         isVideoMode={isVideoMode}
         onVideoModeChange={handleVideoModeToggle}
         onStartVideoChat={handleStartVideoChat}
