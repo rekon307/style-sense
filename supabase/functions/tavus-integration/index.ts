@@ -33,6 +33,17 @@ serve(async (req) => {
       });
     }
 
+    // Validate API key format
+    if (!tavusApiKey.startsWith('tvs-')) {
+      console.error('Invalid TAVUS_API_KEY format. Key should start with "tvs-"');
+      return new Response(JSON.stringify({ 
+        error: 'Invalid Tavus API key format. Please check that your TAVUS_API_KEY starts with "tvs-"'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     console.log('Action:', action);
     console.log('Data:', JSON.stringify(data, null, 2));
     console.log('API Key present:', !!tavusApiKey, 'Length:', tavusApiKey.length);
@@ -48,6 +59,9 @@ serve(async (req) => {
         break;
       case 'get_conversation_status':
         response = await getConversationStatus(data.conversation_id, tavusApiKey);
+        break;
+      case 'list_replicas':
+        response = await listReplicas(tavusApiKey);
         break;
       default:
         throw new Error(`Unknown action: ${action}`);
@@ -74,12 +88,77 @@ serve(async (req) => {
   }
 });
 
+async function listReplicas(apiKey: string) {
+  console.log('=== LISTING TAVUS REPLICAS ===');
+  
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    console.log('Fetching available replicas...');
+    const response = await fetch('https://tavusapi.com/v2/replicas', {
+      method: 'GET',
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Supabase-Edge-Function/1.0',
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    console.log('Tavus API response status:', response.status);
+    const responseText = await response.text();
+    console.log('Raw Tavus API response:', responseText);
+
+    if (!response.ok) {
+      console.error('Failed to list replicas:', response.status, responseText);
+      throw new Error(`Failed to list replicas: ${response.status} - ${responseText}`);
+    }
+
+    const result = JSON.parse(responseText);
+    console.log('✅ Replicas listed successfully:', JSON.stringify(result, null, 2));
+    return result;
+  } catch (fetchError) {
+    console.error('=== FETCH ERROR DETAILS ===');
+    console.error('Error name:', fetchError.name);
+    console.error('Error message:', fetchError.message);
+    
+    if (fetchError.name === 'AbortError') {
+      throw new Error('Request timed out after 30 seconds.');
+    }
+    
+    throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
+  }
+}
+
 async function createConversation(data: any, apiKey: string) {
   console.log('=== CREATING TAVUS CONVERSATION ===');
   
-  // Simplified payload to match working Postman request
+  // First, let's try to get available replicas to find a valid one
+  let replicaId = data.replica_id;
+  
+  if (!replicaId) {
+    console.log('No replica_id provided, fetching available replicas...');
+    try {
+      const replicasResponse = await listReplicas(apiKey);
+      if (replicasResponse.data && replicasResponse.data.length > 0) {
+        replicaId = replicasResponse.data[0].replica_id;
+        console.log('Using first available replica:', replicaId);
+      } else {
+        throw new Error('No replicas available. Please create a replica first in your Tavus account.');
+      }
+    } catch (error) {
+      console.error('Failed to fetch replicas:', error.message);
+      // Fall back to the default if we can't fetch replicas
+      replicaId = "r4fa3e64f1";
+      console.log('Falling back to default replica_id:', replicaId);
+    }
+  }
+  
   const payload = {
-    replica_id: data.replica_id || "r4fa3e64f1",
+    replica_id: replicaId,
     conversation_name: data.conversation_name || "Style Sense Video Chat",
     conversational_context: data.conversational_context || "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
     properties: {
@@ -95,7 +174,6 @@ async function createConversation(data: any, apiKey: string) {
   console.log('API Key being used:', apiKey.substring(0, 8) + '...');
 
   try {
-    // Increase timeout to 60 seconds and add retry logic
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
@@ -121,6 +199,12 @@ async function createConversation(data: any, apiKey: string) {
 
     if (!response.ok) {
       console.error('Tavus conversation creation failed:', response.status, responseText);
+      
+      // If it's still a replica issue, provide helpful error message
+      if (responseText.includes('Invalid replica_uuid') || responseText.includes('replica')) {
+        throw new Error(`Invalid replica ID "${replicaId}". Please check your Tavus account for available replicas or create one first.`);
+      }
+      
       throw new Error(`Failed to create conversation: ${response.status} - ${responseText}`);
     }
 
