@@ -34,8 +34,6 @@ export const useTavus = () => {
             conversation_name: conversationName,
             conversational_context: conversationalContext,
             persona_id: personaId || "p347dab0cef8",
-            participant_name: participantName,
-            custom_greeting: `Hello ${participantName || 'there'}! I'm Alex, your AI style advisor. I can see you and I'm ready to help with your fashion questions. Feel free to ask me anything about style, outfits, or fashion trends!`,
             properties: {
               max_call_duration: 1800, // 30 minutes
               participant_left_timeout: 60,
@@ -79,7 +77,7 @@ export const useTavus = () => {
       
       toast({
         title: "Video conversation ready",
-        description: `Welcome ${participantName}! Your direct conversation with Alex is starting.`,
+        description: `Welcome ${participantName || 'there'}! Your direct conversation with Alex is starting.`,
       });
 
       return data;

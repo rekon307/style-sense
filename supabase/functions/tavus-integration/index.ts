@@ -140,22 +140,14 @@ async function createConversation(data: any, apiKey: string) {
     payload.conversational_context = data.conversational_context;
   }
 
-  // Add participant name if provided
-  if (data.participant_name) {
-    payload.participant_name = data.participant_name;
-  }
-
-  // Add conversation properties optimized for AI-only interaction
+  // Add conversation properties but exclude unsupported fields
   payload.properties = {
     max_call_duration: data.properties?.max_call_duration || 1800, // 30 minutes
     participant_left_timeout: data.properties?.participant_left_timeout || 60,
     participant_absent_timeout: data.properties?.participant_absent_timeout || 60,
     enable_recording: data.properties?.enable_recording || false,
-    // Optimize for AI-only conversation
-    enable_transcription: true,
-    language: "en",
-    // These properties help create a more streamlined experience
-    custom_greeting: data.custom_greeting || `Hello ${data.participant_name || 'there'}! I'm Alex, your AI style advisor. I can see you and I'm ready to help with your fashion questions.`
+    enable_transcription: data.properties?.enable_transcription || true,
+    language: data.properties?.language || "en"
   };
 
   console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
