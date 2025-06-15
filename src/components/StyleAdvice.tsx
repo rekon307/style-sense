@@ -38,8 +38,9 @@ const StyleAdvice = ({
   const [isCreatingVideo, setIsCreatingVideo] = useState(false);
   const [hasTriedAutoStart, setHasTriedAutoStart] = useState(false);
   
-  // Track the previous video mode to detect changes
+  // Track previous values to detect changes
   const previousVideoModeRef = useRef<boolean>(isVideoMode);
+  const previousSessionIdRef = useRef<string | null>(currentSessionId);
   const isEndingConversationRef = useRef<boolean>(false);
   
   const { 
@@ -75,6 +76,9 @@ const StyleAdvice = ({
       setCurrentConversation(null);
       setHasTriedAutoStart(false);
       
+      // Update parent component
+      onVideoUrlChange?.(null);
+      
       toast({
         title: "Video chat ended",
         description: "Your video conversation has been properly closed.",
@@ -91,6 +95,23 @@ const StyleAdvice = ({
       isEndingConversationRef.current = false;
     }
   };
+
+  // Watch for session changes and end conversation immediately
+  useEffect(() => {
+    console.log('=== SESSION CHANGE DETECTION ===');
+    console.log('Previous session:', previousSessionIdRef.current);
+    console.log('Current session:', currentSessionId);
+    console.log('Current conversation ID:', currentConversationId);
+
+    // If session changed and we have an active conversation, end it immediately
+    if (previousSessionIdRef.current !== currentSessionId && currentConversationId) {
+      console.log('🔄 Session changed - ending video conversation');
+      safeEndVideoConversation();
+    }
+    
+    // Update the ref for next comparison
+    previousSessionIdRef.current = currentSessionId;
+  }, [currentSessionId, currentConversationId]);
 
   // Watch for video mode changes and end conversation when switching to text mode
   useEffect(() => {
@@ -109,29 +130,29 @@ const StyleAdvice = ({
     previousVideoModeRef.current = isVideoMode;
   }, [isVideoMode, currentConversationId]);
 
-  // Auto-start video conversation when switching to video mode
+  // Auto-start video conversation when switching to video mode (only if no active conversation)
   useEffect(() => {
-    console.log('=== VIDEO MODE EFFECT ===');
+    console.log('=== VIDEO MODE AUTO-START EFFECT ===');
     console.log('isVideoMode:', isVideoMode);
     console.log('videoConversationUrl:', videoConversationUrl);
+    console.log('currentConversationId:', currentConversationId);
     console.log('isCreatingVideo:', isCreatingVideo);
-    console.log('user:', !!user);
     console.log('hasTriedAutoStart:', hasTriedAutoStart);
 
-    // Only auto-start if we're in video mode and haven't tried yet
-    if (isVideoMode && !videoConversationUrl && !isCreatingVideo && !hasTriedAutoStart) {
+    // Only auto-start if we're in video mode, don't have an active conversation, and haven't tried yet
+    if (isVideoMode && !videoConversationUrl && !currentConversationId && !isCreatingVideo && !hasTriedAutoStart) {
       console.log('🎬 Auto-starting video chat...');
       setHasTriedAutoStart(true);
       handleStartVideoChat();
     }
-  }, [isVideoMode, videoConversationUrl, isCreatingVideo, hasTriedAutoStart]);
+  }, [isVideoMode, videoConversationUrl, currentConversationId, isCreatingVideo, hasTriedAutoStart]);
 
-  // Reset auto-start flag when switching modes or sessions
+  // Reset auto-start flag when switching away from video mode
   useEffect(() => {
     if (!isVideoMode) {
       setHasTriedAutoStart(false);
     }
-  }, [isVideoMode, currentSessionId]);
+  }, [isVideoMode]);
 
   // Update parent with video URL changes
   useEffect(() => {
@@ -139,26 +160,16 @@ const StyleAdvice = ({
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
 
-  // Handle session changes - end any active conversations
-  useEffect(() => {
-    return () => {
-      // Cleanup on session change
-      if (currentConversationId) {
-        console.log('🧹 Session change detected - ending conversation:', currentConversationId);
-        safeEndVideoConversation();
-      }
-    };
-  }, [currentSessionId]);
-
   // Handle component unmount - always end active conversations
   useEffect(() => {
     return () => {
       if (currentConversationId) {
         console.log('🧹 Component unmounting - ending conversation:', currentConversationId);
-        safeEndVideoConversation();
+        // Use the Tavus hook directly for cleanup on unmount
+        endConversation(currentConversationId).catch(console.error);
       }
     };
-  }, []);
+  }, [currentConversationId, endConversation]);
 
   const handleStartVideoChat = async () => {
     if (isCreatingVideo || isCreatingConversation) {
@@ -198,7 +209,7 @@ const StyleAdvice = ({
       const conversation = await createConversation(
         "Style Sense Video Chat",
         conversationalContext,
-        "p869ead8c67b", // Using the correct persona_id
+        "p869ead8c67b",
         currentSessionId || undefined,
         userName
       );
@@ -228,7 +239,7 @@ const StyleAdvice = ({
       setVideoConversationUrl(null);
       setCurrentConversationId(null);
       setCurrentConversation(null);
-      setHasTriedAutoStart(false); // Allow retry
+      setHasTriedAutoStart(false);
       
       let errorMessage = "Failed to start video conversation. Please try again.";
       if (error.message?.includes('Authentication required')) {
