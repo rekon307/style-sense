@@ -79,7 +79,7 @@ const StyleAdvice = ({
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
 
-  // Cleanup when switching from video to text mode
+  // Handle switching from video to text mode - end conversation immediately
   useEffect(() => {
     if (!isVideoMode && currentConversationId) {
       console.log('🔄 Switching to text mode - ending video conversation:', currentConversationId);
@@ -205,7 +205,6 @@ const StyleAdvice = ({
     setCurrentConversationId(null);
     setCurrentConversation(null);
     setHasTriedAutoStart(false);
-    onVideoModeChange?.(false);
     
     console.log('🧹 Video call state cleared');
   };
@@ -223,9 +222,28 @@ const StyleAdvice = ({
     }, 500);
   };
 
+  const handleVideoModeChange = (newVideoMode: boolean) => {
+    console.log('🔄 Video mode changing to:', newVideoMode);
+    if (onVideoModeChange) {
+      onVideoModeChange(newVideoMode);
+    }
+    
+    // If switching to text mode and we have an active conversation, end it
+    if (!newVideoMode && currentConversationId) {
+      console.log('🛑 Switching to text mode - will end conversation:', currentConversationId);
+      handleEndVideoCall();
+    }
+  };
+
   if (isVideoMode) {
     return (
       <div className="flex h-full flex-col bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-800/50 shadow-2xl overflow-hidden">
+        <ChatHeader 
+          isAnalyzing={isAnalyzing}
+          isVideoMode={isVideoMode}
+          onVideoModeChange={handleVideoModeChange}
+          onStartVideoChat={handleStartVideoChat}
+        />
         <div className="flex-1 overflow-hidden">
           <DailyVideoFrame 
             conversationUrl={videoConversationUrl}
@@ -240,6 +258,12 @@ const StyleAdvice = ({
 
   return (
     <div className="flex h-full flex-col bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-800/50 shadow-2xl overflow-hidden">
+      <ChatHeader 
+        isAnalyzing={isAnalyzing}
+        isVideoMode={isVideoMode}
+        onVideoModeChange={handleVideoModeChange}
+        onStartVideoChat={handleStartVideoChat}
+      />
       <div className="flex-1 overflow-hidden">
         <ChatMessages 
           messages={messages}
