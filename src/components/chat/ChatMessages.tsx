@@ -60,8 +60,12 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
       >
         {!isUser && (
           <Avatar className="w-6 h-6 flex-shrink-0 mt-0.5">
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 text-white text-xs">
-              <Sparkles className="h-3 w-3" />
+            <AvatarFallback className="bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 text-white text-xs p-0 overflow-hidden">
+              <img 
+                src="/lovable-uploads/f0c270a9-d300-449b-abfe-fd6d760c9297.png" 
+                alt="Andrew"
+                className="w-full h-full object-cover"
+              />
             </AvatarFallback>
           </Avatar>
         )}
@@ -108,8 +112,12 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   const renderThinkingIndicator = () => (
     <div className="flex gap-2 mb-2 justify-start animate-in slide-in-from-bottom-1 duration-200">
       <Avatar className="w-6 h-6 flex-shrink-0 mt-0.5">
-        <AvatarFallback className="bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 text-white text-xs">
-          <Sparkles className="h-3 w-3" />
+        <AvatarFallback className="bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 text-white text-xs p-0 overflow-hidden">
+          <img 
+            src="/lovable-uploads/f0c270a9-d300-449b-abfe-fd6d760c9297.png" 
+            alt="Andrew"
+            className="w-full h-full object-cover"
+          />
         </AvatarFallback>
       </Avatar>
       
@@ -129,12 +137,16 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   const renderEmptyState = () => (
     <div className="py-4 px-2">
       <div className="flex items-start gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex-shrink-0 shadow-lg">
-          <Sparkles className="h-5 w-5 text-white" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex-shrink-0 shadow-lg p-0 overflow-hidden">
+          <img 
+            src="/lovable-uploads/f0c270a9-d300-449b-abfe-fd6d760c9297.png" 
+            alt="Andrew"
+            className="w-full h-full object-cover"
+          />
         </div>
         <div className="flex-1">
           <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Hi, I'm Alex!
+            Hi, I'm Andrew!
           </h3>
           <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-1 text-sm">
             Your personal AI style advisor. Share a photo of your outfit and I'll help you elevate your style.

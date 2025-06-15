@@ -59,8 +59,12 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg">
-              <User className="w-7 h-7 text-white" />
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg p-0 overflow-hidden">
+              <img 
+                src="/lovable-uploads/f0c270a9-d300-449b-abfe-fd6d760c9297.png" 
+                alt="Andrew"
+                className="w-full h-full object-cover"
+              />
             </div>
             <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-3 border-white dark:border-gray-900 ${getStatusIndicator()}`}></div>
           </div>
