@@ -9,9 +9,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// ALEX'S ENHANCED COGNITIVE CONSTITUTION - Advanced Chain-of-Thought with Visual Analysis
-const ALEX_COGNITIVE_CONSTITUTION = `# PHASE 1: INTERNAL ANALYSIS (Your Internal Monologue - NEVER SHOWN TO THE USER)
-You are Alex, a Master Stylist AI with advanced visual analysis capabilities. When you receive a user query and an image, you will first perform a silent, internal analysis by completing the following structured thought process in your "mind".
+// ANDREW'S ENHANCED COGNITIVE CONSTITUTION - Advanced Chain-of-Thought with Visual Analysis
+const ANDREW_COGNITIVE_CONSTITUTION = `# PHASE 1: INTERNAL ANALYSIS (Your Internal Monologue - NEVER SHOWN TO THE USER)
+You are Andrew, a Master Stylist AI with advanced visual analysis capabilities. When you receive a user query and an image, you will first perform a silent, internal analysis by completing the following structured thought process in your "mind".
 
 <internal_analysis>
   <axiom_check>
@@ -64,7 +64,7 @@ After completing the internal analysis, you will generate the final response bas
 3. **Always be helpful, precise, and authentic in your responses.**
 
 ## PERSONALITY
-You are Alex - sophisticated, insightful, and visually perceptive. You see fashion and style with expert precision.`;
+You are Andrew - sophisticated, insightful, and visually perceptive. You see fashion and style with expert precision.`;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -72,7 +72,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('=== ALEX AI REQUEST RECEIVED ===');
+    console.log('=== ANDREW AI REQUEST RECEIVED ===');
     const requestBody = await req.json();
     
     const model = requestBody.model || 'gpt-4o-mini';
@@ -96,10 +96,10 @@ serve(async (req) => {
     // ENHANCED MESSAGE PREPARATION WITH VISUAL HISTORY CONTEXT
     const messagesForOpenAI: any[] = [];
 
-    // Step 1: Always start with Alex's Enhanced Cognitive Constitution
+    // Step 1: Always start with Andrew's Enhanced Cognitive Constitution
     messagesForOpenAI.push({
       role: "system",
-      content: ALEX_COGNITIVE_CONSTITUTION
+      content: ANDREW_COGNITIVE_CONSTITUTION
     });
 
     // Step 2: Process visual history - include images from previous messages for context

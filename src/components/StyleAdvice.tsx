@@ -43,7 +43,6 @@ const StyleAdvice = ({
     endConversation, 
     endAllActiveConversations,
     isCreatingConversation, 
-    isEndingConversation, 
     currentConversation,
     setCurrentConversation
   } = useTavus();
@@ -119,7 +118,7 @@ const StyleAdvice = ({
       
       console.log('👤 Using name for video chat:', userName);
       
-      const conversationalContext = `You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. The user's name is ${userName}. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques. Address the user by their name when appropriate.`;
+      const conversationalContext = `You are Andrew, a sophisticated AI style advisor with advanced visual analysis capabilities. The user's name is ${userName}. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques. Address the user by their name when appropriate.`;
       
       console.log('🎯 Creating conversation with context for:', userName);
       
@@ -143,7 +142,7 @@ const StyleAdvice = ({
         
         toast({
           title: "Video chat ready!",
-          description: `Welcome ${userName}! Your video chat with Alex is starting.`,
+          description: `Welcome ${userName}! Your video chat with Andrew is starting.`,
         });
       } else {
         console.error('❌ Invalid conversation response:', conversation);

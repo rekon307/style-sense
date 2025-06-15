@@ -42,7 +42,7 @@ const VideoConversation = ({ onClose, currentSessionId }: VideoConversationProps
     try {
       const conversation = await createConversation(
         "Style Sense Video Chat",
-        "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
+        "You are Andrew, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
         "p347dab0cef8",
         currentSessionId || undefined
       );
@@ -62,7 +62,7 @@ const VideoConversation = ({ onClose, currentSessionId }: VideoConversationProps
     setConversationStatus('idle');
     toast({
       title: "Video conversation ended",
-      description: "Thanks for chatting with Alex!",
+      description: "Thanks for chatting with Andrew!",
     });
     onClose?.();
   };
@@ -121,7 +121,7 @@ const VideoConversation = ({ onClose, currentSessionId }: VideoConversationProps
       <CardHeader className="text-center">
         <CardTitle className="flex items-center justify-center gap-2">
           <Video className="h-6 w-6 text-blue-500" />
-          Video Style Consultation with Alex
+          Video Style Consultation with Andrew
         </CardTitle>
         <div className="flex items-center justify-center gap-2 mt-2">
           <Badge variant="outline" className={`${getStatusColor(conversationStatus)} text-white`}>
@@ -172,7 +172,7 @@ const VideoConversation = ({ onClose, currentSessionId }: VideoConversationProps
               <Video className="h-12 w-12 text-blue-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Start Your Video Style Session</h3>
               <p className="text-muted-foreground mb-4">
-                Connect with Alex for a personalized video consultation about your style, fashion choices, and outfit analysis.
+                Connect with Andrew for a personalized video consultation about your style, fashion choices, and outfit analysis.
               </p>
               <Button 
                 onClick={handleStartConversation}
@@ -202,7 +202,7 @@ const VideoConversation = ({ onClose, currentSessionId }: VideoConversationProps
               </div>
               
               <p className="text-muted-foreground mb-4">
-                Your video conversation with Alex is ready. Click the button below to join the video call.
+                Your video conversation with Andrew is ready. Click the button below to join the video call.
               </p>
               
               <div className="flex gap-3 justify-center">

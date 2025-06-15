@@ -168,7 +168,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
         console.log('👤 Participant joined:', event.participant);
         if (event.participant && !event.participant.local) {
           toast({
-            title: "Alex joined",
+            title: "Andrew joined",
             description: "Your style advisor is now in the video chat!",
           });
         }
@@ -212,7 +212,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
     }
     toast({
       title: "Video conversation ended",
-      description: "Thanks for chatting with Alex!",
+      description: "Thanks for chatting with Andrew!",
     });
     onClose();
   };
@@ -241,7 +241,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
             <Loader2 className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
             <h3 className="text-lg font-semibold mb-2">Creating Video Chat...</h3>
             <p className="text-muted-foreground mb-4">
-              Setting up your conversation with Alex
+              Setting up your conversation with Andrew
             </p>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
               <div className="bg-blue-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
@@ -298,7 +298,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
             <Loader2 className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
             <h3 className="text-lg font-semibold mb-2">Starting Video Chat...</h3>
             <p className="text-muted-foreground mb-4">
-              Setting up your conversation with Alex
+              Setting up your conversation with Andrew
             </p>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
               <div className="bg-blue-500 h-2 rounded-full animate-pulse" style={{ width: '30%' }}></div>
@@ -322,7 +322,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
           <div className="flex items-center gap-3">
             <Video className="h-5 w-5 text-blue-500" />
             <div>
-              <span className="text-sm font-medium">Video Chat with Alex</span>
+              <span className="text-sm font-medium">Video Chat with Andrew</span>
               <div className="text-xs text-muted-foreground">AI Style Advisor</div>
             </div>
           </div>
