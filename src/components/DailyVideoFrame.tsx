@@ -5,7 +5,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Video, PhoneOff, Loader2, RotateCcw, AlertCircle } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 
-// @ts-ignore - Daily types might not be available
 declare global {
   interface Window {
     DailyIframe: any;
@@ -34,7 +33,6 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
     console.log('Is Loading:', isLoading);
     console.log('URL valid:', conversationUrl && conversationUrl.startsWith('https://'));
 
-    // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -50,7 +48,6 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
       console.log('⏳ No URL and not loading - showing timeout');
       setIsFrameLoading(false);
       
-      // Set a timeout to show error if URL doesn't come within 30 seconds
       timeoutRef.current = setTimeout(() => {
         console.log('❌ Video conversation timeout reached');
         setTimeoutReached(true);
@@ -88,6 +85,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
         return;
       }
 
+      console.log('📥 Loading Daily.co script...');
       const script = document.createElement('script');
       script.src = 'https://unpkg.com/@daily-co/daily-js';
       script.onload = () => {
@@ -105,19 +103,16 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
 
   const initializeDailyFrame = async () => {
     try {
-      // Validate URL format
       if (!conversationUrl || !conversationUrl.startsWith('https://')) {
         throw new Error('Invalid conversation URL format');
       }
 
       console.log('🔗 Validating conversation URL:', conversationUrl);
 
-      // Load Daily.co script
       console.log('📥 Loading Daily.co script...');
       await loadDailyScript();
 
-      // Wait a moment for script to initialize
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       if (!window.DailyIframe) {
         throw new Error('Daily.co script failed to initialize');
@@ -140,7 +135,6 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
 
       setCallFrame(frame);
 
-      // Set up event listeners
       frame.on('loaded', () => {
         console.log('✅ Daily frame loaded successfully');
         setIsFrameLoading(false);
@@ -178,7 +172,6 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
         console.log('👤 Participant left:', event.participant);
       });
 
-      // Join the conversation
       console.log('🚀 Joining conversation with URL:', conversationUrl);
       await frame.join({ 
         url: conversationUrl,
@@ -232,7 +225,6 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
     }
   };
 
-  // Show loading state while creating conversation
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center p-4">
@@ -257,7 +249,6 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
     );
   }
 
-  // Show timeout error
   if (!conversationUrl && timeoutReached) {
     return (
       <div className="h-full flex items-center justify-center p-4">
@@ -289,7 +280,6 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
     );
   }
 
-  // Show waiting for URL
   if (!conversationUrl) {
     return (
       <div className="h-full flex items-center justify-center p-4">
@@ -316,7 +306,6 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-      {/* Video Controls Header */}
       <div className="border-b border-gray-100 dark:border-gray-800 p-4 bg-white dark:bg-gray-900 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -350,7 +339,6 @@ const DailyVideoFrame = ({ conversationUrl, onClose, onRetry, isLoading = false 
         </div>
       </div>
 
-      {/* Video Frame Container */}
       <div className="flex-1 relative">
         {isFrameLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-50 dark:bg-gray-800 z-10">

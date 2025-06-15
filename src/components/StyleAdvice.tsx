@@ -38,7 +38,6 @@ const StyleAdvice = ({
   const [isCreatingVideo, setIsCreatingVideo] = useState(false);
   const [hasTriedAutoStart, setHasTriedAutoStart] = useState(false);
   
-  // Single source of truth for ending conversations - prevents spam
   const endingConversationRef = useRef<string | null>(null);
   const previousVideoModeRef = useRef<boolean>(isVideoMode);
   const previousSessionIdRef = useRef<string | null>(currentSessionId);
@@ -54,7 +53,6 @@ const StyleAdvice = ({
 
   const temperature = 0.2;
 
-  // Centralized function to safely end video conversation with spam prevention
   const safeEndVideoConversation = async (conversationId: string | null = null) => {
     const idToEnd = conversationId || currentConversationId;
     
@@ -63,7 +61,6 @@ const StyleAdvice = ({
       return;
     }
 
-    // Prevent duplicate end requests for the same conversation
     if (endingConversationRef.current === idToEnd) {
       console.log('🔄 Already ending conversation:', idToEnd);
       return;
@@ -76,13 +73,11 @@ const StyleAdvice = ({
       await endConversation(idToEnd);
       console.log('✅ Video conversation ended successfully');
       
-      // Clear all video call state
       setVideoConversationUrl(null);
       setCurrentConversationId(null);
       setCurrentConversation(null);
       setHasTriedAutoStart(false);
       
-      // Update parent component
       onVideoUrlChange?.(null);
       
       toast({
@@ -98,19 +93,17 @@ const StyleAdvice = ({
         variant: "destructive",
       });
     } finally {
-      // Clear the guard after completion or error
       endingConversationRef.current = null;
     }
   };
 
-  // Watch for session changes - single effect to prevent conflicts
+  // Watch for session changes
   useEffect(() => {
     console.log('=== SESSION CHANGE DETECTION ===');
     console.log('Previous session:', previousSessionIdRef.current);
     console.log('Current session:', currentSessionId);
     console.log('Current conversation ID:', currentConversationId);
 
-    // If session changed and we have an active conversation, end it
     if (previousSessionIdRef.current !== null && 
         previousSessionIdRef.current !== currentSessionId && 
         currentConversationId && 
@@ -119,18 +112,16 @@ const StyleAdvice = ({
       safeEndVideoConversation();
     }
     
-    // Update the ref for next comparison
     previousSessionIdRef.current = currentSessionId;
   }, [currentSessionId]);
 
-  // Watch for video mode changes - single effect to prevent conflicts
+  // Watch for video mode changes
   useEffect(() => {
     console.log('=== VIDEO MODE CHANGE DETECTION ===');
     console.log('Previous video mode:', previousVideoModeRef.current);
     console.log('Current video mode:', isVideoMode);
     console.log('Current conversation ID:', currentConversationId);
 
-    // If we're switching FROM video mode TO text mode and have an active conversation
     if (previousVideoModeRef.current === true && 
         isVideoMode === false && 
         currentConversationId && 
@@ -139,7 +130,6 @@ const StyleAdvice = ({
       safeEndVideoConversation();
     }
     
-    // Update the ref for next comparison
     previousVideoModeRef.current = isVideoMode;
   }, [isVideoMode]);
 
@@ -172,7 +162,7 @@ const StyleAdvice = ({
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
 
-  // Handle component unmount - single cleanup
+  // Handle component unmount
   useEffect(() => {
     return () => {
       if (currentConversationId && !endingConversationRef.current) {
@@ -196,14 +186,11 @@ const StyleAdvice = ({
       console.log('Current session ID:', currentSessionId);
       console.log('User object:', user);
       
-      // Clean up any existing conversations first
       console.log('🧹 Cleaning up existing conversations...');
       await endAllActiveConversations();
       
-      // Wait for cleanup to complete
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Extract user name
       let userName = 'Style Enthusiast';
       if (user) {
         userName = user.user_metadata?.full_name || 
@@ -230,11 +217,11 @@ const StyleAdvice = ({
       console.log('Full conversation response:', conversation);
       
       if (conversation?.conversation_url && conversation?.conversation_id) {
+        console.log('✅ Setting video conversation URL:', conversation.conversation_url);
+        console.log('✅ Setting video conversation ID:', conversation.conversation_id);
+        
         setVideoConversationUrl(conversation.conversation_url);
         setCurrentConversationId(conversation.conversation_id);
-        
-        console.log('✅ Video conversation URL set:', conversation.conversation_url);
-        console.log('✅ Video conversation ID set:', conversation.conversation_id);
         
         toast({
           title: "Video chat ready!",
@@ -247,7 +234,6 @@ const StyleAdvice = ({
     } catch (error) {
       console.error('❌ Failed to start video conversation:', error);
       
-      // Clear any partial state
       setVideoConversationUrl(null);
       setCurrentConversationId(null);
       setCurrentConversation(null);
@@ -283,7 +269,6 @@ const StyleAdvice = ({
     setCurrentConversationId(null);
     setCurrentConversation(null);
     
-    // Start the video chat again
     setTimeout(() => {
       handleStartVideoChat();
     }, 500);
@@ -292,13 +277,11 @@ const StyleAdvice = ({
   const handleVideoModeChange = async (newVideoMode: boolean) => {
     console.log('🔄 Video mode changing to:', newVideoMode);
     
-    // If switching to text mode and we have an active conversation, end it first
     if (!newVideoMode && currentConversationId && !endingConversationRef.current) {
       console.log('🛑 Manual switch to text mode - ending conversation:', currentConversationId);
       await safeEndVideoConversation();
     }
     
-    // Then update the mode
     if (onVideoModeChange) {
       onVideoModeChange(newVideoMode);
     }
