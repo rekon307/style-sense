@@ -36,6 +36,7 @@ const StyleAdvice = ({
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isCreatingVideo, setIsCreatingVideo] = useState(false);
+  const [hasTriedAutoStart, setHasTriedAutoStart] = useState(false);
   
   const { 
     createConversation, 
@@ -56,13 +57,37 @@ const StyleAdvice = ({
     console.log('videoConversationUrl:', videoConversationUrl);
     console.log('isCreatingVideo:', isCreatingVideo);
     console.log('user:', !!user);
+    console.log('user object:', user);
     console.log('currentConversation:', currentConversation);
+    console.log('hasTriedAutoStart:', hasTriedAutoStart);
 
-    if (isVideoMode && !videoConversationUrl && !isCreatingVideo && user && !currentConversation) {
+    // Check if user is properly authenticated
+    if (!user) {
+      console.log('❌ No authenticated user - cannot start video chat');
+      if (isVideoMode) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to start a video chat.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
+    // Auto-start video chat if conditions are met
+    if (isVideoMode && !videoConversationUrl && !isCreatingVideo && !currentConversation && !hasTriedAutoStart) {
       console.log('🎬 Auto-starting video chat...');
+      setHasTriedAutoStart(true);
       handleStartVideoChat();
     }
-  }, [isVideoMode, user, videoConversationUrl, isCreatingVideo, currentConversation]);
+  }, [isVideoMode, user, videoConversationUrl, isCreatingVideo, currentConversation, hasTriedAutoStart]);
+
+  // Reset auto-start flag when switching modes or sessions
+  useEffect(() => {
+    if (!isVideoMode) {
+      setHasTriedAutoStart(false);
+    }
+  }, [isVideoMode, currentSessionId]);
 
   // Update parent with video URL changes
   useEffect(() => {
@@ -85,15 +110,15 @@ const StyleAdvice = ({
     }
 
     console.log('=== STARTING VIDEO CHAT ===');
-    console.log('User check:', !!user);
     
     if (!user) {
-      console.error('❌ No user found for video chat');
+      console.error('❌ No authenticated user for video chat');
       toast({
         title: "Authentication required",
         description: "Please sign in to start a video chat.",
         variant: "destructive",
       });
+      onVideoModeChange?.(false);
       return;
     }
 
@@ -101,7 +126,11 @@ const StyleAdvice = ({
     
     try {
       console.log('Current session ID:', currentSessionId);
-      console.log('User:', user);
+      console.log('User details:', {
+        id: user?.id,
+        email: user?.email,
+        metadata: user?.user_metadata
+      });
       
       // End any existing conversations first to prevent conflicts
       console.log('🧹 Cleaning up existing conversations...');
@@ -150,10 +179,11 @@ const StyleAdvice = ({
       setVideoConversationUrl(null);
       setCurrentConversationId(null);
       setCurrentConversation(null);
+      setHasTriedAutoStart(false); // Allow retry
       
       toast({
         title: "Video chat error",
-        description: "Failed to start video conversation. Please try again.",
+        description: error.message || "Failed to start video conversation. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -190,9 +220,28 @@ const StyleAdvice = ({
     setVideoConversationUrl(null);
     setCurrentConversationId(null);
     setCurrentConversation(null);
+    setHasTriedAutoStart(false);
     onVideoModeChange?.(false);
     
     console.log('🧹 Video call state cleared');
+  };
+
+  const handleRetryVideoChat = () => {
+    console.log('🔄 Retrying video chat...');
+    setHasTriedAutoStart(false);
+    setVideoConversationUrl(null);
+    setCurrentConversationId(null);
+    setCurrentConversation(null);
+    
+    if (user) {
+      handleStartVideoChat();
+    } else {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to start a video chat.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isVideoMode) {
@@ -202,6 +251,7 @@ const StyleAdvice = ({
           <DailyVideoFrame 
             conversationUrl={videoConversationUrl}
             onClose={handleEndVideoCall}
+            onRetry={handleRetryVideoChat}
           />
         </div>
       </div>

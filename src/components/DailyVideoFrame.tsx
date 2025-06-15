@@ -15,9 +15,10 @@ declare global {
 interface DailyVideoFrameProps {
   conversationUrl: string | null;
   onClose: () => void;
+  onRetry?: () => void;
 }
 
-const DailyVideoFrame = ({ conversationUrl, onClose }: DailyVideoFrameProps) => {
+const DailyVideoFrame = ({ conversationUrl, onClose, onRetry }: DailyVideoFrameProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [timeoutReached, setTimeoutReached] = useState(false);
@@ -28,6 +29,8 @@ const DailyVideoFrame = ({ conversationUrl, onClose }: DailyVideoFrameProps) => 
   useEffect(() => {
     console.log('=== DAILY VIDEO FRAME SETUP ===');
     console.log('Conversation URL:', conversationUrl);
+    console.log('URL length:', conversationUrl?.length);
+    console.log('URL valid:', conversationUrl && conversationUrl.startsWith('https://'));
 
     // Clear any existing timeout
     if (timeoutRef.current) {
@@ -46,12 +49,12 @@ const DailyVideoFrame = ({ conversationUrl, onClose }: DailyVideoFrameProps) => 
       setIsLoading(true);
       setHasError(false);
       
-      // Set a timeout to show error if URL doesn't come within 45 seconds
+      // Set a timeout to show error if URL doesn't come within 30 seconds
       timeoutRef.current = setTimeout(() => {
         console.log('❌ Video conversation timeout reached');
         setTimeoutReached(true);
         setIsLoading(false);
-      }, 45000);
+      }, 30000);
     }
 
     return () => {
@@ -74,8 +77,16 @@ const DailyVideoFrame = ({ conversationUrl, onClose }: DailyVideoFrameProps) => 
 
   const initializeDailyFrame = async () => {
     try {
+      // Validate URL format
+      if (!conversationUrl || !conversationUrl.startsWith('https://')) {
+        throw new Error('Invalid conversation URL format');
+      }
+
+      console.log('🔗 Validating conversation URL:', conversationUrl);
+
       // Load Daily.co script dynamically
       if (!window.DailyIframe) {
+        console.log('📥 Loading Daily.co script...');
         await loadDailyScript();
       }
 
@@ -98,7 +109,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose }: DailyVideoFrameProps) => 
 
       // Set up event listeners
       frame.on('loaded', () => {
-        console.log('✅ Daily frame loaded');
+        console.log('✅ Daily frame loaded successfully');
         setIsLoading(false);
         setHasError(false);
         setTimeoutReached(false);
@@ -150,7 +161,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose }: DailyVideoFrameProps) => 
       setHasError(true);
       toast({
         title: "Connection failed",
-        description: "Unable to connect to video chat. Please try again.",
+        description: `Unable to connect to video chat: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -166,7 +177,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose }: DailyVideoFrameProps) => 
       const script = document.createElement('script');
       script.src = 'https://unpkg.com/@daily-co/daily-js';
       script.onload = () => {
-        console.log('✅ Daily.co script loaded');
+        console.log('✅ Daily.co script loaded successfully');
         resolve();
       };
       script.onerror = () => {
@@ -200,10 +211,11 @@ const DailyVideoFrame = ({ conversationUrl, onClose }: DailyVideoFrameProps) => 
     setHasError(false);
     setIsLoading(true);
     
-    if (conversationUrl) {
+    if (onRetry) {
+      onRetry();
+    } else if (conversationUrl) {
       initializeDailyFrame();
     } else {
-      // This will trigger a new conversation attempt
       onClose();
     }
   };
@@ -222,6 +234,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose }: DailyVideoFrameProps) => 
               <li>• Network connectivity issues</li>
               <li>• Tavus API service temporarily unavailable</li>
               <li>• Maximum conversation limit reached</li>
+              <li>• Authentication issues</li>
             </ul>
             <div className="flex gap-2 justify-center">
               <Button onClick={handleRetry} className="bg-blue-500 hover:bg-blue-600">
@@ -305,6 +318,7 @@ const DailyVideoFrame = ({ conversationUrl, onClose }: DailyVideoFrameProps) => 
             <div className="text-center">
               <Loader2 className="h-8 w-8 text-blue-500 mx-auto mb-3 animate-spin" />
               <p className="text-sm text-muted-foreground">Loading video chat...</p>
+              <p className="text-xs text-muted-foreground mt-1">URL: {conversationUrl?.substring(0, 50)}...</p>
             </div>
           </div>
         )}
