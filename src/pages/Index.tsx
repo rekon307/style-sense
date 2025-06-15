@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
@@ -40,7 +41,7 @@ const Index = ({
   onAuthChange
 }: IndexProps) => {
   const webcamRef = useRef<WebcamDisplayRef>(null);
-  const [showChatHistory, setShowChatHistory] = useState(false); // Changed to false by default
+  const [showChatHistory, setShowChatHistory] = useState(true);
   const [isVideoMode, setIsVideoMode] = useState(true);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
 
@@ -126,12 +127,12 @@ const Index = ({
         
         <div className="flex h-[calc(100vh-4rem)]">
           {/* Sidebar */}
-          <aside className={`${showChatHistory ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r`}>
-            <div className="h-full bg-muted/30">
-              <div className="p-6">
+          <aside className={`${showChatHistory ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r bg-muted/20`}>
+            <div className="h-full">
+              <div className="p-4 border-b">
                 <div className="mb-4">
-                  <h2 className="text-lg font-semibold">Chat History</h2>
-                  <p className="text-sm text-muted-foreground">Previous conversations</p>
+                  <h2 className="text-sm font-medium text-muted-foreground">Chat History</h2>
+                  <p className="text-xs text-muted-foreground">Previous conversations</p>
                 </div>
                 <ChatHistory onSessionChange={onSessionChange} />
               </div>
@@ -139,7 +140,7 @@ const Index = ({
           </aside>
           
           <main className="flex flex-1 gap-0">
-            {/* Main Content Area */}
+            {/* Main Content Area - Video or Camera */}
             <section className="flex-1 min-w-0 p-4">
               <Card className="h-full">
                 <CardContent className="p-0 h-full">
@@ -202,7 +203,7 @@ const Index = ({
               </Card>
             </section>
             
-            {/* Style Advice Panel */}
+            {/* Style Advice Panel - Always shows text chat interface */}
             <section className="w-96 flex-shrink-0 border-l">
               <StyleAdvice 
                 messages={messages} 

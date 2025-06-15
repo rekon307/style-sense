@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
@@ -190,34 +189,20 @@ const StyleAdvice = ({
         onStartVideoChat={handleStartVideoChat}
       />
       
-      {/* Content Area - only show text chat interface */}
-      {!isVideoMode && (
-        <>
-          <div className="flex-1 overflow-hidden">
-            <ChatMessages 
-              messages={messages}
-              isAnalyzing={isAnalyzing}
-            />
-          </div>
-          <div className="flex-shrink-0">
-            <ChatInput 
-              isAnalyzing={isAnalyzing}
-              onSendMessage={onSendMessage}
-              temperature={temperature}
-            />
-          </div>
-        </>
-      )}
-      
-      {/* Video mode */}
-      {isVideoMode && (
-        <div className="flex-1 overflow-hidden">
-          <DailyVideoFrame 
-            conversationUrl={videoConversationUrl}
-            onClose={handleEndVideoCall}
-          />
-        </div>
-      )}
+      {/* Always show text chat interface in the right panel */}
+      <div className="flex-1 overflow-hidden">
+        <ChatMessages 
+          messages={messages}
+          isAnalyzing={isAnalyzing}
+        />
+      </div>
+      <div className="flex-shrink-0">
+        <ChatInput 
+          isAnalyzing={isAnalyzing}
+          onSendMessage={onSendMessage}
+          temperature={temperature}
+        />
+      </div>
     </div>
   );
 };
