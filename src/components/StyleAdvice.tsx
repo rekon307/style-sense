@@ -82,7 +82,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       
       {/* Response Style - only show in text mode */}
       {!isVideoMode && (
-        <div className="border-b border-gray-100 dark:border-gray-800 px-4 py-3 bg-white dark:bg-gray-900">
+        <div className="border-b border-gray-100 dark:border-gray-800 px-4 py-3 bg-white dark:bg-gray-900 flex-shrink-0">
           <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">Response Style</div>
           <ToggleGroup 
             type="single" 
@@ -116,8 +116,8 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       )}
       
       {/* Content Area */}
-      <div className="flex-1 overflow-hidden">
-        {isVideoMode ? (
+      {isVideoMode ? (
+        <div className="flex-1 overflow-hidden">
           <DailyVideoFrame 
             conversationUrl={videoConversationUrl}
             onClose={() => {
@@ -125,20 +125,24 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
               setVideoConversationUrl(null);
             }}
           />
-        ) : (
-          <>
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 overflow-hidden">
             <ChatMessages 
               messages={messages}
               isAnalyzing={isAnalyzing}
             />
+          </div>
+          <div className="flex-shrink-0">
             <ChatInput 
               isAnalyzing={isAnalyzing}
               onSendMessage={onSendMessage}
               temperature={temperature}
             />
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
