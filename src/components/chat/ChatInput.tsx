@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,7 +23,8 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
     isListening, 
     liveTranscript, 
     startListening, 
-    stopListening 
+    stopListening,
+    clearTranscript
   } = useVoiceRecording();
 
   useEffect(() => {
@@ -49,6 +49,17 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
     }
   }, [liveTranscript]);
 
+  const clearInput = () => {
+    console.log('🧹 Clearing chat input...');
+    setMessage("");
+    setSelectedImage(null);
+    clearTranscript(); // Clear the voice transcript
+    
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+  };
+
   const handleSend = () => {
     if (!message.trim() && !selectedImage) {
       toast({
@@ -59,13 +70,9 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
       return;
     }
 
+    console.log('📤 Sending message and clearing input...');
     onSendMessage(message.trim(), selectedImage, temperature);
-    setMessage("");
-    setSelectedImage(null);
-    
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
+    clearInput();
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -83,9 +90,11 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
     } else {
       startListening((finalTranscript: string) => {
         if (finalTranscript.trim()) {
+          console.log('🎤 Voice message completed, sending and clearing...');
           onSendMessage(finalTranscript.trim(), selectedImage, temperature);
-          setMessage("");
+          // Clear everything after voice message is sent
           setSelectedImage(null);
+          // Note: transcript is already cleared by the cleanup function in useVoiceRecording
         }
       });
     }

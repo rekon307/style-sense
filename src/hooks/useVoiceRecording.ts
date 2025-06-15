@@ -21,6 +21,8 @@ export const useVoiceRecording = () => {
     if (isCleanupRef.current) return;
     isCleanupRef.current = true;
 
+    console.log('🧹 Cleaning up voice recording...');
+
     if (pauseTimerRef.current) {
       clearTimeout(pauseTimerRef.current);
       pauseTimerRef.current = null;
@@ -42,6 +44,12 @@ export const useVoiceRecording = () => {
     setTimeout(() => {
       isCleanupRef.current = false;
     }, 100);
+  }, []);
+
+  // Add a new function to clear transcript manually
+  const clearTranscript = useCallback(() => {
+    console.log('🧹 Clearing transcript manually...');
+    setLiveTranscript('');
   }, []);
 
   const startListening = useCallback((onSpeechEnd?: (transcript: string) => void) => {
@@ -71,7 +79,7 @@ export const useVoiceRecording = () => {
       recognition.lang = 'ro-RO';
 
       recognition.onstart = () => {
-        console.log('Alex is listening - real-time cognitive mode');
+        console.log('🎤 Alex is listening - real-time cognitive mode');
         setIsListening(true);
         setLiveTranscript('');
         
@@ -107,9 +115,9 @@ export const useVoiceRecording = () => {
         if (fullTranscript) {
           pauseTimerRef.current = setTimeout(() => {
             if (fullTranscript && onSpeechEndRef.current && !isCleanupRef.current) {
-              console.log('Cognitive pause detected, processing:', fullTranscript);
+              console.log('🧠 Cognitive pause detected, processing:', fullTranscript);
               const callback = onSpeechEndRef.current;
-              cleanup();
+              cleanup(); // This will clear the transcript
               callback(fullTranscript);
             }
           }, 1500);
@@ -117,7 +125,7 @@ export const useVoiceRecording = () => {
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        console.error('Speech recognition error:', event.error);
+        console.error('❌ Speech recognition error:', event.error);
         
         if (event.error !== 'aborted' && !isCleanupRef.current) {
           toast({
@@ -131,7 +139,7 @@ export const useVoiceRecording = () => {
       };
 
       recognition.onend = () => {
-        console.log('Speech recognition ended');
+        console.log('🎤 Speech recognition ended');
         if (!isCleanupRef.current) {
           setIsListening(false);
         }
@@ -141,7 +149,7 @@ export const useVoiceRecording = () => {
       recognition.start();
 
     } catch (error) {
-      console.error('Error starting speech recognition:', error);
+      console.error('❌ Error starting speech recognition:', error);
       cleanup();
       toast({
         title: "Eroare la pornirea recunoașterii vocale",
@@ -152,7 +160,7 @@ export const useVoiceRecording = () => {
   }, [isListening, cleanup]);
 
   const stopListening = useCallback(() => {
-    console.log('Stopping speech recognition manually');
+    console.log('🛑 Stopping speech recognition manually');
     cleanup();
   }, [cleanup]);
 
@@ -167,6 +175,7 @@ export const useVoiceRecording = () => {
     liveTranscript,
     isSupported,
     startListening,
-    stopListening
+    stopListening,
+    clearTranscript
   };
 };
