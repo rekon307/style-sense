@@ -33,6 +33,7 @@ const StyleAdvice = ({
 }: StyleAdviceProps) => {
   const [isVideoMode, setIsVideoMode] = useState<boolean>(true);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
+  const [preservedVideoUrl, setPreservedVideoUrl] = useState<string | null>(null);
   const { createConversation, isCreatingConversation, cleanupOldConversations } = useTavus();
 
   // Fixed temperature for precise mode only
@@ -40,7 +41,7 @@ const StyleAdvice = ({
 
   // Auto-start video chat when component mounts
   useEffect(() => {
-    if (isVideoMode && !videoConversationUrl && !isCreatingConversation) {
+    if (isVideoMode && !videoConversationUrl && !isCreatingConversation && !preservedVideoUrl) {
       handleStartVideoChat();
     }
   }, []);
@@ -54,6 +55,18 @@ const StyleAdvice = ({
   useEffect(() => {
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
+
+  // Restore preserved video URL when switching back to video mode
+  useEffect(() => {
+    if (isVideoMode && preservedVideoUrl && !videoConversationUrl) {
+      console.log('🔄 Restoring preserved video conversation:', preservedVideoUrl);
+      setVideoConversationUrl(preservedVideoUrl);
+      toast({
+        title: "Video chat restored",
+        description: "Your previous video conversation has been restored.",
+      });
+    }
+  }, [isVideoMode, preservedVideoUrl, videoConversationUrl]);
 
   const handleStartVideoChat = async () => {
     try {
@@ -78,6 +91,7 @@ const StyleAdvice = ({
       
       if (conversation?.conversation_url) {
         setVideoConversationUrl(conversation.conversation_url);
+        setPreservedVideoUrl(conversation.conversation_url);
         console.log('✅ Video conversation URL set:', conversation.conversation_url);
         toast({
           title: "Video chat ready!",
@@ -118,13 +132,26 @@ const StyleAdvice = ({
   };
 
   const handleVideoModeToggle = (newVideoMode: boolean) => {
-    setIsVideoMode(newVideoMode);
+    console.log('🔄 Video mode toggle:', { from: isVideoMode, to: newVideoMode, hasUrl: !!videoConversationUrl });
     
-    if (newVideoMode && !videoConversationUrl && !isCreatingConversation) {
+    if (!newVideoMode && videoConversationUrl) {
+      // Switching from video to text - preserve the URL
+      console.log('💾 Preserving video URL for later restore:', videoConversationUrl);
+      setPreservedVideoUrl(videoConversationUrl);
+      // Don't clear videoConversationUrl immediately to avoid triggering new conversation
+    } else if (newVideoMode && !videoConversationUrl && !preservedVideoUrl && !isCreatingConversation) {
+      // Switching to video mode with no existing conversation
       handleStartVideoChat();
-    } else if (!newVideoMode) {
-      setVideoConversationUrl(null);
     }
+    
+    setIsVideoMode(newVideoMode);
+  };
+
+  const handleEndVideoCall = () => {
+    console.log('🛑 Ending video call');
+    setVideoConversationUrl(null);
+    setPreservedVideoUrl(null);
+    setIsVideoMode(false);
   };
 
   return (
@@ -155,13 +182,13 @@ const StyleAdvice = ({
         </>
       )}
       
-      {/* Video mode message */}
+      {/* Video mode */}
       {isVideoMode && (
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="text-center text-gray-500 dark:text-gray-400">
-            <p className="text-sm">Video chat is active in the main view</p>
-            <p className="text-xs mt-1">Switch to "Text Chat" to use the messaging interface</p>
-          </div>
+        <div className="flex-1 overflow-hidden">
+          <DailyVideoFrame 
+            conversationUrl={videoConversationUrl}
+            onClose={handleEndVideoCall}
+          />
         </div>
       )}
     </div>
