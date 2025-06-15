@@ -69,10 +69,10 @@ const Index = ({
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container flex h-16 items-center justify-between px-4">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+        {/* Clean Header */}
+        <header className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl">
+          <div className="container flex h-14 items-center justify-between px-6">
             <div className="flex items-center gap-4">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -80,7 +80,7 @@ const Index = ({
                     onClick={() => setShowChatHistory(!showChatHistory)}
                     variant="ghost"
                     size="sm"
-                    className="h-9 w-9 p-0"
+                    className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   >
                     {showChatHistory ? (
                       <PanelLeftClose className="h-4 w-4" />
@@ -90,76 +90,61 @@ const Index = ({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{showChatHistory ? 'Hide chat history' : 'Show chat history'}</p>
+                  <p>{showChatHistory ? 'Hide history' : 'Show history'}</p>
                 </TooltipContent>
               </Tooltip>
               
               <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600">
-                    <Sparkles className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                  <Badge 
-                    variant={isAnalyzing ? "default" : "secondary"} 
-                    className={`absolute -bottom-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center ${
-                      isAnalyzing ? 'animate-pulse bg-amber-500' : 'bg-green-500'
-                    }`}
-                  >
-                    <div className="h-2 w-2 rounded-full bg-white" />
-                  </Badge>
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+                  <Sparkles className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold">AI Style Assistant</h1>
-                  <p className="text-sm text-muted-foreground">
-                    {isAnalyzing ? 'Analyzing...' : 'Ready to help'}
-                  </p>
+                  <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Style AI</h1>
                 </div>
               </div>
             </div>
             
             <div className="flex items-center gap-3">
               <AuthButton user={user} onAuthChange={onAuthChange} />
-              <Separator orientation="vertical" className="h-6" />
+              <Separator orientation="vertical" className="h-5" />
               <ThemeToggle />
             </div>
           </div>
         </header>
         
-        <div className="flex h-[calc(100vh-4rem)]">
-          {/* Sidebar */}
-          <aside className={`${showChatHistory ? 'w-80' : 'w-0'} transition-all duration-300 overflow-hidden border-r bg-muted/20`}>
+        <div className="flex h-[calc(100vh-3.5rem)]">
+          {/* Minimal Sidebar */}
+          <aside className={`${showChatHistory ? 'w-72' : 'w-0'} transition-all duration-200 overflow-hidden border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900`}>
             <div className="h-full">
-              <div className="p-4 border-b">
-                <div className="mb-4">
-                  <h2 className="text-sm font-medium text-muted-foreground">Chat History</h2>
-                  <p className="text-xs text-muted-foreground">Previous conversations</p>
-                </div>
+              <div className="p-3 border-b border-gray-100 dark:border-gray-800">
                 <ChatHistory onSessionChange={onSessionChange} />
               </div>
             </div>
           </aside>
           
           <main className="flex flex-1 gap-0">
-            {/* Main Content Area - Video or Camera */}
-            <section className="flex-1 min-w-0 p-4">
-              <Card className="h-full">
+            {/* Main Content Area */}
+            <section className="flex-1 min-w-0 p-6">
+              <Card className="h-full border-0 shadow-sm bg-white dark:bg-gray-900">
                 <CardContent className="p-0 h-full">
                   {isVideoMode ? (
-                    <div className="h-full flex flex-col">
-                      <div className="flex items-center justify-between p-4 border-b bg-muted/50">
-                        <div className="flex items-center gap-2">
-                          <Video className="h-5 w-5 text-primary" />
+                    <div className="h-full flex flex-col rounded-lg overflow-hidden">
+                      <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                            <Video className="h-4 w-4 text-green-600 dark:text-green-400" />
+                          </div>
                           <div>
-                            <h3 className="font-semibold">Video Chat</h3>
-                            <p className="text-sm text-muted-foreground">Live conversation with Alex</p>
+                            <h3 className="font-medium text-gray-900 dark:text-white">Video Chat</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Live with Alex</p>
                           </div>
                         </div>
-                        <Badge variant="default" className="bg-green-500">
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
                           {videoConversationUrl ? 'Connected' : 'Connecting...'}
                         </Badge>
                       </div>
                       
-                      <div className="flex-1">
+                      <div className="flex-1 bg-black">
                         {videoConversationUrl ? (
                           <iframe
                             src={videoConversationUrl}
@@ -169,13 +154,13 @@ const Index = ({
                           />
                         ) : (
                           <div className="h-full flex items-center justify-center">
-                            <div className="text-center space-y-4">
-                              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                                <Video className="h-10 w-10 text-primary animate-pulse" />
+                            <div className="text-center space-y-3">
+                              <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto">
+                                <Video className="h-8 w-8 text-blue-500 animate-pulse" />
                               </div>
                               <div>
-                                <h3 className="text-xl font-semibold">Starting Video Chat</h3>
-                                <p className="text-muted-foreground">Setting up your conversation with Alex</p>
+                                <h3 className="text-lg font-medium text-white">Starting Video Chat</h3>
+                                <p className="text-gray-300 text-sm">Connecting with Alex...</p>
                               </div>
                             </div>
                           </div>
@@ -183,13 +168,15 @@ const Index = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="h-full flex flex-col">
-                      <div className="flex items-center justify-between p-4 border-b bg-muted/50">
-                        <div className="flex items-center gap-2">
-                          <Camera className="h-5 w-5 text-primary" />
+                    <div className="h-full flex flex-col rounded-lg overflow-hidden">
+                      <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                            <Camera className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          </div>
                           <div>
-                            <h3 className="font-semibold">Camera View</h3>
-                            <p className="text-sm text-muted-foreground">Live camera feed for style analysis</p>
+                            <h3 className="font-medium text-gray-900 dark:text-white">Camera</h3>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Style analysis</p>
                           </div>
                         </div>
                       </div>
@@ -203,8 +190,8 @@ const Index = ({
               </Card>
             </section>
             
-            {/* Style Advice Panel - Always shows text chat interface */}
-            <section className="w-96 flex-shrink-0 border-l">
+            {/* Chat Panel */}
+            <section className="w-96 flex-shrink-0 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
               <StyleAdvice 
                 messages={messages} 
                 isAnalyzing={isAnalyzing}
