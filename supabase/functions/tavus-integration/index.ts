@@ -17,14 +17,15 @@ serve(async (req) => {
     const requestBody = await req.json();
     const { action, data } = requestBody;
 
+    // Get Tavus API key from Supabase environment variables
     const tavusApiKey = Deno.env.get('TAVUS_API_KEY');
     if (!tavusApiKey) {
-      console.error('TAVUS_API_KEY environment variable not set');
-      throw new Error('Tavus API key not configured');
+      console.error('TAVUS_API_KEY environment variable not set in Supabase secrets');
+      throw new Error('Tavus API key not configured. Please add TAVUS_API_KEY to Supabase secrets.');
     }
 
     console.log('Action:', action);
-    console.log('Data:', data);
+    console.log('Data:', JSON.stringify(data, null, 2));
 
     let response;
 
