@@ -222,16 +222,18 @@ const StyleAdvice = ({
     }, 500);
   };
 
-  const handleVideoModeChange = (newVideoMode: boolean) => {
+  const handleVideoModeChange = async (newVideoMode: boolean) => {
     console.log('🔄 Video mode changing to:', newVideoMode);
-    if (onVideoModeChange) {
-      onVideoModeChange(newVideoMode);
+    
+    // If switching to text mode and we have an active conversation, end it first
+    if (!newVideoMode && currentConversationId) {
+      console.log('🛑 Switching to text mode - ending conversation:', currentConversationId);
+      await handleEndVideoCall();
     }
     
-    // If switching to text mode and we have an active conversation, end it
-    if (!newVideoMode && currentConversationId) {
-      console.log('🛑 Switching to text mode - will end conversation:', currentConversationId);
-      handleEndVideoCall();
+    // Then update the mode
+    if (onVideoModeChange) {
+      onVideoModeChange(newVideoMode);
     }
   };
 
