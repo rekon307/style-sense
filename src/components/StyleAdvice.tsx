@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
@@ -21,9 +21,16 @@ interface StyleAdviceProps {
 
 const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onModelChange, currentSessionId, user }: StyleAdviceProps) => {
   const [temperature, setTemperature] = useState<number>(0.5);
-  const [isVideoMode, setIsVideoMode] = useState<boolean>(false);
+  const [isVideoMode, setIsVideoMode] = useState<boolean>(true); // Changed to true by default
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   const { createConversation, isCreatingConversation } = useTavus();
+
+  // Auto-start video chat when component mounts
+  useEffect(() => {
+    if (isVideoMode && !videoConversationUrl && !isCreatingConversation) {
+      handleStartVideoChat();
+    }
+  }, []);
 
   const handleStartVideoChat = async () => {
     try {
