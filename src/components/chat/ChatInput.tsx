@@ -2,7 +2,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Mic, Square } from "lucide-react";
+import { Send, Mic, Square, ImageIcon } from "lucide-react";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { captureImageFromWebcam, isWebcamAvailable } from "@/utils/imageUtils";
 import { toast } from "@/components/ui/use-toast";
@@ -15,7 +15,9 @@ interface ChatInputProps {
 
 const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) => {
   const [message, setMessage] = useState("");
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const {
     isListening,
@@ -32,12 +34,15 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
     if (!finalTranscript.trim()) return;
 
     const captureResult = captureImageFromWebcam();
-    if (!captureResult.success) {
+    const imageToSend = uploadedImage || captureResult.image || null;
+    
+    if (!captureResult.success && !uploadedImage) {
       console.warn('Auto image capture failed:', captureResult.error);
     }
     
-    onSendMessage(finalTranscript, captureResult.image || null, temperature);
+    onSendMessage(finalTranscript, imageToSend, temperature);
     setMessage("");
+    setUploadedImage(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -49,21 +54,44 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
     console.log('=== MANUAL SUBMIT START ===');
     
     const captureResult = captureImageFromWebcam();
-    if (!captureResult.success) {
+    const imageToSend = uploadedImage || captureResult.image || null;
+    
+    if (!captureResult.success && !uploadedImage) {
       console.warn('Manual image capture failed:', captureResult.error);
-      toast({
-        title: "Image capture failed",
-        description: captureResult.error,
-        variant: "destructive",
-      });
     }
     
-    onSendMessage(messageToSend, captureResult.image || null, temperature);
+    onSendMessage(messageToSend, imageToSend, temperature);
     setMessage("");
+    setUploadedImage(null);
     
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      setUploadedImage(result);
+      toast({
+        title: "Image uploaded",
+        description: "Image will be sent with your next message.",
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -112,7 +140,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
                 : "Ask Alex about your style..."
             }
             disabled={isInputDisabled}
-            className={`min-h-[44px] max-h-[120px] resize-none pr-16 transition-all duration-300 ${
+            className={`min-h-[44px] max-h-[120px] resize-none pr-20 transition-all duration-300 ${
               isListening 
                 ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-300 dark:border-blue-600 shadow-lg' 
                 : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
@@ -120,26 +148,52 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
             style={{ height: 'auto' }}
           />
           
-          {isSupported && (
+          <div className="absolute right-2 top-2 flex gap-1">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+              disabled={isAnalyzing}
+            />
+            
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              onClick={toggleListening}
+              onClick={() => fileInputRef.current?.click()}
               disabled={isAnalyzing}
-              className={`absolute right-2 top-2 h-7 w-7 p-0 transition-all duration-300 ${
-                isListening 
-                  ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 animate-pulse' 
+              className={`h-7 w-7 p-0 transition-all duration-300 ${
+                uploadedImage
+                  ? 'text-green-600 hover:text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:text-green-300'
                   : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
               }`}
             >
-              {isListening ? (
-                <Square className="h-4 w-4" />
-              ) : (
-                <Mic className="h-4 w-4" />
-              )}
+              <ImageIcon className="h-4 w-4" />
             </Button>
-          )}
+
+            {isSupported && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={toggleListening}
+                disabled={isAnalyzing}
+                className={`h-7 w-7 p-0 transition-all duration-300 ${
+                  isListening 
+                    ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 animate-pulse' 
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                }`}
+              >
+                {isListening ? (
+                  <Square className="h-4 w-4" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
         
         <Button 
@@ -162,10 +216,25 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
         </Button>
       </form>
       
-      {!webcamAvailable && (
+      {uploadedImage && (
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+            <ImageIcon className="h-4 w-4" />
+            <span>Image ready to send</span>
+            <button 
+              onClick={() => setUploadedImage(null)}
+              className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {!webcamAvailable && !uploadedImage && (
         <div className="px-4 pb-2">
           <p className="text-xs text-amber-600 dark:text-amber-400">
-            📷 Camera not available - messages will be sent without image
+            📷 Camera not available - upload an image or messages will be sent without visual context
           </p>
         </div>
       )}
