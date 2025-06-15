@@ -35,12 +35,12 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
     return (
       <div 
         key={message.id || index} 
-        className={`flex gap-3 mb-4 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+        className={`flex gap-2 mb-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
       >
         <Avatar className="w-8 h-8 flex-shrink-0">
           <AvatarFallback className={isUser 
-            ? "bg-blue-600 text-white" 
-            : "bg-gradient-to-br from-blue-600 to-purple-600 text-white"
+            ? "bg-gray-400 text-white text-xs" 
+            : "bg-blue-600 text-white text-xs"
           }>
             {isUser ? (
               <User className="h-4 w-4" />
@@ -50,30 +50,26 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
           </AvatarFallback>
         </Avatar>
         
-        <div className={`flex flex-col max-w-[75%] ${isUser ? 'items-end' : 'items-start'}`}>
+        <div className={`flex flex-col max-w-[70%] ${isUser ? 'items-end' : 'items-start'}`}>
           {hasImage && isUser && (
-            <div className="mb-2 max-w-60">
+            <div className="mb-2 max-w-48">
               <img 
                 src={message.visual_context} 
                 alt="Shared image" 
-                className="rounded-2xl max-w-full h-auto border border-slate-200 dark:border-slate-700"
-                onLoad={() => console.log('✅ Image loaded successfully')}
-                onError={(e) => {
-                  console.error('❌ Image failed to load:', e);
-                }}
+                className="rounded-xl max-w-full h-auto"
               />
             </div>
           )}
           
-          <div className={`px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${
+          <div className={`px-3 py-2 rounded-2xl text-sm max-w-full break-words ${
             isUser 
-              ? 'bg-blue-600 text-white rounded-br-md shadow-md' 
-              : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-bl-md shadow-sm'
+              ? 'bg-blue-600 text-white' 
+              : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-600'
           }`}>
             {message.content}
           </div>
           
-          <div className={`text-xs text-slate-500 dark:text-slate-400 mt-1 px-1 ${isUser ? 'text-right' : 'text-left'}`}>
+          <div className={`text-xs text-gray-500 mt-1 ${isUser ? 'text-right' : 'text-left'}`}>
             {message.created_at ? new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
@@ -82,22 +78,21 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
   };
 
   const renderThinkingIndicator = () => (
-    <div className="flex gap-3 mb-4">
+    <div className="flex gap-2 mb-3">
       <Avatar className="w-8 h-8 flex-shrink-0">
-        <AvatarFallback className="bg-gradient-to-br from-blue-600 to-purple-600 text-white">
+        <AvatarFallback className="bg-blue-600 text-white text-xs">
           <Sparkles className="h-4 w-4" />
         </AvatarFallback>
       </Avatar>
       
-      <div className="flex flex-col max-w-[75%] items-start">
-        <div className="px-4 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 rounded-bl-md shadow-sm">
+      <div className="flex flex-col max-w-[70%] items-start">
+        <div className="px-3 py-2 rounded-2xl bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
             </div>
-            <span className="text-sm text-slate-600 dark:text-slate-400 ml-2">Alex is thinking...</span>
           </div>
         </div>
       </div>
@@ -106,26 +101,26 @@ const ChatMessages = ({ messages, isAnalyzing }: ChatMessagesProps) => {
 
   const renderEmptyState = () => (
     <div className="text-center py-16 px-6">
-      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30">
-        <Sparkles className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+        <Sparkles className="h-8 w-8 text-blue-600" />
       </div>
-      <h3 className="mb-3 text-xl font-semibold text-slate-900 dark:text-slate-100">
+      <h3 className="mb-3 text-xl font-medium text-gray-900 dark:text-gray-100">
         Hi, I'm Alex!
       </h3>
-      <p className="mx-auto mb-6 max-w-sm text-base leading-relaxed text-slate-600 dark:text-slate-400">
-        Your personal AI style advisor, ready to help you improve your wardrobe with personalized recommendations.
+      <p className="mx-auto mb-6 max-w-sm text-base text-gray-600 dark:text-gray-400">
+        Your personal AI style advisor, ready to help you improve your wardrobe.
       </p>
       <div className="mx-auto grid max-w-sm grid-cols-1 gap-3">
-        <div className="flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
-          <Camera className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-          <span className="text-sm text-slate-600 dark:text-slate-400">Camera captures automatically</span>
+        <div className="flex items-center gap-3 rounded-lg bg-gray-100 dark:bg-gray-800 p-3">
+          <Camera className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+          <span className="text-sm text-gray-600 dark:text-gray-400">Camera captures automatically</span>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="flex-1 bg-white dark:bg-slate-900">
+    <div className="flex-1 bg-gray-50 dark:bg-gray-900">
       <ScrollArea className="h-full">
         <div className="p-4">
           {messages.length === 0 && !isAnalyzing ? (

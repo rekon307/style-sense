@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +27,6 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
     stopListening 
   } = useVoiceRecording();
 
-  // Update status when listening changes
   useEffect(() => {
     if (isListening) {
       setStatus('listening');
@@ -35,7 +35,6 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
     }
   }, [isListening, setStatus, status]);
 
-  // Update status when analyzing changes
   useEffect(() => {
     if (isAnalyzing) {
       setStatus('analyzing');
@@ -44,7 +43,6 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
     }
   }, [isAnalyzing, setStatus, status]);
 
-  // Update textarea with live transcript
   useEffect(() => {
     if (liveTranscript) {
       setMessage(liveTranscript);
@@ -128,19 +126,19 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
   const getPlaceholder = () => {
     if (status === 'listening') return 'Listening...';
     if (status === 'analyzing') return 'Alex is thinking...';
-    return 'Ask about your style or speak...';
+    return 'Type a message...';
   };
 
   const isInputDisabled = status === 'analyzing';
 
   return (
-    <div className="border-t border-slate-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-900">
+    <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
       {selectedImage && (
         <div className="mb-3 relative inline-block">
           <img 
             src={selectedImage} 
             alt="Selected" 
-            className="max-w-32 max-h-32 rounded-xl border border-slate-200 dark:border-slate-700"
+            className="max-w-32 max-h-32 rounded-xl"
           />
           <Button
             onClick={removeImage}
@@ -153,12 +151,12 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
         </div>
       )}
       
-      <div className="flex items-end gap-3">
+      <div className="flex items-end gap-2">
         <Button
           onClick={() => fileInputRef.current?.click()}
           size="sm"
           variant="ghost"
-          className="h-10 w-10 p-0 rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
+          className="h-10 w-10 p-0 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700"
           disabled={isInputDisabled}
         >
           <Camera className="h-5 w-5" />
@@ -171,17 +169,17 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder={getPlaceholder()}
-            className="min-h-[2.5rem] max-h-32 resize-none rounded-2xl border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 pr-12 focus:border-blue-500 focus:ring-blue-500"
+            className="min-h-[40px] max-h-32 resize-none rounded-full border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-4 py-2 pr-12 text-sm"
             disabled={isInputDisabled}
           />
           <Button
             onClick={handleMicClick}
             size="sm"
             variant="ghost"
-            className={`absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 rounded-full ${
+            className={`absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 rounded-full ${
               status === 'listening' 
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 animate-pulse' 
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700'
+                ? 'bg-blue-100 text-blue-600 animate-pulse' 
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
             }`}
             disabled={isInputDisabled}
           >
@@ -196,7 +194,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
         <Button
           onClick={handleSend}
           size="sm"
-          className="h-10 w-10 p-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+          className="h-10 w-10 p-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white"
           disabled={isInputDisabled || (!message.trim() && !selectedImage)}
         >
           <Send className="h-4 w-4" />

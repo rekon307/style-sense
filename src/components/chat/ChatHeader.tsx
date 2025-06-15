@@ -34,32 +34,32 @@ const ChatHeader = ({ isAnalyzing, selectedModel, onModelChange }: ChatHeaderPro
       case 'speaking':
         return 'Speaking';
       default:
-        return 'Active';
+        return 'Online';
     }
   };
 
   return (
-    <div className="border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+    <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600 shadow-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
-            <div className={`absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white dark:border-slate-900 ${getStatusIndicator()}`}></div>
+            <div className={`absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-white dark:border-gray-800 ${getStatusIndicator()}`}></div>
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="text-lg font-medium text-gray-900 dark:text-gray-100">
               Alex
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {getStatusText()}
             </p>
           </div>
         </div>
         
         <Select value={selectedModel} onValueChange={onModelChange}>
-          <SelectTrigger className="h-9 w-36 text-sm border-slate-300 dark:border-slate-600">
+          <SelectTrigger className="h-9 w-36 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
