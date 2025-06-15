@@ -17,11 +17,23 @@ interface StyleAdviceProps {
   onModelChange: (model: string) => void;
   currentSessionId: string | null;
   user?: any;
+  onVideoModeChange?: (isVideoMode: boolean) => void;
+  onVideoUrlChange?: (url: string | null) => void;
 }
 
-const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onModelChange, currentSessionId, user }: StyleAdviceProps) => {
+const StyleAdvice = ({ 
+  messages, 
+  isAnalyzing, 
+  onSendMessage, 
+  selectedModel, 
+  onModelChange, 
+  currentSessionId, 
+  user,
+  onVideoModeChange,
+  onVideoUrlChange
+}: StyleAdviceProps) => {
   const [temperature, setTemperature] = useState<number>(0.5);
-  const [isVideoMode, setIsVideoMode] = useState<boolean>(true); // Changed to true by default
+  const [isVideoMode, setIsVideoMode] = useState<boolean>(true);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   const { createConversation, isCreatingConversation } = useTavus();
 
@@ -31,6 +43,16 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       handleStartVideoChat();
     }
   }, []);
+
+  // Notify parent component of video mode changes
+  useEffect(() => {
+    onVideoModeChange?.(isVideoMode);
+  }, [isVideoMode, onVideoModeChange]);
+
+  // Notify parent component of video URL changes
+  useEffect(() => {
+    onVideoUrlChange?.(videoConversationUrl);
+  }, [videoConversationUrl, onVideoUrlChange]);
 
   const handleStartVideoChat = async () => {
     try {
@@ -78,12 +100,22 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
     }
   };
 
+  const handleVideoModeToggle = (newVideoMode: boolean) => {
+    setIsVideoMode(newVideoMode);
+    
+    if (newVideoMode && !videoConversationUrl && !isCreatingConversation) {
+      handleStartVideoChat();
+    } else if (!newVideoMode) {
+      setVideoConversationUrl(null);
+    }
+  };
+
   return (
     <div className="flex h-full flex-col bg-white dark:bg-gray-900">
       <ChatHeader 
         isAnalyzing={isAnalyzing || isCreatingConversation}
         isVideoMode={isVideoMode}
-        onVideoModeChange={setIsVideoMode}
+        onVideoModeChange={handleVideoModeToggle}
         onStartVideoChat={handleStartVideoChat}
       />
       
@@ -122,18 +154,8 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         </div>
       )}
       
-      {/* Content Area */}
-      {isVideoMode ? (
-        <div className="flex-1 overflow-hidden">
-          <DailyVideoFrame 
-            conversationUrl={videoConversationUrl}
-            onClose={() => {
-              setIsVideoMode(false);
-              setVideoConversationUrl(null);
-            }}
-          />
-        </div>
-      ) : (
+      {/* Content Area - only show text chat interface */}
+      {!isVideoMode && (
         <>
           <div className="flex-1 overflow-hidden">
             <ChatMessages 
@@ -149,6 +171,16 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
             />
           </div>
         </>
+      )}
+      
+      {/* Video mode message */}
+      {isVideoMode && (
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center text-gray-500 dark:text-gray-400">
+            <p className="text-sm">Video chat is active in the main view</p>
+            <p className="text-xs mt-1">Switch to "Text Chat" to use the messaging interface</p>
+          </div>
+        </div>
       )}
     </div>
   );

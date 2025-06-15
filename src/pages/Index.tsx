@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
@@ -37,6 +38,8 @@ const Index = ({
 }: IndexProps) => {
   const webcamRef = useRef<WebcamDisplayRef>(null);
   const [showChatHistory, setShowChatHistory] = useState(true);
+  const [isVideoMode, setIsVideoMode] = useState(true);
+  const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
 
   const handleCognitiveMessage = (message: string, image?: string | null, temperature: number = 0.5) => {
     console.log('=== ALEX COGNITIVE PROCESSING ===');
@@ -47,6 +50,17 @@ const Index = ({
     
     // Always use Style Mini (gpt-4o-mini) as the default and only model
     handleSendMessage(message, image, temperature);
+  };
+
+  const handleVideoModeChange = (newVideoMode: boolean) => {
+    setIsVideoMode(newVideoMode);
+    if (!newVideoMode) {
+      setVideoConversationUrl(null);
+    }
+  };
+
+  const handleVideoUrlChange = (url: string | null) => {
+    setVideoConversationUrl(url);
   };
 
   return (
@@ -100,7 +114,34 @@ const Index = ({
         
         <main className="flex flex-1 gap-0">
           <section className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-800">
-            <WebcamDisplay ref={webcamRef} />
+            {!isVideoMode ? (
+              <WebcamDisplay ref={webcamRef} />
+            ) : (
+              <div className="h-full">
+                {videoConversationUrl ? (
+                  <iframe
+                    src={videoConversationUrl}
+                    className="w-full h-full border-0"
+                    allow="camera; microphone; fullscreen"
+                    title="Video Chat with Alex"
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Sparkles className="h-8 w-8 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
+                        Starting Video Chat...
+                      </h3>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">
+                        Setting up your conversation with Alex
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </section>
           
           <section className="w-96 flex-shrink-0 border-l border-slate-200 dark:border-slate-800">
@@ -112,6 +153,8 @@ const Index = ({
               onModelChange={onModelChange}
               currentSessionId={currentSessionId}
               user={user}
+              onVideoModeChange={handleVideoModeChange}
+              onVideoUrlChange={handleVideoUrlChange}
             />
           </section>
         </main>
