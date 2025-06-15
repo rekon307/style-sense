@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -17,7 +16,7 @@ export const useTavus = () => {
   const createConversation = async (
     conversationName?: string,
     conversationalContext?: string,
-    replicaId?: string
+    personaId?: string
   ) => {
     setIsCreatingConversation(true);
     try {
@@ -29,7 +28,7 @@ export const useTavus = () => {
           data: {
             conversation_name: conversationName,
             conversational_context: conversationalContext,
-            replica_id: replicaId || "r4fa3e64f1"
+            persona_id: personaId || "p347dab0cef8"
           }
         }
       });

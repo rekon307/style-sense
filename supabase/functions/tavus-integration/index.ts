@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -27,17 +28,6 @@ serve(async (req) => {
       console.error('TAVUS_API_KEY environment variable not set in Supabase secrets');
       return new Response(JSON.stringify({ 
         error: 'Tavus API key not configured. Please add TAVUS_API_KEY to Supabase secrets.'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Validate API key format
-    if (!tavusApiKey.startsWith('tvs-')) {
-      console.error('Invalid TAVUS_API_KEY format. Key should start with "tvs-"');
-      return new Response(JSON.stringify({ 
-        error: 'Invalid Tavus API key format. Please check that your TAVUS_API_KEY starts with "tvs-"'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -101,7 +91,6 @@ async function listReplicas(apiKey: string) {
       headers: {
         'x-api-key': apiKey,
         'Content-Type': 'application/json',
-        'User-Agent': 'Supabase-Edge-Function/1.0',
       },
       signal: controller.signal,
     });
@@ -136,42 +125,34 @@ async function listReplicas(apiKey: string) {
 async function createConversation(data: any, apiKey: string) {
   console.log('=== CREATING TAVUS CONVERSATION ===');
   
-  // First, let's try to get available replicas to find a valid one
-  let replicaId = data.replica_id;
-  
-  if (!replicaId) {
-    console.log('No replica_id provided, fetching available replicas...');
-    try {
-      const replicasResponse = await listReplicas(apiKey);
-      if (replicasResponse.data && replicasResponse.data.length > 0) {
-        replicaId = replicasResponse.data[0].replica_id;
-        console.log('Using first available replica:', replicaId);
-      } else {
-        throw new Error('No replicas available. Please create a replica first in your Tavus account.');
-      }
-    } catch (error) {
-      console.error('Failed to fetch replicas:', error.message);
-      // Fall back to the default if we can't fetch replicas
-      replicaId = "r4fa3e64f1";
-      console.log('Falling back to default replica_id:', replicaId);
-    }
-  }
+  // Use persona_id (as per your working curl command) or fall back to replica_id
+  const personaId = data.persona_id || data.replica_id || "p347dab0cef8";
   
   const payload = {
-    replica_id: replicaId,
-    conversation_name: data.conversation_name || "Style Sense Video Chat",
-    conversational_context: data.conversational_context || "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
-    properties: {
-      max_call_duration: 600,
-      participant_left_timeout: 60,
-      participant_absent_timeout: 60,
-      enable_recording: false
-    }
+    persona_id: personaId
   };
+
+  // Add optional conversation properties if provided
+  if (data.conversation_name) {
+    payload.conversation_name = data.conversation_name;
+  }
+  
+  if (data.conversational_context) {
+    payload.conversational_context = data.conversational_context;
+  }
+
+  // Add conversation properties if specified
+  if (data.properties || data.conversation_name || data.conversational_context) {
+    payload.properties = {
+      max_call_duration: data.properties?.max_call_duration || 600,
+      participant_left_timeout: data.properties?.participant_left_timeout || 60,
+      participant_absent_timeout: data.properties?.participant_absent_timeout || 60,
+      enable_recording: data.properties?.enable_recording || false
+    };
+  }
 
   console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
   console.log('Using API endpoint: https://tavusapi.com/v2/conversations');
-  console.log('API Key being used:', apiKey.substring(0, 8) + '...');
 
   try {
     const controller = new AbortController();
@@ -183,7 +164,6 @@ async function createConversation(data: any, apiKey: string) {
       headers: {
         'x-api-key': apiKey,
         'Content-Type': 'application/json',
-        'User-Agent': 'Supabase-Edge-Function/1.0',
       },
       body: JSON.stringify(payload),
       signal: controller.signal,
@@ -199,12 +179,6 @@ async function createConversation(data: any, apiKey: string) {
 
     if (!response.ok) {
       console.error('Tavus conversation creation failed:', response.status, responseText);
-      
-      // If it's still a replica issue, provide helpful error message
-      if (responseText.includes('Invalid replica_uuid') || responseText.includes('replica')) {
-        throw new Error(`Invalid replica ID "${replicaId}". Please check your Tavus account for available replicas or create one first.`);
-      }
-      
       throw new Error(`Failed to create conversation: ${response.status} - ${responseText}`);
     }
 
@@ -247,7 +221,6 @@ async function generateVideo(data: any, apiKey: string) {
       headers: {
         'x-api-key': apiKey,
         'Content-Type': 'application/json',
-        'User-Agent': 'Supabase-Edge-Function/1.0',
       },
       body: JSON.stringify(payload),
       signal: controller.signal,
@@ -297,7 +270,6 @@ async function getConversationStatus(conversationId: string, apiKey: string) {
       headers: {
         'x-api-key': apiKey,
         'Content-Type': 'application/json',
-        'User-Agent': 'Supabase-Edge-Function/1.0',
       },
       signal: controller.signal,
     });
