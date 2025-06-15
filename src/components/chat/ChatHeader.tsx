@@ -27,6 +27,8 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
   };
 
   const getStatusText = () => {
+    if (isAnalyzing) return 'processing...';
+    
     switch (status) {
       case 'listening':
         return 'listening...';
@@ -35,11 +37,17 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
       case 'speaking':
         return 'speaking...';
       default:
-        return 'online';
+        return 'ready';
     }
   };
 
+  const handleTextModeClick = () => {
+    console.log('📝 Switching to text mode');
+    onVideoModeChange(false);
+  };
+
   const handleVideoModeClick = () => {
+    console.log('🎥 Switching to video mode');
     if (!isVideoMode) {
       onStartVideoChat();
     }
@@ -47,7 +55,7 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
   };
 
   return (
-    <div className="border-b border-gray-100/50 dark:border-gray-800/50 bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 px-6 py-4">
+    <div className="border-b border-gray-100/50 dark:border-gray-800/50 bg-gradient-to-r from-white/80 to-gray-50/80 dark:from-gray-900/80 dark:to-gray-800/80 backdrop-blur-sm px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative">
@@ -69,11 +77,12 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
           <Button
             variant={!isVideoMode ? "default" : "outline"}
             size="sm"
-            onClick={() => onVideoModeChange(false)}
+            onClick={handleTextModeClick}
+            disabled={isAnalyzing}
             className={`flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-xl transition-all duration-200 ${
               !isVideoMode 
                 ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl' 
-                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700'
             }`}
           >
             <MessageSquare className="h-4 w-4" />
@@ -83,10 +92,11 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
             variant={isVideoMode ? "default" : "outline"}
             size="sm"
             onClick={handleVideoModeClick}
+            disabled={isAnalyzing}
             className={`flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-xl transition-all duration-200 ${
               isVideoMode 
                 ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-xl' 
-                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700'
             }`}
           >
             <Video className="h-4 w-4" />

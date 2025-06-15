@@ -42,7 +42,7 @@ const Index = ({
 }: IndexProps) => {
   const webcamRef = useRef<WebcamDisplayRef>(null);
   const [showChatHistory, setShowChatHistory] = useState(true);
-  const [isVideoMode, setIsVideoMode] = useState(true);
+  const [isVideoMode, setIsVideoMode] = useState(false);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
 
   const handleCognitiveMessage = (message: string, image?: string | null, temperature: number = 0.5) => {
@@ -52,18 +52,16 @@ const Index = ({
     console.log('Cognitive Temperature:', temperature);
     console.log('Chain-of-Thought Mode: Active');
     
-    // Always use Style Mini (gpt-4o-mini) as the default and only model
     handleSendMessage(message, image, temperature);
   };
 
   const handleVideoModeChange = (newVideoMode: boolean) => {
+    console.log('🔄 Index: Video mode changing to:', newVideoMode);
     setIsVideoMode(newVideoMode);
-    if (!newVideoMode) {
-      setVideoConversationUrl(null);
-    }
   };
 
   const handleVideoUrlChange = (url: string | null) => {
+    console.log('🔗 Index: Video URL changed to:', url);
     setVideoConversationUrl(url);
   };
 
@@ -128,129 +126,51 @@ const Index = ({
           </aside>
           
           <main className="flex flex-1 gap-0">
-            {/* Main Content Area with Modern Design */}
+            {/* Main Content Area */}
             <section className="flex-1 min-w-0 p-6">
               <Card className="h-full border-0 shadow-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-3xl overflow-hidden">
                 <CardContent className="p-0 h-full">
-                  {isVideoMode ? (
-                    <div className="h-full flex flex-col">
-                      <div className="flex items-center justify-between p-6 border-b border-gray-100/50 dark:border-gray-800/50 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg">
-                            <Video className="h-6 w-6 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Video Chat with Alex</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">AI-powered style consultation</p>
-                          </div>
+                  <div className="h-full flex flex-col">
+                    <div className="flex items-center justify-between p-6 border-b border-gray-100/50 dark:border-gray-800/50 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+                          <Camera className="h-6 w-6 text-white" />
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleVideoModeChange(false)}
-                              className="flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 border-blue-200 dark:border-blue-800"
-                            >
-                              <MessageSquare className="h-4 w-4" />
-                              Switch to Text Chat
-                            </Button>
-                          </div>
-                          <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700 px-3 py-1 rounded-full font-medium">
-                            <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                            {videoConversationUrl ? 'Connected' : 'Connecting...'}
-                          </Badge>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Camera View</h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Capture your style for analysis</p>
                         </div>
                       </div>
-                      
-                      <div className="flex-1 bg-gradient-to-br from-gray-900 to-black rounded-b-3xl overflow-hidden">
-                        {videoConversationUrl ? (
-                          <iframe
-                            src={videoConversationUrl}
-                            className="w-full h-full border-0"
-                            allow="camera; microphone; fullscreen"
-                            title="Video Chat with Alex"
-                          />
-                        ) : (
-                          <div className="h-full flex items-center justify-center">
-                            <div className="text-center space-y-4">
-                              <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto animate-pulse">
-                                <Video className="h-10 w-10 text-blue-400" />
-                              </div>
-                              <div>
-                                <h3 className="text-xl font-semibold text-white mb-2">Starting Video Chat</h3>
-                                <p className="text-gray-300">Connecting with Alex...</p>
-                                <div className="flex justify-center mt-4">
-                                  <div className="flex space-x-1">
-                                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        )}
+                      <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700 px-3 py-1 rounded-full font-medium">
+                        <Zap className="w-3 h-3 mr-2" />
+                        Ready
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 to-gray-900">
+                      <div className="h-full rounded-2xl overflow-hidden shadow-inner">
+                        <WebcamDisplay ref={webcamRef} />
                       </div>
                     </div>
-                  ) : (
-                    <div className="h-full flex flex-col">
-                      <div className="flex items-center justify-between p-6 border-b border-gray-100/50 dark:border-gray-800/50 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
-                            <Camera className="h-6 w-6 text-white" />
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Camera View</h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Capture your style for analysis</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleVideoModeChange(true)}
-                              className="flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-green-50 dark:hover:bg-green-900/20 border-green-200 dark:border-green-800"
-                            >
-                              <Video className="h-4 w-4" />
-                              Switch to Video Chat
-                            </Button>
-                          </div>
-                          <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-700 px-3 py-1 rounded-full font-medium">
-                            <Zap className="w-3 h-3 mr-2" />
-                            Ready
-                          </Badge>
-                        </div>
-                      </div>
-                      
-                      <div className="flex-1 p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 to-gray-900">
-                        <div className="h-full rounded-2xl overflow-hidden shadow-inner">
-                          <WebcamDisplay ref={webcamRef} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             </section>
             
-            {/* Chat Panel - Only show in text mode */}
-            {!isVideoMode && (
-              <section className="w-96 flex-shrink-0 border-l border-white/20 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
-                <StyleAdvice 
-                  messages={messages} 
-                  isAnalyzing={isAnalyzing}
-                  onSendMessage={handleCognitiveMessage}
-                  selectedModel={selectedModel}
-                  onModelChange={onModelChange}
-                  currentSessionId={currentSessionId}
-                  user={user}
-                  onVideoModeChange={handleVideoModeChange}
-                  onVideoUrlChange={handleVideoUrlChange}
-                />
-              </section>
-            )}
+            {/* Chat Panel */}
+            <section className="w-96 flex-shrink-0 border-l border-white/20 dark:border-gray-800/50 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm p-6">
+              <StyleAdvice 
+                messages={messages} 
+                isAnalyzing={isAnalyzing}
+                onSendMessage={handleCognitiveMessage}
+                selectedModel={selectedModel}
+                onModelChange={onModelChange}
+                currentSessionId={currentSessionId}
+                user={user}
+                onVideoModeChange={handleVideoModeChange}
+                onVideoUrlChange={handleVideoUrlChange}
+              />
+            </section>
           </main>
         </div>
       </div>

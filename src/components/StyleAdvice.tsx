@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
@@ -30,22 +31,14 @@ const StyleAdvice = ({
   onVideoModeChange,
   onVideoUrlChange
 }: StyleAdviceProps) => {
-  const [isVideoMode, setIsVideoMode] = useState<boolean>(true);
+  const [isVideoMode, setIsVideoMode] = useState<boolean>(false);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
-  const [preservedVideoUrl, setPreservedVideoUrl] = useState<string | null>(null);
-  const [preservedConversationId, setPreservedConversationId] = useState<string | null>(null);
+  const [isCreatingVideo, setIsCreatingVideo] = useState(false);
   const { createConversation, endConversation, isCreatingConversation, isEndingConversation, cleanupOldConversations } = useTavus();
 
   // Fixed temperature for precise mode only
   const temperature = 0.2;
-
-  // Auto-start video chat when component mounts
-  useEffect(() => {
-    if (isVideoMode && !videoConversationUrl && !isCreatingConversation && !preservedVideoUrl) {
-      handleStartVideoChat();
-    }
-  }, []);
 
   // Notify parent component of video mode changes
   useEffect(() => {
@@ -57,23 +50,25 @@ const StyleAdvice = ({
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
 
-  // Restore preserved video URL when switching back to video mode
-  useEffect(() => {
-    if (isVideoMode && preservedVideoUrl && !videoConversationUrl) {
-      console.log('🔄 Restoring preserved video conversation:', preservedVideoUrl);
-      setVideoConversationUrl(preservedVideoUrl);
-      toast({
-        title: "Video chat restored",
-        description: "Your previous video conversation has been restored.",
-      });
-    }
-  }, [isVideoMode, preservedVideoUrl, videoConversationUrl]);
-
   const handleStartVideoChat = async () => {
+    if (isCreatingVideo || isCreatingConversation) {
+      console.log('Already creating video conversation, skipping...');
+      return;
+    }
+
+    setIsCreatingVideo(true);
+    
     try {
-      console.log('=== STARTING DAILY VIDEO CHAT ===');
+      console.log('=== STARTING VIDEO CHAT ===');
       console.log('Current session ID:', currentSessionId);
       console.log('User:', user);
+      
+      // First, cleanup any old conversations
+      console.log('Cleaning up old conversations before creating new one...');
+      await cleanupOldConversations();
+      
+      // Wait a moment for cleanup to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Get user's name or use default
       const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Style Enthusiast';
@@ -93,8 +88,6 @@ const StyleAdvice = ({
       if (conversation?.conversation_url && conversation?.conversation_id) {
         setVideoConversationUrl(conversation.conversation_url);
         setCurrentConversationId(conversation.conversation_id);
-        setPreservedVideoUrl(conversation.conversation_url);
-        setPreservedConversationId(conversation.conversation_id);
         console.log('✅ Video conversation URL set:', conversation.conversation_url);
         console.log('✅ Video conversation ID set:', conversation.conversation_id);
         toast({
@@ -114,44 +107,38 @@ const StyleAdvice = ({
       
       // If it's a concurrent conversation limit, try cleanup and show helpful message
       if (error.message && error.message.includes('maximum concurrent conversations')) {
-        console.log('Attempting to cleanup old conversations...');
         toast({
           title: "Video chat limit reached",
-          description: "Cleaning up previous sessions. Please try again in a moment.",
+          description: "Cleaning up previous sessions. Please wait a moment and try again.",
           variant: "destructive",
-        });
-        
-        // Try cleanup in background
-        cleanupOldConversations().then(() => {
-          console.log('Cleanup completed, user can try again');
         });
       } else {
         toast({
           title: "Error",
-          description: "Failed to start video conversation. Please check the logs.",
+          description: "Failed to start video conversation. Please try again in a moment.",
           variant: "destructive",
         });
       }
+    } finally {
+      setIsCreatingVideo(false);
     }
   };
 
-  const handleVideoModeToggle = (newVideoMode: boolean) => {
-    console.log('🔄 Video mode toggle:', { from: isVideoMode, to: newVideoMode, hasUrl: !!videoConversationUrl });
+  const handleVideoModeToggle = async (newVideoMode: boolean) => {
+    console.log('🔄 Video mode toggle:', { from: isVideoMode, to: newVideoMode });
     
-    if (!newVideoMode && videoConversationUrl) {
-      // Switching from video to text - preserve the URL and conversation ID
-      console.log('💾 Preserving video URL for later restore:', videoConversationUrl);
-      console.log('💾 Preserving conversation ID:', currentConversationId);
-      setPreservedVideoUrl(videoConversationUrl);
-      setPreservedConversationId(currentConversationId);
-      // Don't clear videoConversationUrl immediately to avoid triggering new conversation
-    } else if (newVideoMode && !videoConversationUrl && !preservedVideoUrl && !isCreatingConversation) {
-      // Switching to video mode with no existing conversation
-      handleStartVideoChat();
-    } else if (newVideoMode && preservedVideoUrl && preservedConversationId) {
-      // Restore preserved conversation
-      setVideoConversationUrl(preservedVideoUrl);
-      setCurrentConversationId(preservedConversationId);
+    if (newVideoMode && !videoConversationUrl && !isCreatingVideo) {
+      // Switching to video mode - create new conversation
+      await handleStartVideoChat();
+    } else if (!newVideoMode && currentConversationId) {
+      // Switching from video to text - end the video conversation
+      try {
+        await endConversation(currentConversationId);
+        setVideoConversationUrl(null);
+        setCurrentConversationId(null);
+      } catch (error) {
+        console.error('Failed to end conversation:', error);
+      }
     }
     
     setIsVideoMode(newVideoMode);
@@ -168,41 +155,48 @@ const StyleAdvice = ({
         console.log('✅ Tavus conversation ended successfully');
       } catch (error) {
         console.error('❌ Failed to end Tavus conversation:', error);
-        // Don't block the UI cleanup even if Tavus ending fails
       }
     }
     
     // Clear all video call state
     setVideoConversationUrl(null);
     setCurrentConversationId(null);
-    setPreservedVideoUrl(null);
-    setPreservedConversationId(null);
     setIsVideoMode(false);
   };
 
   return (
-    <div className="flex h-full flex-col bg-white dark:bg-gray-900">
+    <div className="flex h-full flex-col bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-800/50 shadow-2xl overflow-hidden">
       <ChatHeader 
-        isAnalyzing={isAnalyzing || isCreatingConversation || isEndingConversation}
+        isAnalyzing={isAnalyzing || isCreatingConversation || isEndingConversation || isCreatingVideo}
         isVideoMode={isVideoMode}
         onVideoModeChange={handleVideoModeToggle}
         onStartVideoChat={handleStartVideoChat}
       />
       
-      {/* Always show text chat interface in the right panel */}
-      <div className="flex-1 overflow-hidden">
-        <ChatMessages 
-          messages={messages}
-          isAnalyzing={isAnalyzing}
-        />
-      </div>
-      <div className="flex-shrink-0">
-        <ChatInput 
-          isAnalyzing={isAnalyzing}
-          onSendMessage={onSendMessage}
-          temperature={temperature}
-        />
-      </div>
+      {isVideoMode ? (
+        <div className="flex-1 overflow-hidden">
+          <DailyVideoFrame 
+            conversationUrl={videoConversationUrl}
+            onClose={handleEndVideoCall}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="flex-1 overflow-hidden">
+            <ChatMessages 
+              messages={messages}
+              isAnalyzing={isAnalyzing}
+            />
+          </div>
+          <div className="flex-shrink-0">
+            <ChatInput 
+              isAnalyzing={isAnalyzing}
+              onSendMessage={onSendMessage}
+              temperature={temperature}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };
