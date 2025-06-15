@@ -58,14 +58,25 @@ export const useMessageHandler = ({
     console.log('Using image:', !!finalImage);
     console.log('Image source:', image ? 'manual upload' : finalImage ? 'auto capture' : 'none');
 
-    // Add user message to UI immediately
+    // Create user message with unique ID and timestamp
     const userMessage: Message = { 
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       role: 'user', 
       content: message,
-      visual_context: finalImage 
+      visual_context: finalImage,
+      created_at: new Date().toISOString()
     };
-    const updatedMessages: Message[] = [...messages, userMessage];
-    setMessages(updatedMessages);
+
+    // Add user message to UI immediately with proper state update
+    console.log('=== ADDING USER MESSAGE TO UI ===');
+    console.log('User message:', userMessage);
+    
+    setMessages(prevMessages => {
+      const newMessages = [...prevMessages, userMessage];
+      console.log('Updated messages count:', newMessages.length);
+      return newMessages;
+    });
+    
     setIsAnalyzing(true);
 
     try {
@@ -90,16 +101,17 @@ export const useMessageHandler = ({
       const visualHistory = await loadVisualHistory(sessionId);
       console.log('Visual history loaded:', visualHistory.length, 'items');
 
-      // Call style advisor API
+      // Call style advisor API with current messages including the new user message
       console.log('=== CALLING STYLE ADVISOR API ===');
+      const currentMessages = [...messages, userMessage];
       console.log('Sending to API:', {
-        messagesCount: updatedMessages.length,
+        messagesCount: currentMessages.length,
         hasCurrentImage: !!finalImage,
         visualHistoryCount: visualHistory.length,
         temperature
       });
 
-      const response = await callStyleAdvisor(updatedMessages, temperature, finalImage, visualHistory);
+      const response = await callStyleAdvisor(currentMessages, temperature, finalImage, visualHistory);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -142,9 +154,19 @@ const processStreamingResponse = async (
 
   console.log('=== STARTING STREAM PROCESSING ===');
 
-  // Add assistant message placeholder
-  const assistantMessage: Message = { role: 'assistant', content: '' };
-  setMessages(prev => [...prev, assistantMessage]);
+  // Add assistant message placeholder with unique ID
+  const assistantMessage: Message = { 
+    id: `assistant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    role: 'assistant', 
+    content: '',
+    created_at: new Date().toISOString()
+  };
+  
+  setMessages(prev => {
+    const newMessages = [...prev, assistantMessage];
+    console.log('Added assistant placeholder, total messages:', newMessages.length);
+    return newMessages;
+  });
 
   while (true) {
     const { done, value } = await reader.read();
@@ -172,10 +194,11 @@ const processStreamingResponse = async (
           if (parsed.content) {
             assistantContent += parsed.content;
             
+            // Update the assistant message content
             setMessages(prev => {
               const newMessages = [...prev];
               const lastMessage = newMessages[newMessages.length - 1];
-              if (lastMessage.role === 'assistant') {
+              if (lastMessage && lastMessage.role === 'assistant') {
                 lastMessage.content = assistantContent;
               }
               return newMessages;
@@ -201,9 +224,12 @@ const handleError = (
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>
 ) => {
   const errorMessage: Message = {
+    id: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     role: 'assistant',
-    content: 'Sorry, I encountered an error. Please try again.'
+    content: 'Sorry, I encountered an error. Please try again.',
+    created_at: new Date().toISOString()
   };
+  
   setMessages(prev => [...prev, errorMessage]);
   
   toast({
