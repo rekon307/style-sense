@@ -140,44 +140,42 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
   const isInputDisabled = status === 'analyzing';
 
   return (
-    <div className="border-t border-gray-200/50 dark:border-gray-700/50 p-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+    <div className="border-t border-gray-200/30 dark:border-gray-700/30 p-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm">
       {selectedImage && (
-        <div className="mb-4 relative inline-block animate-in slide-in-from-bottom-2 duration-300">
+        <div className="mb-3 relative inline-block animate-in slide-in-from-bottom-2 duration-300">
           <div className="relative">
             <img 
               src={selectedImage} 
               alt="Selected" 
-              className="max-w-48 max-h-48 rounded-2xl border border-gray-200 dark:border-gray-600 shadow-lg object-cover"
+              className="max-w-32 max-h-32 rounded-xl border border-gray-200/50 dark:border-gray-600/50 shadow-sm object-cover"
             />
             <Button
               onClick={removeImage}
               size="sm"
               variant="secondary"
-              className="absolute -top-2 -right-2 h-8 w-8 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white border-2 border-white shadow-lg transition-all duration-200 hover:scale-105"
+              className="absolute -top-1.5 -right-1.5 h-6 w-6 p-0 rounded-full bg-red-500 hover:bg-red-600 text-white border border-white shadow-sm transition-all duration-200"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3 w-3" />
             </Button>
           </div>
-          <div className="mt-3 text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full w-fit">
+          <div className="mt-2 text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5 bg-gray-100/80 dark:bg-gray-800/80 px-2 py-1 rounded-lg w-fit">
             <Image className="h-3 w-3" />
             Image attached
           </div>
         </div>
       )}
       
-      <div className="flex items-end gap-3">
-        <div className="flex flex-col gap-3">
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            size="sm"
-            variant="ghost"
-            className="h-11 w-11 p-0 rounded-xl text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 flex-shrink-0 border border-gray-200 dark:border-gray-600 hover:border-blue-300 shadow-sm hover:shadow-md"
-            disabled={isInputDisabled}
-            title="Attach photo"
-          >
-            <Paperclip className="h-5 w-5" />
-          </Button>
-        </div>
+      <div className="flex items-end gap-2">
+        <Button
+          onClick={() => fileInputRef.current?.click()}
+          size="sm"
+          variant="ghost"
+          className="h-9 w-9 p-0 rounded-lg text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50/80 dark:hover:bg-blue-900/20 transition-all duration-200 flex-shrink-0 border border-gray-200/50 dark:border-gray-600/50 hover:border-blue-300/50"
+          disabled={isInputDisabled}
+          title="Attach photo"
+        >
+          <Paperclip className="h-4 w-4" />
+        </Button>
 
         <div className="flex-1 relative">
           <Textarea
@@ -186,26 +184,26 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder={getPlaceholder()}
-            className="min-h-[48px] max-h-32 resize-none rounded-xl border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 pr-14 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 dark:placeholder:text-gray-400 transition-all duration-200 shadow-sm focus:shadow-md"
+            className="min-h-[40px] max-h-24 resize-none rounded-xl border-gray-200/50 dark:border-gray-600/50 bg-white/80 dark:bg-gray-800/80 px-3 py-2.5 pr-12 text-sm focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 placeholder:text-gray-500 dark:placeholder:text-gray-400 transition-all duration-200 shadow-sm focus:shadow-md"
             disabled={isInputDisabled}
           />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
             <Button
               onClick={handleMicClick}
               size="sm"
               variant="ghost"
-              className={`h-8 w-8 p-0 rounded-lg transition-all duration-200 ${
+              className={`h-7 w-7 p-0 rounded-lg transition-all duration-200 ${
                 status === 'listening' 
-                  ? 'bg-red-500 text-white hover:bg-red-600 shadow-lg animate-pulse' 
-                  : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                  ? 'bg-red-500/90 text-white hover:bg-red-600 shadow-sm animate-pulse' 
+                  : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50/80 dark:hover:bg-blue-900/20'
               }`}
               disabled={isInputDisabled}
               title={status === 'listening' ? 'Stop recording' : 'Start voice recording'}
             >
               {status === 'listening' ? (
-                <Square className="h-4 w-4" />
+                <Square className="h-3.5 w-3.5" />
               ) : (
-                <Mic className="h-4 w-4" />
+                <Mic className="h-3.5 w-3.5" />
               )}
             </Button>
           </div>
@@ -214,7 +212,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
         <Button
           onClick={handleSend}
           size="sm"
-          className="h-11 w-11 p-0 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+          className="h-9 w-9 p-0 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md transition-all duration-200"
           disabled={isInputDisabled || (!message.trim() && !selectedImage)}
           title="Send message"
         >
