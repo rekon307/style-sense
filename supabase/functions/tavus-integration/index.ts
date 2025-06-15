@@ -52,6 +52,9 @@ serve(async (req) => {
       case 'list_replicas':
         response = await listReplicas(tavusApiKey);
         break;
+      case 'cleanup_conversations':
+        response = await cleanupConversations(tavusApiKey);
+        break;
       default:
         throw new Error(`Unknown action: ${action}`);
     }
@@ -76,6 +79,70 @@ serve(async (req) => {
     });
   }
 });
+
+async function cleanupConversations(apiKey: string) {
+  console.log('=== CLEANING UP OLD CONVERSATIONS ===');
+  
+  try {
+    // First, get all conversations
+    const listResponse = await fetch('https://tavusapi.com/v2/conversations', {
+      method: 'GET',
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!listResponse.ok) {
+      console.error('Failed to list conversations:', listResponse.status);
+      return { success: false, error: 'Failed to list conversations' };
+    }
+
+    const conversations = await listResponse.json();
+    console.log('Found conversations:', conversations.length || 0);
+
+    let cleanedUp = 0;
+    
+    // Clean up old or inactive conversations
+    if (conversations.data && Array.isArray(conversations.data)) {
+      for (const conversation of conversations.data) {
+        try {
+          // Delete conversations that are not active or are older than 1 hour
+          const conversationAge = new Date().getTime() - new Date(conversation.created_at).getTime();
+          const oneHourInMs = 60 * 60 * 1000;
+          
+          if (conversation.status !== 'active' || conversationAge > oneHourInMs) {
+            console.log(`Deleting conversation ${conversation.conversation_id} (status: ${conversation.status}, age: ${Math.round(conversationAge / 1000 / 60)}min)`);
+            
+            const deleteResponse = await fetch(`https://tavusapi.com/v2/conversations/${conversation.conversation_id}`, {
+              method: 'DELETE',
+              headers: {
+                'x-api-key': apiKey,
+                'Content-Type': 'application/json',
+              },
+            });
+
+            if (deleteResponse.ok) {
+              cleanedUp++;
+              console.log(`✅ Deleted conversation ${conversation.conversation_id}`);
+            } else {
+              console.log(`❌ Failed to delete conversation ${conversation.conversation_id}`);
+            }
+          }
+        } catch (deleteError) {
+          console.error('Error deleting conversation:', deleteError.message);
+        }
+      }
+    }
+
+    console.log(`✅ Cleanup completed. Removed ${cleanedUp} conversations`);
+    return { success: true, cleanedUp };
+  } catch (error) {
+    console.error('=== CLEANUP ERROR ===');
+    console.error('Error:', error.message);
+    return { success: false, error: error.message };
+  }
+}
 
 async function listReplicas(apiKey: string) {
   console.log('=== LISTING TAVUS REPLICAS ===');
@@ -123,6 +190,14 @@ async function listReplicas(apiKey: string) {
 
 async function createConversation(data: any, apiKey: string) {
   console.log('=== CREATING TAVUS CONVERSATION ===');
+  
+  // First try to cleanup old conversations to free up slots
+  try {
+    console.log('Attempting to cleanup old conversations first...');
+    await cleanupConversations(apiKey);
+  } catch (cleanupError) {
+    console.log('Cleanup failed, but continuing with conversation creation:', cleanupError.message);
+  }
   
   // Use persona_id (as per your working curl command) or fall back to replica_id
   const personaId = data.persona_id || data.replica_id || "p347dab0cef8";
@@ -178,6 +253,41 @@ async function createConversation(data: any, apiKey: string) {
 
     if (!response.ok) {
       console.error('Tavus conversation creation failed:', response.status, responseText);
+      
+      // If we get a concurrent conversations error, try cleanup and retry once
+      if (response.status === 400 && responseText.includes('maximum concurrent conversations')) {
+        console.log('⚠️ Hit concurrent conversation limit, attempting aggressive cleanup and retry...');
+        
+        try {
+          await cleanupConversations(apiKey);
+          console.log('Retrying conversation creation after cleanup...');
+          
+          // Retry the request
+          const retryResponse = await fetch('https://tavusapi.com/v2/conversations', {
+            method: 'POST',
+            headers: {
+              'x-api-key': apiKey,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const retryResponseText = await retryResponse.text();
+          
+          if (retryResponse.ok) {
+            const retryResult = JSON.parse(retryResponseText);
+            console.log('✅ Retry successful:', JSON.stringify(retryResult, null, 2));
+            return retryResult;
+          } else {
+            console.error('Retry also failed:', retryResponse.status, retryResponseText);
+          }
+        } catch (retryError) {
+          console.error('Retry attempt failed:', retryError.message);
+        }
+        
+        throw new Error(`Failed to create conversation: ${response.status} - Maximum concurrent conversations reached. Please try again in a few minutes.`);
+      }
+      
       throw new Error(`Failed to create conversation: ${response.status} - ${responseText}`);
     }
 

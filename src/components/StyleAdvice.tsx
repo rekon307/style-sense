@@ -35,7 +35,7 @@ const StyleAdvice = ({
   const [temperature, setTemperature] = useState<number>(0.5);
   const [isVideoMode, setIsVideoMode] = useState<boolean>(true);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
-  const { createConversation, isCreatingConversation } = useTavus();
+  const { createConversation, isCreatingConversation, cleanupOldConversations } = useTavus();
 
   // Auto-start video chat when component mounts
   useEffect(() => {
@@ -92,11 +92,27 @@ const StyleAdvice = ({
       }
     } catch (error) {
       console.error('❌ Failed to start video conversation:', error);
-      toast({
-        title: "Error",
-        description: "Failed to start video conversation. Please check the logs.",
-        variant: "destructive",
-      });
+      
+      // If it's a concurrent conversation limit, try cleanup and show helpful message
+      if (error.message && error.message.includes('maximum concurrent conversations')) {
+        console.log('Attempting to cleanup old conversations...');
+        toast({
+          title: "Video chat limit reached",
+          description: "Cleaning up previous sessions. Please try again in a moment.",
+          variant: "destructive",
+        });
+        
+        // Try cleanup in background
+        cleanupOldConversations().then(() => {
+          console.log('Cleanup completed, user can try again');
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to start video conversation. Please check the logs.",
+          variant: "destructive",
+        });
+      }
     }
   };
 

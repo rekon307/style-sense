@@ -16,6 +16,30 @@ export const useTavus = () => {
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
   const [currentConversation, setCurrentConversation] = useState<TavusConversation | null>(null);
 
+  const cleanupOldConversations = async () => {
+    try {
+      console.log('=== CLEANING UP OLD CONVERSATIONS ===');
+      
+      const { data, error } = await supabase.functions.invoke('tavus-integration', {
+        body: {
+          action: 'cleanup_conversations',
+          data: {}
+        }
+      });
+
+      if (error) {
+        console.error('Error cleaning up conversations:', error);
+        return false;
+      }
+
+      console.log('✅ Cleanup result:', data);
+      return true;
+    } catch (error) {
+      console.error('Failed to cleanup conversations:', error);
+      return false;
+    }
+  };
+
   const createConversation = async (
     conversationName?: string,
     conversationalContext?: string,
@@ -48,6 +72,21 @@ export const useTavus = () => {
 
       if (error) {
         console.error('Error creating conversation:', error);
+        
+        // If it's a concurrent conversation limit error, show a more helpful message
+        if (error.message && error.message.includes('maximum concurrent conversations')) {
+          toast({
+            title: "Video chat limit reached",
+            description: "Please wait a moment and try again. We're cleaning up previous sessions.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to create video conversation. Please try again.",
+            variant: "destructive",
+          });
+        }
         throw error;
       }
 
@@ -83,11 +122,15 @@ export const useTavus = () => {
       return data;
     } catch (error) {
       console.error('Failed to create conversation:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create video conversation. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Don't show duplicate error toasts
+      if (!error.message?.includes('maximum concurrent conversations')) {
+        toast({
+          title: "Error",
+          description: "Failed to create video conversation. Please try again.",
+          variant: "destructive",
+        });
+      }
       throw error;
     } finally {
       setIsCreatingConversation(false);
@@ -213,6 +256,7 @@ export const useTavus = () => {
     generateVideo,
     getConversationStatus,
     loadVideoConversations,
+    cleanupOldConversations,
     isCreatingConversation,
     isGeneratingVideo,
     currentConversation,
