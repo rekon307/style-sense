@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AlexStateProvider } from "@/contexts/AlexStateContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -67,33 +68,35 @@ const App = () => {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="system" storageKey="ai-style-advisor-theme">
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route 
-                  path="/" 
-                  element={
-                    <Index 
-                      messages={messages}
-                      isAnalyzing={isAnalyzing}
-                      handleSendMessage={handleSendMessage}
-                      selectedModel={selectedModel}
-                      onModelChange={setSelectedModel}
-                      currentSessionId={currentSessionId}
-                      onSessionChange={handleSessionChange}
-                      user={user}
-                      onAuthChange={handleAuthChange}
-                    />
-                  } 
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </QueryClientProvider>
+        <AlexStateProvider>
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route 
+                    path="/" 
+                    element={
+                      <Index 
+                        messages={messages}
+                        isAnalyzing={isAnalyzing}
+                        handleSendMessage={handleSendMessage}
+                        selectedModel={selectedModel}
+                        onModelChange={setSelectedModel}
+                        currentSessionId={currentSessionId}
+                        onSessionChange={handleSessionChange}
+                        user={user}
+                        onAuthChange={handleAuthChange}
+                      />
+                    } 
+                  />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </QueryClientProvider>
+        </AlexStateProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

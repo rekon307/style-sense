@@ -1,10 +1,11 @@
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Image as ImageIcon, Mic, MicOff } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
+import { useAlexState } from "@/contexts/AlexStateContext";
 
 interface ChatInputProps {
   isAnalyzing: boolean;
@@ -17,6 +18,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { status, setStatus } = useAlexState();
 
   // Voice recording hook integration
   const {
@@ -27,8 +29,19 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
     stopListening
   } = useVoiceRecording();
 
+  // Sync Alex state with voice recording and analyzing
+  useEffect(() => {
+    if (isListening) {
+      setStatus('listening');
+    } else if (isAnalyzing) {
+      setStatus('analyzing');
+    } else {
+      setStatus('idle');
+    }
+  }, [isListening, isAnalyzing, setStatus]);
+
   // Update textarea with live transcript
-  useState(() => {
+  useEffect(() => {
     if (liveTranscript) {
       setMessage(liveTranscript);
       
@@ -40,7 +53,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
         textarea.style.height = `${newHeight}px`;
       }
     }
-  });
+  }, [liveTranscript]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,12 +162,22 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
     }
   };
 
+  const getPlaceholder = () => {
+    if (status === 'analyzing') return "Alex is thinking...";
+    if (status === 'listening') return "Listening... Speak now";
+    return "Ask about your style or speak with the mic...";
+  };
+
   return (
     <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
       <div className="p-4">
         <form onSubmit={handleSubmit}>
           {/* Integrated Input Area with Icons */}
-          <div className="relative flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-blue-400 transition-colors">
+          <div className={`relative flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border transition-all duration-300 ${
+            status === 'analyzing' 
+              ? 'border-amber-300 dark:border-amber-600 shadow-lg shadow-amber-100 dark:shadow-amber-900/20' 
+              : 'border-slate-200 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-blue-400'
+          }`}>
             {/* Left side icons */}
             <div className="flex items-center gap-1">
               {/* Image Upload Icon */}
@@ -176,13 +199,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
               value={message}
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
-              placeholder={
-                isAnalyzing 
-                  ? "Alex is thinking..." 
-                  : isListening 
-                    ? "Listening... Speak now" 
-                    : "Ask about your style or speak with the mic..."
-              }
+              placeholder={getPlaceholder()}
               disabled={isAnalyzing}
               className="flex-1 min-h-[32px] max-h-[120px] resize-none border-0 bg-transparent px-0 py-1 text-sm leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0"
               rows={1}
@@ -198,9 +215,9 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
                   size="sm"
                   onClick={handleVoiceInput}
                   disabled={isAnalyzing}
-                  className={`h-8 w-8 p-0 transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 ${
-                    isListening 
-                      ? 'text-red-500 bg-red-50 dark:bg-red-900/20 animate-pulse shadow-lg shadow-red-200 dark:shadow-red-900/30' 
+                  className={`h-8 w-8 p-0 transition-all duration-300 hover:bg-slate-100 dark:hover:bg-slate-700 ${
+                    status === 'listening'
+                      ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20 animate-pulse shadow-lg shadow-blue-200 dark:shadow-blue-900/30 ring-2 ring-blue-300 dark:ring-blue-600' 
                       : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                   }`}
                 >
@@ -217,7 +234,11 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
                 type="submit"
                 size="sm"
                 disabled={!message.trim() || isAnalyzing || isListening}
-                className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 transition-colors rounded-full"
+                className={`h-8 w-8 p-0 transition-all duration-300 rounded-full ${
+                  status === 'analyzing'
+                    ? 'bg-amber-500 hover:bg-amber-600 animate-pulse'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                } disabled:bg-slate-300 dark:disabled:bg-slate-600`}
               >
                 <Send className="h-4 w-4" />
               </Button>
@@ -226,19 +247,19 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
 
           {/* Status Indicators */}
           <div className="flex items-center justify-center gap-4 mt-3">
-            {isAnalyzing && (
-              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            {status === 'analyzing' && (
+              <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
                 <div className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></div>
                   <span>Alex is thinking...</span>
                 </div>
               </div>
             )}
             
-            {isListening && (
-              <div className="flex items-center gap-2 text-xs text-red-500 dark:text-red-400">
+            {status === 'listening' && (
+              <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
                 <div className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
                   <span>Listening... Speak naturally</span>
                 </div>
               </div>
