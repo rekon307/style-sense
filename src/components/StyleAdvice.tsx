@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
-import VideoConversationEmbed from "./VideoConversationEmbed";
+import DailyVideoFrame from "./DailyVideoFrame";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTavus } from "@/hooks/useTavus";
 import { toast } from "@/components/ui/use-toast";
@@ -26,7 +27,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
 
   const handleStartVideoChat = async () => {
     try {
-      console.log('=== STARTING VIDEO CHAT ===');
+      console.log('=== STARTING DAILY VIDEO CHAT ===');
       console.log('Current session ID:', currentSessionId);
       console.log('User:', user);
       
@@ -39,7 +40,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
         `You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. The user's name is ${userName}. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques. Address the user by their name when appropriate.`,
         "p347dab0cef8",
         currentSessionId || undefined,
-        userName // Pass the participant name
+        userName
       );
       
       console.log('=== VIDEO CONVERSATION CREATED ===');
@@ -117,7 +118,7 @@ const StyleAdvice = ({ messages, isAnalyzing, onSendMessage, selectedModel, onMo
       {/* Content Area */}
       <div className="flex-1 overflow-hidden">
         {isVideoMode ? (
-          <VideoConversationEmbed 
+          <DailyVideoFrame 
             conversationUrl={videoConversationUrl}
             onClose={() => {
               setIsVideoMode(false);
