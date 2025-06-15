@@ -36,6 +36,7 @@ serve(async (req) => {
 
     console.log('Action:', action);
     console.log('Data:', JSON.stringify(data, null, 2));
+    console.log('API Key present:', !!tavusApiKey, 'Length:', tavusApiKey.length);
 
     let response;
 
@@ -61,10 +62,12 @@ serve(async (req) => {
     console.error('=== TAVUS INTEGRATION ERROR ===');
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
+    console.error('Error name:', error.name);
     
     return new Response(JSON.stringify({ 
       error: error.message || 'An unexpected error occurred',
-      details: error.stack
+      details: error.stack,
+      errorType: error.name
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -75,107 +78,136 @@ serve(async (req) => {
 async function createConversation(data: any, apiKey: string) {
   console.log('=== CREATING TAVUS CONVERSATION ===');
   
+  // Updated to use the correct Tavus API structure
   const payload = {
-    replica_id: data.replica_id || "re8e740a42",
-    persona_id: data.persona_id || "p24293d6",
+    replica_id: data.replica_id || "r4fa3e64f1",  // Updated default replica ID
     conversation_name: data.conversation_name || "Style Advice Session",
     conversational_context: data.conversational_context || "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
+    callback_url: data.callback_url,
     properties: {
-      enable_recording: true,
-      max_call_duration: 300,
+      max_call_duration: 600,
+      participant_left_timeout: 60,
       participant_absent_timeout: 60,
-      participant_left_timeout: 60
+      enable_recording: false
     }
   };
 
   console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
-  console.log('Using API endpoint: https://api.tavus.io/v2/conversations');
+  console.log('Using API endpoint: https://tavusapi.com/v2/conversations');
+  console.log('API Key format check:', apiKey.startsWith('tvs-') ? 'Correct format' : 'Incorrect format - should start with tvs-');
 
-  const response = await fetch('https://api.tavus.io/v2/conversations', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const response = await fetch('https://tavusapi.com/v2/conversations', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,  // Tavus uses x-api-key header
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-  console.log('Tavus API response status:', response.status);
-  console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('Tavus API response status:', response.status);
+    console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Tavus conversation creation failed:', response.status, errorText);
-    throw new Error(`Failed to create conversation: ${response.status} - ${errorText}`);
+    const responseText = await response.text();
+    console.log('Raw Tavus API response:', responseText);
+
+    if (!response.ok) {
+      console.error('Tavus conversation creation failed:', response.status, responseText);
+      throw new Error(`Failed to create conversation: ${response.status} - ${responseText}`);
+    }
+
+    const result = JSON.parse(responseText);
+    console.log('✅ Conversation created successfully:', JSON.stringify(result, null, 2));
+    return result;
+  } catch (fetchError) {
+    console.error('=== FETCH ERROR DETAILS ===');
+    console.error('Error name:', fetchError.name);
+    console.error('Error message:', fetchError.message);
+    console.error('Error cause:', fetchError.cause);
+    throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
   }
-
-  const result = await response.json();
-  console.log('✅ Conversation created successfully:', JSON.stringify(result, null, 2));
-  return result;
 }
 
 async function generateVideo(data: any, apiKey: string) {
   console.log('=== GENERATING TAVUS VIDEO ===');
   
   const payload = {
-    data: {
-      "@greeting": data.greeting || "Hello! I'm Alex, your AI style advisor. Let's talk about fashion!",
-      "@style_context": data.styleContext || data.style_context || "",
-      "@user_name": data.userName || data.user_name || "there"
-    },
-    campaign_id: data.campaignId || data.campaign_id,
-    callback: data.callbackUrl || data.callback_url
+    script: data.greeting || "Hello! I'm Alex, your AI style advisor. Let's talk about fashion!",
+    replica_id: data.replica_id || "r4fa3e64f1",
+    background_url: data.background_url,
+    webhook_url: data.callbackUrl || data.callback_url
   };
 
   console.log('Generating video with payload:', JSON.stringify(payload, null, 2));
-  console.log('Using API endpoint: https://api.tavus.io/v1/requests');
+  console.log('Using API endpoint: https://tavusapi.com/v2/videos');
 
-  const response = await fetch('https://api.tavus.io/v1/requests', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const response = await fetch('https://tavusapi.com/v2/videos', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
 
-  console.log('Tavus API response status:', response.status);
-  console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('Tavus API response status:', response.status);
+    console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Tavus video generation failed:', response.status, errorText);
-    throw new Error(`Failed to generate video: ${response.status} - ${errorText}`);
+    const responseText = await response.text();
+    console.log('Raw Tavus API response:', responseText);
+
+    if (!response.ok) {
+      console.error('Tavus video generation failed:', response.status, responseText);
+      throw new Error(`Failed to generate video: ${response.status} - ${responseText}`);
+    }
+
+    const result = JSON.parse(responseText);
+    console.log('✅ Video generation initiated:', JSON.stringify(result, null, 2));
+    return result;
+  } catch (fetchError) {
+    console.error('=== FETCH ERROR DETAILS ===');
+    console.error('Error name:', fetchError.name);
+    console.error('Error message:', fetchError.message);
+    console.error('Error cause:', fetchError.cause);
+    throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
   }
-
-  const result = await response.json();
-  console.log('✅ Video generation initiated:', JSON.stringify(result, null, 2));
-  return result;
 }
 
 async function getConversationStatus(conversationId: string, apiKey: string) {
   console.log('=== GETTING CONVERSATION STATUS ===');
   console.log('Conversation ID:', conversationId);
-  console.log('Using API endpoint: https://api.tavus.io/v2/conversations/' + conversationId);
+  console.log('Using API endpoint: https://tavusapi.com/v2/conversations/' + conversationId);
 
-  const response = await fetch(`https://api.tavus.io/v2/conversations/${conversationId}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-  });
+  try {
+    const response = await fetch(`https://tavusapi.com/v2/conversations/${conversationId}`, {
+      method: 'GET',
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+    });
 
-  console.log('Tavus API response status:', response.status);
-  console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('Tavus API response status:', response.status);
+    console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('Failed to get conversation status:', response.status, errorText);
-    throw new Error(`Failed to get conversation status: ${response.status} - ${errorText}`);
+    const responseText = await response.text();
+    console.log('Raw Tavus API response:', responseText);
+
+    if (!response.ok) {
+      console.error('Failed to get conversation status:', response.status, responseText);
+      throw new Error(`Failed to get conversation status: ${response.status} - ${responseText}`);
+    }
+
+    const result = JSON.parse(responseText);
+    console.log('✅ Conversation status retrieved:', JSON.stringify(result, null, 2));
+    return result;
+  } catch (fetchError) {
+    console.error('=== FETCH ERROR DETAILS ===');
+    console.error('Error name:', fetchError.name);
+    console.error('Error message:', fetchError.message);
+    console.error('Error cause:', fetchError.cause);
+    throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
   }
-
-  const result = await response.json();
-  console.log('✅ Conversation status retrieved:', JSON.stringify(result, null, 2));
-  return result;
 }
