@@ -9,12 +9,6 @@ interface TavusConversation {
   status: string;
 }
 
-interface TavusVideoRequest {
-  request_id: string;
-  status: string;
-  download_url?: string;
-}
-
 export const useTavus = () => {
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
@@ -85,10 +79,10 @@ export const useTavus = () => {
           action: 'generate_video',
           data: {
             greeting,
-            style_context: styleContext,
-            user_name: userName,
-            campaign_id: campaignId,
-            callback_url: callbackUrl
+            styleContext,
+            userName,
+            campaignId,
+            callbackUrl
           }
         }
       });
