@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Sparkles, MessageSquare, Video } from "lucide-react";
+import { Sparkles, MessageSquare, Video, Zap } from "lucide-react";
 import { useAlexState } from "@/contexts/AlexStateContext";
 
 interface ChatHeaderProps {
@@ -16,11 +16,11 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
   const getStatusIndicator = () => {
     switch (status) {
       case 'listening':
-        return 'bg-blue-500';
+        return 'bg-blue-500 animate-pulse';
       case 'analyzing':
-        return 'bg-orange-500';
+        return 'bg-orange-500 animate-pulse';
       case 'speaking':
-        return 'bg-green-500';
+        return 'bg-green-500 animate-pulse';
       default:
         return 'bg-green-500';
     }
@@ -31,7 +31,7 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
       case 'listening':
         return 'listening...';
       case 'analyzing':
-        return 'typing...';
+        return 'thinking...';
       case 'speaking':
         return 'speaking...';
       default:
@@ -47,18 +47,21 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
   };
 
   return (
-    <div className="border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3">
+    <div className="border-b border-gray-100/50 dark:border-gray-800/50 bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 px-6 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg">
+              <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-gray-900 ${getStatusIndicator()}`}></div>
+            <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white dark:border-gray-900 ${getStatusIndicator()}`}></div>
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Alex</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{getStatusText()}</p>
+            <h3 className="font-bold text-gray-900 dark:text-white text-lg">Alex</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
+              <Zap className="w-3 h-3" />
+              {getStatusText()}
+            </p>
           </div>
         </div>
         
@@ -67,18 +70,26 @@ const ChatHeader = ({ isAnalyzing, isVideoMode, onVideoModeChange, onStartVideoC
             variant={!isVideoMode ? "default" : "outline"}
             size="sm"
             onClick={() => onVideoModeChange(false)}
-            className="flex items-center gap-2 h-8 px-3 text-xs"
+            className={`flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-xl transition-all duration-200 ${
+              !isVideoMode 
+                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl' 
+                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
           >
-            <MessageSquare className="h-3 w-3" />
+            <MessageSquare className="h-4 w-4" />
             Text Chat
           </Button>
           <Button
             variant={isVideoMode ? "default" : "outline"}
             size="sm"
             onClick={handleVideoModeClick}
-            className="flex items-center gap-2 h-8 px-3 text-xs bg-blue-500 hover:bg-blue-600 text-white"
+            className={`flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-xl transition-all duration-200 ${
+              isVideoMode 
+                ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-xl' 
+                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
           >
-            <Video className="h-3 w-3" />
+            <Video className="h-4 w-4" />
             Video Chat
           </Button>
         </div>
