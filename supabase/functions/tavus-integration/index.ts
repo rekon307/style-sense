@@ -104,7 +104,7 @@ async function createConversation(data: any, apiKey: string) {
       participant_absent_timeout: data.participant_absent_timeout || 30, // 30 seconds
       enable_recording: data.enable_recording || false,
       enable_closed_captions: data.enable_closed_captions !== undefined ? data.enable_closed_captions : true,
-      language: data.language || "en"
+      language: data.language === "en" ? "English" : (data.language || "English") // Convert ISO code to full name
     }
   };
 

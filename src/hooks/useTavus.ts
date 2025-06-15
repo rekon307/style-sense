@@ -155,7 +155,7 @@ export const useTavus = () => {
         participant_absent_timeout: 30, // 30 seconds
         enable_recording: false,
         enable_closed_captions: true,
-        language: "en"
+        language: "English" // Use full language name instead of ISO code
       };
       
       console.log('🚀 Sending enhanced conversation creation request:', requestData);
