@@ -154,15 +154,7 @@ export const useTavus = () => {
           data: {
             conversation_name: conversationName,
             conversational_context: conversationalContext,
-            persona_id: personaId || "p347dab0cef8",
-            properties: {
-              max_call_duration: 1800, // 30 minutes
-              participant_left_timeout: 60,
-              participant_absent_timeout: 60,
-              enable_recording: false,
-              enable_transcription: true,
-              language: "English"
-            }
+            persona_id: "p869ead8c67b" // Use the correct persona_id from your template
           }
         }
       });

@@ -83,6 +83,105 @@ serve(async (req) => {
   }
 });
 
+async function createConversation(data: any, apiKey: string) {
+  console.log('=== CREATING TAVUS CONVERSATION ===');
+  
+  // First try to cleanup old conversations to free up slots
+  try {
+    console.log('Attempting to cleanup old conversations first...');
+    await cleanupConversations(apiKey);
+  } catch (cleanupError) {
+    console.log('Cleanup failed, but continuing with conversation creation:', cleanupError.message);
+  }
+  
+  // Use the correct persona_id from your working template
+  const payload = {
+    persona_id: "p869ead8c67b"
+  };
+
+  console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
+  console.log('Using API endpoint: https://tavusapi.com/v2/conversations');
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    console.log('Making request to Tavus API...');
+    const response = await fetch('https://tavusapi.com/v2/conversations', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    console.log('Tavus API response status:', response.status);
+    console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
+
+    const responseText = await response.text();
+    console.log('Raw Tavus API response:', responseText);
+
+    if (!response.ok) {
+      console.error('Tavus conversation creation failed:', response.status, responseText);
+      
+      // If we get a concurrent conversations error, try cleanup and retry once
+      if (response.status === 400 && responseText.includes('maximum concurrent conversations')) {
+        console.log('⚠️ Hit concurrent conversation limit, attempting aggressive cleanup and retry...');
+        
+        try {
+          await cleanupConversations(apiKey);
+          console.log('Retrying conversation creation after cleanup...');
+          
+          // Retry the request
+          const retryResponse = await fetch('https://tavusapi.com/v2/conversations', {
+            method: 'POST',
+            headers: {
+              'x-api-key': apiKey,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const retryResponseText = await retryResponse.text();
+          
+          if (retryResponse.ok) {
+            const retryResult = JSON.parse(retryResponseText);
+            console.log('✅ Retry successful:', JSON.stringify(retryResult, null, 2));
+            return retryResult;
+          } else {
+            console.error('Retry also failed:', retryResponse.status, retryResponseText);
+          }
+        } catch (retryError) {
+          console.error('Retry attempt failed:', retryError.message);
+        }
+        
+        throw new Error(`Failed to create conversation: ${response.status} - Maximum concurrent conversations reached. Please try again in a few minutes.`);
+      }
+      
+      throw new Error(`Failed to create conversation: ${response.status} - ${responseText}`);
+    }
+
+    const result = JSON.parse(responseText);
+    console.log('✅ Conversation created successfully:', JSON.stringify(result, null, 2));
+    return result;
+  } catch (fetchError) {
+    console.error('=== FETCH ERROR DETAILS ===');
+    console.error('Error name:', fetchError.name);
+    console.error('Error message:', fetchError.message);
+    console.error('Error cause:', fetchError.cause);
+    
+    if (fetchError.name === 'AbortError') {
+      throw new Error('Request timed out after 60 seconds. The Tavus API may be experiencing delays. Please try again.');
+    }
+    
+    throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
+  }
+}
+
 async function endConversation(conversationId: string, apiKey: string) {
   console.log('=== ENDING TAVUS CONVERSATION ===');
   console.log('Conversation ID:', conversationId);
@@ -233,126 +332,6 @@ async function listReplicas(apiKey: string) {
     
     if (fetchError.name === 'AbortError') {
       throw new Error('Request timed out after 30 seconds.');
-    }
-    
-    throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
-  }
-}
-
-async function createConversation(data: any, apiKey: string) {
-  console.log('=== CREATING TAVUS CONVERSATION ===');
-  
-  // First try to cleanup old conversations to free up slots
-  try {
-    console.log('Attempting to cleanup old conversations first...');
-    await cleanupConversations(apiKey);
-  } catch (cleanupError) {
-    console.log('Cleanup failed, but continuing with conversation creation:', cleanupError.message);
-  }
-  
-  // Use persona_id (as per your working curl command) or fall back to replica_id
-  const personaId = data.persona_id || data.replica_id || "p347dab0cef8";
-  
-  const payload = {
-    persona_id: personaId
-  };
-
-  // Add optional conversation properties if provided
-  if (data.conversation_name) {
-    payload.conversation_name = data.conversation_name;
-  }
-  
-  if (data.conversational_context) {
-    payload.conversational_context = data.conversational_context;
-  }
-
-  // Add conversation properties with correct format - use "English" instead of "en"
-  payload.properties = {
-    max_call_duration: data.properties?.max_call_duration || 1800, // 30 minutes
-    participant_left_timeout: data.properties?.participant_left_timeout || 60,
-    participant_absent_timeout: data.properties?.participant_absent_timeout || 60,
-    enable_recording: data.properties?.enable_recording || false,
-    enable_transcription: data.properties?.enable_transcription || true,
-    language: "English" // Always use full language name, not ISO code
-  };
-
-  console.log('Creating conversation with payload:', JSON.stringify(payload, null, 2));
-  console.log('Using API endpoint: https://tavusapi.com/v2/conversations');
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-    console.log('Making request to Tavus API...');
-    const response = await fetch('https://tavusapi.com/v2/conversations', {
-      method: 'POST',
-      headers: {
-        'x-api-key': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    console.log('Tavus API response status:', response.status);
-    console.log('Tavus API response headers:', Object.fromEntries(response.headers.entries()));
-
-    const responseText = await response.text();
-    console.log('Raw Tavus API response:', responseText);
-
-    if (!response.ok) {
-      console.error('Tavus conversation creation failed:', response.status, responseText);
-      
-      // If we get a concurrent conversations error, try cleanup and retry once
-      if (response.status === 400 && responseText.includes('maximum concurrent conversations')) {
-        console.log('⚠️ Hit concurrent conversation limit, attempting aggressive cleanup and retry...');
-        
-        try {
-          await cleanupConversations(apiKey);
-          console.log('Retrying conversation creation after cleanup...');
-          
-          // Retry the request
-          const retryResponse = await fetch('https://tavusapi.com/v2/conversations', {
-            method: 'POST',
-            headers: {
-              'x-api-key': apiKey,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          });
-
-          const retryResponseText = await retryResponse.text();
-          
-          if (retryResponse.ok) {
-            const retryResult = JSON.parse(retryResponseText);
-            console.log('✅ Retry successful:', JSON.stringify(retryResult, null, 2));
-            return retryResult;
-          } else {
-            console.error('Retry also failed:', retryResponse.status, retryResponseText);
-          }
-        } catch (retryError) {
-          console.error('Retry attempt failed:', retryError.message);
-        }
-        
-        throw new Error(`Failed to create conversation: ${response.status} - Maximum concurrent conversations reached. Please try again in a few minutes.`);
-      }
-      
-      throw new Error(`Failed to create conversation: ${response.status} - ${responseText}`);
-    }
-
-    const result = JSON.parse(responseText);
-    console.log('✅ Conversation created successfully:', JSON.stringify(result, null, 2));
-    return result;
-  } catch (fetchError) {
-    console.error('=== FETCH ERROR DETAILS ===');
-    console.error('Error name:', fetchError.name);
-    console.error('Error message:', fetchError.message);
-    console.error('Error cause:', fetchError.cause);
-    
-    if (fetchError.name === 'AbortError') {
-      throw new Error('Request timed out after 60 seconds. The Tavus API may be experiencing delays. Please try again.');
     }
     
     throw new Error(`Network error calling Tavus API: ${fetchError.message}`);
