@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -151,41 +150,37 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
               rows={1}
             />
             
-            {/* Right side icons container */}
-            <div className="flex items-center gap-1">
-              {/* Voice Recording Icon (moved to right) */}
-              <div className="flex items-end pb-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleRecording}
-                  disabled={isAnalyzing}
-                  className={`h-8 w-8 p-0 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 ${
-                    isRecording 
-                      ? 'text-red-500 hover:text-red-600' 
-                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                  }`}
-                >
-                  {isRecording ? (
-                    <MicOff className="h-4 w-4" />
-                  ) : (
-                    <Mic className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
+            {/* Right side icons container - fixed alignment */}
+            <div className="flex items-center gap-1 pb-2">
+              {/* Voice Recording Icon */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={toggleRecording}
+                disabled={isAnalyzing}
+                className={`h-8 w-8 p-0 transition-colors hover:bg-slate-100 dark:hover:bg-slate-700 ${
+                  isRecording 
+                    ? 'text-red-500 hover:text-red-600' 
+                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                }`}
+              >
+                {isRecording ? (
+                  <MicOff className="h-4 w-4" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+              </Button>
               
               {/* Send Button */}
-              <div className="flex items-end pb-2">
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={!message.trim() || isAnalyzing}
-                  className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 transition-colors rounded-full"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!message.trim() || isAnalyzing}
+                className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 transition-colors rounded-full"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
