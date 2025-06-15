@@ -2,8 +2,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Camera, Send, Image as ImageIcon, Mic, MicOff } from "lucide-react";
-import { forcePhotoCapture, isWebcamReady } from "@/utils/imageCapture";
+import { Send, Image as ImageIcon, Mic, MicOff } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ChatInputProps {
@@ -47,42 +46,6 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
     textarea.style.height = 'auto';
     const newHeight = Math.min(textarea.scrollHeight, 120); // Max 120px
     textarea.style.height = `${newHeight}px`;
-  };
-
-  const handleCameraCapture = () => {
-    console.log('=== CAMERA CAPTURE INITIATED ===');
-    
-    if (!isWebcamReady()) {
-      console.log('Webcam not ready, attempting force capture...');
-    }
-
-    const capturedImage = forcePhotoCapture();
-    
-    if (capturedImage) {
-      const currentMessage = message.trim() || "Analyze my style";
-      console.log('=== SENDING MESSAGE WITH IMAGE ===');
-      console.log('Message:', currentMessage);
-      console.log('Image captured successfully, length:', capturedImage.length);
-      
-      onSendMessage(currentMessage, capturedImage, temperature);
-      setMessage("");
-      
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
-      
-      toast({
-        title: "Photo captured",
-        description: "Analyzing your style...",
-      });
-    } else {
-      console.error('=== CAMERA CAPTURE FAILED ===');
-      toast({
-        title: "Capture failed",
-        description: "Unable to capture image from camera. Please ensure camera is active.",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,7 +99,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
   };
 
   return (
-    <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm">
+    <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
       <div className="p-4">
         <form onSubmit={handleSubmit} className="space-y-3">
           {/* Main Input Area */}
@@ -148,7 +111,7 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
               onKeyDown={handleKeyDown}
               placeholder={isAnalyzing ? "Alex is thinking..." : "Ask about your style..."}
               disabled={isAnalyzing}
-              className="min-h-[44px] max-h-[120px] resize-none pr-12 py-3 text-sm leading-relaxed bg-slate-50/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
+              className="min-h-[50px] max-h-[120px] resize-none pr-12 py-3 text-sm leading-relaxed bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
               rows={1}
             />
             
@@ -166,19 +129,6 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
           {/* Action Buttons Row */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {/* Camera Capture */}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleCameraCapture}
-                disabled={isAnalyzing}
-                className="h-9 px-3 text-xs font-medium border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
-              >
-                <Camera className="h-4 w-4 mr-1.5" />
-                Capture
-              </Button>
-
               {/* Image Upload */}
               <Button
                 type="button"
