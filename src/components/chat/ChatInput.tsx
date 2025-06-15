@@ -3,7 +3,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, Send, Image as ImageIcon, Mic, MicOff } from "lucide-react";
-import { captureImageFromWebcam, isWebcamAvailable } from "@/utils/imageUtils";
+import { forcePhotoCapture, isWebcamReady } from "@/utils/imageCapture";
 import { useToast } from "@/components/ui/use-toast";
 
 interface ChatInputProps {
@@ -50,19 +50,21 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
   };
 
   const handleCameraCapture = () => {
-    if (!isWebcamAvailable()) {
-      toast({
-        title: "Camera not available",
-        description: "Please ensure your camera is active and try again.",
-        variant: "destructive",
-      });
-      return;
+    console.log('=== CAMERA CAPTURE INITIATED ===');
+    
+    if (!isWebcamReady()) {
+      console.log('Webcam not ready, attempting force capture...');
     }
 
-    const result = captureImageFromWebcam();
-    if (result.success && result.image) {
+    const capturedImage = forcePhotoCapture();
+    
+    if (capturedImage) {
       const currentMessage = message.trim() || "Analyze my style";
-      onSendMessage(currentMessage, result.image, temperature);
+      console.log('=== SENDING MESSAGE WITH IMAGE ===');
+      console.log('Message:', currentMessage);
+      console.log('Image captured successfully, length:', capturedImage.length);
+      
+      onSendMessage(currentMessage, capturedImage, temperature);
       setMessage("");
       
       if (textareaRef.current) {
@@ -74,9 +76,10 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
         description: "Analyzing your style...",
       });
     } else {
+      console.error('=== CAMERA CAPTURE FAILED ===');
       toast({
         title: "Capture failed",
-        description: result.error || "Unable to capture image",
+        description: "Unable to capture image from camera. Please ensure camera is active.",
         variant: "destructive",
       });
     }
@@ -100,6 +103,10 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
       const imageData = event.target?.result as string;
       if (imageData) {
         const currentMessage = message.trim() || "Analyze this image";
+        console.log('=== SENDING MESSAGE WITH UPLOADED IMAGE ===');
+        console.log('Message:', currentMessage);
+        console.log('Image uploaded successfully, length:', imageData.length);
+        
         onSendMessage(currentMessage, imageData, temperature);
         setMessage("");
         
