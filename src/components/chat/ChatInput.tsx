@@ -1,8 +1,7 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, Send, Square, Camera, ImageIcon } from "lucide-react";
+import { Mic, Send, Square, Camera } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useAlexState } from "@/contexts/AlexStateContext";
@@ -135,13 +134,13 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
   const isInputDisabled = status === 'analyzing';
 
   return (
-    <div className="border-t border-slate-200/50 dark:border-slate-700/50 p-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm">
+    <div className="border-t border-slate-200 dark:border-slate-700 p-4 bg-white dark:bg-slate-900">
       {selectedImage && (
         <div className="mb-3 relative inline-block">
           <img 
             src={selectedImage} 
             alt="Selected" 
-            className="max-w-32 max-h-32 rounded-lg border border-slate-200 dark:border-slate-700"
+            className="max-w-32 max-h-32 rounded-xl border border-slate-200 dark:border-slate-700"
           />
           <Button
             onClick={removeImage}
@@ -154,16 +153,35 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
         </div>
       )}
       
-      <div className="flex items-end gap-2">
-        <div className="flex gap-1">
+      <div className="flex items-end gap-3">
+        <Button
+          onClick={() => fileInputRef.current?.click()}
+          size="sm"
+          variant="ghost"
+          className="h-10 w-10 p-0 rounded-full text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
+          disabled={isInputDisabled}
+        >
+          <Camera className="h-5 w-5" />
+        </Button>
+
+        <div className="flex-1 relative">
+          <Textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder={getPlaceholder()}
+            className="min-h-[2.5rem] max-h-32 resize-none rounded-2xl border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 px-4 py-3 pr-12 focus:border-blue-500 focus:ring-blue-500"
+            disabled={isInputDisabled}
+          />
           <Button
             onClick={handleMicClick}
             size="sm"
             variant="ghost"
-            className={`h-10 w-10 p-0 transition-all duration-300 ${
+            className={`absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 rounded-full ${
               status === 'listening' 
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-lg shadow-blue-500/25 animate-pulse' 
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 animate-pulse' 
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700'
             }`}
             disabled={isInputDisabled}
           >
@@ -173,42 +191,12 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputP
               <Mic className="h-4 w-4" />
             )}
           </Button>
-          
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            size="sm"
-            variant="ghost"
-            className="h-10 w-10 p-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
-            disabled={isInputDisabled}
-          >
-            <Camera className="h-4 w-4" />
-          </Button>
-        </div>
-
-        <div className={`flex-1 relative transition-all duration-300 ${
-          status === 'analyzing' 
-            ? 'ring-2 ring-amber-400/50 ring-offset-2 ring-offset-white dark:ring-offset-slate-900' 
-            : ''
-        }`}>
-          <Textarea
-            ref={textareaRef}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder={getPlaceholder()}
-            className="min-h-[2.5rem] max-h-32 resize-none border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-300"
-            disabled={isInputDisabled}
-          />
         </div>
 
         <Button
           onClick={handleSend}
           size="sm"
-          className={`h-10 w-10 p-0 transition-all duration-300 ${
-            status === 'analyzing'
-              ? 'bg-amber-500 hover:bg-amber-600 animate-pulse'
-              : 'bg-blue-600 hover:bg-blue-700'
-          }`}
+          className="h-10 w-10 p-0 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
           disabled={isInputDisabled || (!message.trim() && !selectedImage)}
         >
           <Send className="h-4 w-4" />

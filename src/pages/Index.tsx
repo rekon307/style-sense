@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
@@ -49,16 +50,15 @@ const Index = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800">
-      {/* Improved Header */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <header className="sticky top-0 z-50 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
         <div className="flex h-14 items-center justify-between px-4">
           <div className="flex items-center gap-3">
             <Button
               onClick={() => setShowChatHistory(!showChatHistory)}
               variant="ghost"
               size="sm"
-              className="h-8 px-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+              className="h-8 px-2"
             >
               {showChatHistory ? (
                 <PanelLeftClose className="h-4 w-4" />
@@ -69,19 +69,15 @@ const Index = ({
             
             <div className="flex items-center gap-2">
               <div className="relative">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-600">
                   <Sparkles className="h-4 w-4 text-white" />
                 </div>
                 <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border border-white ${isAnalyzing ? 'bg-amber-500 animate-pulse' : 'bg-green-500'} dark:border-slate-900`}></div>
               </div>
               <div>
-                <h1 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+                <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                   AI Style
                 </h1>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1 h-1 bg-green-400 rounded-full animate-pulse"></div>
-                  <p className="text-xs text-green-600 dark:text-green-400">Active</p>
-                </div>
               </div>
             </div>
           </div>
@@ -94,35 +90,27 @@ const Index = ({
       </header>
       
       <div className="flex h-[calc(100vh-3.5rem)]">
-        {/* Improved Sidebar */}
-        <aside className={`${showChatHistory ? 'w-72' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-slate-200/50 dark:border-slate-700/50`}>
-          <div className="h-full bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm">
+        <aside className={`${showChatHistory ? 'w-72' : 'w-0'} transition-all duration-300 overflow-hidden border-r border-slate-200 dark:border-slate-800`}>
+          <div className="h-full bg-white dark:bg-slate-900">
             <div className="p-4">
               <ChatHistory onSessionChange={onSessionChange} />
             </div>
           </div>
         </aside>
         
-        {/* Improved Main Content */}
-        <main className="flex flex-1 gap-4 p-4">
-          {/* Enhanced Camera Section */}
-          <section className="flex-1 min-w-0">
-            <div className="h-full rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-white/30 dark:border-slate-700/30 shadow-lg">
-              <WebcamDisplay ref={webcamRef} />
-            </div>
+        <main className="flex flex-1 gap-0">
+          <section className="flex-1 min-w-0 bg-slate-100 dark:bg-slate-800">
+            <WebcamDisplay ref={webcamRef} />
           </section>
           
-          {/* Enhanced Chat Section */}
-          <section className="w-96 flex-shrink-0">
-            <div className="h-full rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-white/30 dark:border-slate-700/30 shadow-lg">
-              <StyleAdvice 
-                messages={messages} 
-                isAnalyzing={isAnalyzing}
-                onSendMessage={handleCognitiveMessage}
-                selectedModel={selectedModel}
-                onModelChange={onModelChange}
-              />
-            </div>
+          <section className="w-96 flex-shrink-0 border-l border-slate-200 dark:border-slate-800">
+            <StyleAdvice 
+              messages={messages} 
+              isAnalyzing={isAnalyzing}
+              onSendMessage={handleCognitiveMessage}
+              selectedModel={selectedModel}
+              onModelChange={onModelChange}
+            />
           </section>
         </main>
       </div>
