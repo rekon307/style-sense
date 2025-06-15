@@ -2,10 +2,9 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Mic, Square, ImageIcon } from "lucide-react";
-import { useVoiceRecording } from "@/hooks/useVoiceRecording";
+import { Camera, Send, Image as ImageIcon, Mic, MicOff } from "lucide-react";
 import { captureImageFromWebcam, isWebcamAvailable } from "@/utils/imageUtils";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ChatInputProps {
   isAnalyzing: boolean;
@@ -15,86 +14,25 @@ interface ChatInputProps {
 
 const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) => {
   const [message, setMessage] = useState("");
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const {
-    isListening,
-    liveTranscript,
-    startListening,
-    stopListening,
-    isSupported
-  } = useVoiceRecording();
-
-  const handleAutoSend = (finalTranscript: string) => {
-    console.log('=== AUTO-SEND START ===');
-    console.log('Transcript:', finalTranscript);
-    
-    if (!finalTranscript.trim()) return;
-
-    const captureResult = captureImageFromWebcam();
-    const imageToSend = uploadedImage || captureResult.image || null;
-    
-    if (!captureResult.success && !uploadedImage) {
-      console.warn('Auto image capture failed:', captureResult.error);
-    }
-    
-    onSendMessage(finalTranscript, imageToSend, temperature);
-    setMessage("");
-    setUploadedImage(null);
-  };
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!message.trim() || isAnalyzing) return;
     
-    const messageToSend = message.trim();
-    if (!messageToSend) return;
-
-    console.log('=== MANUAL SUBMIT START ===');
-    
-    const captureResult = captureImageFromWebcam();
-    const imageToSend = uploadedImage || captureResult.image || null;
-    
-    if (!captureResult.success && !uploadedImage) {
-      console.warn('Manual image capture failed:', captureResult.error);
-    }
-    
-    onSendMessage(messageToSend, imageToSend, temperature);
+    onSendMessage(message.trim(), null, temperature);
     setMessage("");
-    setUploadedImage(null);
     
+    // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid file type",
-        description: "Please select an image file.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      setUploadedImage(result);
-      toast({
-        title: "Image uploaded",
-        description: "Image will be sent with your next message.",
-      });
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
@@ -104,140 +42,192 @@ const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
     
+    // Auto-resize textarea
     const textarea = e.target;
     textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    const newHeight = Math.min(textarea.scrollHeight, 120); // Max 120px
+    textarea.style.height = `${newHeight}px`;
   };
 
-  const toggleListening = () => {
-    if (isListening) {
-      stopListening();
+  const handleCameraCapture = () => {
+    if (!isWebcamAvailable()) {
+      toast({
+        title: "Camera not available",
+        description: "Please ensure your camera is active and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const result = captureImageFromWebcam();
+    if (result.success && result.image) {
+      const currentMessage = message.trim() || "Analyze my style";
+      onSendMessage(currentMessage, result.image, temperature);
+      setMessage("");
+      
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto';
+      }
+      
+      toast({
+        title: "Photo captured",
+        description: "Analyzing your style...",
+      });
     } else {
-      startListening(handleAutoSend);
+      toast({
+        title: "Capture failed",
+        description: result.error || "Unable to capture image",
+        variant: "destructive",
+      });
     }
   };
 
-  const currentMessage = isListening ? liveTranscript : message;
-  const isInputDisabled = isAnalyzing || isListening;
-  const webcamAvailable = isWebcamAvailable();
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file",
+        description: "Please select an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imageData = event.target?.result as string;
+      if (imageData) {
+        const currentMessage = message.trim() || "Analyze this image";
+        onSendMessage(currentMessage, imageData, temperature);
+        setMessage("");
+        
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+        }
+        
+        toast({
+          title: "Image uploaded",
+          description: "Analyzing your style...",
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset file input
+    e.target.value = '';
+  };
+
+  const toggleRecording = () => {
+    setIsRecording(!isRecording);
+    // Voice recording functionality would be implemented here
+    toast({
+      title: "Voice recording",
+      description: "Feature coming soon!",
+    });
+  };
 
   return (
-    <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-      <form onSubmit={handleSubmit} className="flex gap-3 p-4">
-        <div className="flex-1 relative">
-          <Textarea
-            ref={textareaRef}
-            value={currentMessage}
-            onChange={handleTextareaChange}
-            onKeyPress={handleKeyPress}
-            placeholder={
-              isListening 
-                ? "Alex is analyzing in real-time... speak naturally" 
-                : isAnalyzing 
-                ? "Alex is processing with cognitive architecture..." 
-                : webcamAvailable
-                ? "Ask Alex about your style (photo auto-captured)..."
-                : "Ask Alex about your style..."
-            }
-            disabled={isInputDisabled}
-            className={`min-h-[44px] max-h-[120px] resize-none pr-20 transition-all duration-300 ${
-              isListening 
-                ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-300 dark:border-blue-600 shadow-lg' 
-                : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
-            }`}
-            style={{ height: 'auto' }}
-          />
-          
-          <div className="absolute right-2 top-2 flex gap-1">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
+    <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm">
+      <div className="p-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
+          {/* Main Input Area */}
+          <div className="relative">
+            <Textarea
+              ref={textareaRef}
+              value={message}
+              onChange={handleTextareaChange}
+              onKeyDown={handleKeyDown}
+              placeholder={isAnalyzing ? "Alex is thinking..." : "Ask about your style..."}
               disabled={isAnalyzing}
+              className="min-h-[44px] max-h-[120px] resize-none pr-12 py-3 text-sm leading-relaxed bg-slate-50/80 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
+              rows={1}
             />
             
+            {/* Send Button - Positioned inside textarea */}
             <Button
-              type="button"
-              variant="ghost"
+              type="submit"
               size="sm"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isAnalyzing}
-              className={`h-7 w-7 p-0 transition-all duration-300 ${
-                uploadedImage
-                  ? 'text-green-600 hover:text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:text-green-300'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-              }`}
+              disabled={!message.trim() || isAnalyzing}
+              className="absolute right-2 top-2 h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 transition-colors"
             >
-              <ImageIcon className="h-4 w-4" />
+              <Send className="h-4 w-4" />
             </Button>
+          </div>
 
-            {isSupported && (
+          {/* Action Buttons Row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {/* Camera Capture */}
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={toggleListening}
+                onClick={handleCameraCapture}
                 disabled={isAnalyzing}
-                className={`h-7 w-7 p-0 transition-all duration-300 ${
-                  isListening 
-                    ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-100 dark:text-blue-400 dark:hover:text-blue-300 animate-pulse' 
-                    : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                className="h-9 px-3 text-xs font-medium border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                <Camera className="h-4 w-4 mr-1.5" />
+                Capture
+              </Button>
+
+              {/* Image Upload */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isAnalyzing}
+                className="h-9 px-3 text-xs font-medium border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                <ImageIcon className="h-4 w-4 mr-1.5" />
+                Upload
+              </Button>
+
+              {/* Voice Recording */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={toggleRecording}
+                disabled={isAnalyzing}
+                className={`h-9 px-3 text-xs font-medium border-slate-200 dark:border-slate-700 transition-colors ${
+                  isRecording 
+                    ? 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400' 
+                    : 'hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
-                {isListening ? (
-                  <Square className="h-4 w-4" />
+                {isRecording ? (
+                  <MicOff className="h-4 w-4 mr-1.5" />
                 ) : (
-                  <Mic className="h-4 w-4" />
+                  <Mic className="h-4 w-4 mr-1.5" />
                 )}
+                {isRecording ? 'Stop' : 'Voice'}
               </Button>
+            </div>
+
+            {/* Status Indicator */}
+            {isAnalyzing && (
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <div className="flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
+                  <span>Alex is thinking...</span>
+                </div>
+              </div>
             )}
           </div>
-        </div>
-        
-        <Button 
-          type="submit" 
-          disabled={isAnalyzing || isListening || (!currentMessage.trim())}
-          className={`h-11 px-4 transition-all duration-300 ${
-            isAnalyzing 
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 animate-pulse' 
-              : 'bg-blue-600 hover:bg-blue-700'
-          } text-white disabled:opacity-50`}
-        >
-          {isAnalyzing ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              <span className="text-sm">Alex thinking...</span>
-            </div>
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-        </Button>
-      </form>
-      
-      {uploadedImage && (
-        <div className="px-4 pb-2">
-          <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-            <ImageIcon className="h-4 w-4" />
-            <span>Image ready to send</span>
-            <button 
-              onClick={() => setUploadedImage(null)}
-              className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {!webcamAvailable && !uploadedImage && (
-        <div className="px-4 pb-2">
-          <p className="text-xs text-amber-600 dark:text-amber-400">
-            📷 Camera not available - upload an image or messages will be sent without visual context
-          </p>
-        </div>
-      )}
+        </form>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
+      </div>
     </div>
   );
 };
