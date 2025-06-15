@@ -2,280 +2,226 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Image as ImageIcon, Mic, MicOff } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { Mic, Send, Square, Camera, ImageIcon } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 import { useAlexState } from "@/contexts/AlexStateContext";
 
 interface ChatInputProps {
   isAnalyzing: boolean;
   onSendMessage: (message: string, image?: string | null, temperature?: number) => void;
-  temperature: number;
+  temperature?: number;
 }
 
-const ChatInput = ({ isAnalyzing, onSendMessage, temperature }: ChatInputProps) => {
+const ChatInput = ({ isAnalyzing, onSendMessage, temperature = 0.5 }: ChatInputProps) => {
   const [message, setMessage] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
   const { status, setStatus } = useAlexState();
 
-  // Voice recording hook integration
-  const {
-    isListening,
-    liveTranscript,
-    isSupported: isVoiceSupported,
-    startListening,
-    stopListening
+  const { 
+    isListening, 
+    liveTranscript, 
+    startListening, 
+    stopListening 
   } = useVoiceRecording();
 
-  // Sync Alex state with voice recording and analyzing
+  // Update status when listening changes
   useEffect(() => {
     if (isListening) {
       setStatus('listening');
-    } else if (isAnalyzing) {
-      setStatus('analyzing');
-    } else {
+    } else if (status === 'listening') {
       setStatus('idle');
     }
-  }, [isListening, isAnalyzing, setStatus]);
+  }, [isListening, setStatus, status]);
+
+  // Update status when analyzing changes
+  useEffect(() => {
+    if (isAnalyzing) {
+      setStatus('analyzing');
+    } else if (status === 'analyzing') {
+      setStatus('idle');
+    }
+  }, [isAnalyzing, setStatus, status]);
 
   // Update textarea with live transcript
   useEffect(() => {
     if (liveTranscript) {
       setMessage(liveTranscript);
-      
-      // Auto-resize textarea for live transcript
-      if (textareaRef.current) {
-        const textarea = textareaRef.current;
-        textarea.style.height = 'auto';
-        const newHeight = Math.min(textarea.scrollHeight, 120);
-        textarea.style.height = `${newHeight}px`;
-      }
     }
   }, [liveTranscript]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || isAnalyzing) return;
-    
-    onSendMessage(message.trim(), null, temperature);
+  const handleSend = () => {
+    if (!message.trim() && !selectedImage) {
+      toast({
+        title: "Empty message",
+        description: "Please enter a message or select an image before sending.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    onSendMessage(message.trim(), selectedImage, temperature);
     setMessage("");
+    setSelectedImage(null);
     
-    // Reset textarea height
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e);
+      if (!isAnalyzing && !isListening) {
+        handleSend();
+      }
     }
   };
 
-  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    // Only update if not listening (to prevent interference with live transcript)
-    if (!isListening) {
-      setMessage(e.target.value);
-      
-      // Auto-resize textarea
-      const textarea = e.target;
-      textarea.style.height = 'auto';
-      const newHeight = Math.min(textarea.scrollHeight, 120);
-      textarea.style.height = `${newHeight}px`;
-    }
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid file",
-        description: "Please select an image file.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imageData = event.target?.result as string;
-      if (imageData) {
-        const currentMessage = message.trim() || "Analyze this image";
-        console.log('=== SENDING MESSAGE WITH UPLOADED IMAGE ===');
-        console.log('Message:', currentMessage);
-        console.log('Image uploaded successfully, length:', imageData.length);
-        
-        onSendMessage(currentMessage, imageData, temperature);
-        setMessage("");
-        
-        if (textareaRef.current) {
-          textareaRef.current.style.height = 'auto';
+  const handleMicClick = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening((finalTranscript: string) => {
+        if (finalTranscript.trim()) {
+          onSendMessage(finalTranscript.trim(), selectedImage, temperature);
+          setMessage("");
+          setSelectedImage(null);
         }
-        
+      });
+    }
+  };
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 10MB.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setSelectedImage(result);
         toast({
           title: "Image uploaded",
-          description: "Analyzing your style...",
+          description: "Image ready to be sent with your message.",
         });
-      }
-    };
-    reader.readAsDataURL(file);
-    
-    // Reset file input
-    e.target.value = '';
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleVoiceInput = () => {
-    if (!isVoiceSupported) {
-      toast({
-        title: "Voice not supported",
-        description: "Your browser doesn't support voice input.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (isListening) {
-      // Stop listening without sending message (cancel)
-      stopListening();
-      setMessage(""); // Clear any live transcript
-    } else {
-      // Start listening with automatic message submission
-      startListening((finalTranscript: string) => {
-        console.log('=== VOICE INPUT COMPLETED ===');
-        console.log('Final transcript:', finalTranscript);
-        
-        if (finalTranscript.trim()) {
-          onSendMessage(finalTranscript.trim(), null, temperature);
-          setMessage(""); // Clear the message after sending
-          
-          toast({
-            title: "Voice message sent",
-            description: "Alex is processing your voice input...",
-          });
-        }
-      });
+  const removeImage = () => {
+    setSelectedImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
   const getPlaceholder = () => {
-    if (status === 'analyzing') return "Alex is thinking...";
-    if (status === 'listening') return "Listening... Speak now";
-    return "Ask about your style or speak with the mic...";
+    if (status === 'listening') return 'Listening...';
+    if (status === 'analyzing') return 'Alex is thinking...';
+    return 'Ask about your style or speak...';
   };
 
+  const isInputDisabled = status === 'analyzing';
+
   return (
-    <div className="border-t border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-      <div className="p-4">
-        <form onSubmit={handleSubmit}>
-          {/* Integrated Input Area with Icons */}
-          <div className={`relative flex items-center gap-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-2xl border transition-all duration-300 ${
-            status === 'analyzing' 
-              ? 'border-amber-300 dark:border-amber-600 shadow-lg shadow-amber-100 dark:shadow-amber-900/20' 
-              : 'border-slate-200 dark:border-slate-700 focus-within:border-blue-500 dark:focus-within:border-blue-400'
-          }`}>
-            {/* Left side icons */}
-            <div className="flex items-center gap-1">
-              {/* Image Upload Icon */}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isAnalyzing || isListening}
-                className="h-8 w-8 p-0 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
-              >
-                <ImageIcon className="h-5 w-5" />
-              </Button>
-            </div>
-
-            {/* Text Input */}
-            <Textarea
-              ref={textareaRef}
-              value={message}
-              onChange={handleTextareaChange}
-              onKeyDown={handleKeyDown}
-              placeholder={getPlaceholder()}
-              disabled={isAnalyzing}
-              className="flex-1 min-h-[32px] max-h-[120px] resize-none border-0 bg-transparent px-0 py-1 text-sm leading-relaxed focus-visible:ring-0 focus-visible:ring-offset-0"
-              rows={1}
-            />
-            
-            {/* Right side icons container */}
-            <div className="flex items-center gap-1">
-              {/* Voice Recording Icon */}
-              {isVoiceSupported && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleVoiceInput}
-                  disabled={isAnalyzing}
-                  className={`h-8 w-8 p-0 transition-all duration-300 hover:bg-slate-100 dark:hover:bg-slate-700 ${
-                    status === 'listening'
-                      ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20 animate-pulse shadow-lg shadow-blue-200 dark:shadow-blue-900/30 ring-2 ring-blue-300 dark:ring-blue-600' 
-                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-                  }`}
-                >
-                  {isListening ? (
-                    <MicOff className="h-4 w-4" />
-                  ) : (
-                    <Mic className="h-4 w-4" />
-                  )}
-                </Button>
-              )}
-              
-              {/* Send Button */}
-              <Button
-                type="submit"
-                size="sm"
-                disabled={!message.trim() || isAnalyzing || isListening}
-                className={`h-8 w-8 p-0 transition-all duration-300 rounded-full ${
-                  status === 'analyzing'
-                    ? 'bg-amber-500 hover:bg-amber-600 animate-pulse'
-                    : 'bg-blue-600 hover:bg-blue-700'
-                } disabled:bg-slate-300 dark:disabled:bg-slate-600`}
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Status Indicators */}
-          <div className="flex items-center justify-center gap-4 mt-3">
-            {status === 'analyzing' && (
-              <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
-                <div className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></div>
-                  <span>Alex is thinking...</span>
-                </div>
-              </div>
+    <div className="border-t border-slate-200/50 dark:border-slate-700/50 p-4 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm">
+      {selectedImage && (
+        <div className="mb-3 relative inline-block">
+          <img 
+            src={selectedImage} 
+            alt="Selected" 
+            className="max-w-32 max-h-32 rounded-lg border border-slate-200 dark:border-slate-700"
+          />
+          <Button
+            onClick={removeImage}
+            size="sm"
+            variant="destructive"
+            className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+          >
+            ×
+          </Button>
+        </div>
+      )}
+      
+      <div className="flex items-end gap-2">
+        <div className="flex gap-1">
+          <Button
+            onClick={handleMicClick}
+            size="sm"
+            variant="ghost"
+            className={`h-10 w-10 p-0 transition-all duration-300 ${
+              status === 'listening' 
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-lg shadow-blue-500/25 animate-pulse' 
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+            }`}
+            disabled={isInputDisabled}
+          >
+            {status === 'listening' ? (
+              <Square className="h-4 w-4" />
+            ) : (
+              <Mic className="h-4 w-4" />
             )}
-            
-            {status === 'listening' && (
-              <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400">
-                <div className="flex items-center gap-1">
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-                  <span>Listening... Speak naturally</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </form>
+          </Button>
+          
+          <Button
+            onClick={() => fileInputRef.current?.click()}
+            size="sm"
+            variant="ghost"
+            className="h-10 w-10 p-0 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+            disabled={isInputDisabled}
+          >
+            <Camera className="h-4 w-4" />
+          </Button>
+        </div>
 
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="hidden"
-        />
+        <div className={`flex-1 relative transition-all duration-300 ${
+          status === 'analyzing' 
+            ? 'ring-2 ring-amber-400/50 ring-offset-2 ring-offset-white dark:ring-offset-slate-900' 
+            : ''
+        }`}>
+          <Textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder={getPlaceholder()}
+            className="min-h-[2.5rem] max-h-32 resize-none border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-300"
+            disabled={isInputDisabled}
+          />
+        </div>
+
+        <Button
+          onClick={handleSend}
+          size="sm"
+          className={`h-10 w-10 p-0 transition-all duration-300 ${
+            status === 'analyzing'
+              ? 'bg-amber-500 hover:bg-amber-600 animate-pulse'
+              : 'bg-blue-600 hover:bg-blue-700'
+          }`}
+          disabled={isInputDisabled || (!message.trim() && !selectedImage)}
+        >
+          <Send className="h-4 w-4" />
+        </Button>
       </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="hidden"
+      />
     </div>
   );
 };
