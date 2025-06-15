@@ -38,6 +38,10 @@ const StyleAdvice = ({
   const [isCreatingVideo, setIsCreatingVideo] = useState(false);
   const [hasTriedAutoStart, setHasTriedAutoStart] = useState(false);
   
+  // Track the previous video mode to detect changes
+  const previousVideoModeRef = useRef<boolean>(isVideoMode);
+  const isEndingConversationRef = useRef<boolean>(false);
+  
   const { 
     createConversation, 
     endConversation, 
@@ -48,6 +52,62 @@ const StyleAdvice = ({
   } = useTavus();
 
   const temperature = 0.2;
+
+  // Function to safely end video conversation
+  const safeEndVideoConversation = async (conversationId: string | null = null) => {
+    const idToEnd = conversationId || currentConversationId;
+    
+    if (!idToEnd || isEndingConversationRef.current) {
+      console.log('🔄 No conversation to end or already ending');
+      return;
+    }
+
+    isEndingConversationRef.current = true;
+    console.log('🛑 Safely ending video conversation:', idToEnd);
+    
+    try {
+      await endConversation(idToEnd);
+      console.log('✅ Video conversation ended successfully');
+      
+      // Clear all video call state
+      setVideoConversationUrl(null);
+      setCurrentConversationId(null);
+      setCurrentConversation(null);
+      setHasTriedAutoStart(false);
+      
+      toast({
+        title: "Video chat ended",
+        description: "Your video conversation has been properly closed.",
+      });
+    } catch (error) {
+      console.error('❌ Failed to end video conversation:', error);
+      
+      toast({
+        title: "Warning",
+        description: "Failed to properly end video conversation. It may still be active.",
+        variant: "destructive",
+      });
+    } finally {
+      isEndingConversationRef.current = false;
+    }
+  };
+
+  // Watch for video mode changes and end conversation when switching to text mode
+  useEffect(() => {
+    console.log('=== VIDEO MODE CHANGE DETECTION ===');
+    console.log('Previous video mode:', previousVideoModeRef.current);
+    console.log('Current video mode:', isVideoMode);
+    console.log('Current conversation ID:', currentConversationId);
+
+    // If we're switching FROM video mode TO text mode and have an active conversation
+    if (previousVideoModeRef.current === true && isVideoMode === false && currentConversationId) {
+      console.log('🔄 Detected switch from video to text mode - ending conversation');
+      safeEndVideoConversation();
+    }
+    
+    // Update the ref for next comparison
+    previousVideoModeRef.current = isVideoMode;
+  }, [isVideoMode, currentConversationId]);
 
   // Auto-start video conversation when switching to video mode
   useEffect(() => {
@@ -79,13 +139,26 @@ const StyleAdvice = ({
     onVideoUrlChange?.(videoConversationUrl);
   }, [videoConversationUrl, onVideoUrlChange]);
 
-  // Handle switching from video to text mode - end conversation immediately
+  // Handle session changes - end any active conversations
   useEffect(() => {
-    if (!isVideoMode && currentConversationId) {
-      console.log('🔄 Switching to text mode - ending video conversation:', currentConversationId);
-      handleEndVideoCall();
-    }
-  }, [isVideoMode, currentConversationId]);
+    return () => {
+      // Cleanup on session change
+      if (currentConversationId) {
+        console.log('🧹 Session change detected - ending conversation:', currentConversationId);
+        safeEndVideoConversation();
+      }
+    };
+  }, [currentSessionId]);
+
+  // Handle component unmount - always end active conversations
+  useEffect(() => {
+    return () => {
+      if (currentConversationId) {
+        console.log('🧹 Component unmounting - ending conversation:', currentConversationId);
+        safeEndVideoConversation();
+      }
+    };
+  }, []);
 
   const handleStartVideoChat = async () => {
     if (isCreatingVideo || isCreatingConversation) {
@@ -176,37 +249,8 @@ const StyleAdvice = ({
   };
 
   const handleEndVideoCall = async () => {
-    console.log('🛑 Ending video call');
-    console.log('Current conversation ID:', currentConversationId);
-    
-    if (currentConversationId) {
-      console.log('🛑 Ending Tavus conversation:', currentConversationId);
-      try {
-        const result = await endConversation(currentConversationId);
-        console.log('✅ Tavus conversation ended successfully:', result);
-        
-        toast({
-          title: "Video chat ended",
-          description: "Your video conversation has been properly closed.",
-        });
-      } catch (error) {
-        console.error('❌ Failed to end Tavus conversation:', error);
-        
-        toast({
-          title: "Warning",
-          description: "Failed to properly end video conversation. It may still be active.",
-          variant: "destructive",
-        });
-      }
-    }
-    
-    // Clear all video call state
-    setVideoConversationUrl(null);
-    setCurrentConversationId(null);
-    setCurrentConversation(null);
-    setHasTriedAutoStart(false);
-    
-    console.log('🧹 Video call state cleared');
+    console.log('🛑 Manual end video call triggered');
+    await safeEndVideoConversation();
   };
 
   const handleRetryVideoChat = () => {
@@ -227,8 +271,8 @@ const StyleAdvice = ({
     
     // If switching to text mode and we have an active conversation, end it first
     if (!newVideoMode && currentConversationId) {
-      console.log('🛑 Switching to text mode - ending conversation:', currentConversationId);
-      await handleEndVideoCall();
+      console.log('🛑 Manual switch to text mode - ending conversation:', currentConversationId);
+      await safeEndVideoConversation();
     }
     
     // Then update the mode
