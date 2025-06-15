@@ -1,3 +1,4 @@
+
 import { useRef, useState, useEffect } from "react";
 import WebcamDisplay, { WebcamDisplayRef } from "@/components/WebcamDisplay";
 import StyleAdvice from "@/components/StyleAdvice";
@@ -9,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { PanelLeft, PanelLeftClose, Sparkles, Video, Camera, MessageSquare, Zap, Users, Brain } from "lucide-react";
+import { PanelLeft, PanelLeftClose, Sparkles, Camera, MessageSquare, Zap, Brain } from "lucide-react";
 import { useTavus } from "@/hooks/useTavus";
 
 interface Message {
@@ -42,12 +43,11 @@ const Index = ({
 }: IndexProps) => {
   const webcamRef = useRef<WebcamDisplayRef>(null);
   const [showChatHistory, setShowChatHistory] = useState(true);
-  const [isVideoMode, setIsVideoMode] = useState<boolean>(true); // Changed to true for video mode default
+  const [isVideoMode, setIsVideoMode] = useState<boolean>(true);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   
   const { endAllActiveConversations } = useTavus();
   
-  // Track previous session ID to detect changes
   const previousSessionIdRef = useRef<string | null>(currentSessionId);
 
   const handleCognitiveMessage = (message: string, image?: string | null, temperature: number = 0.5) => {
@@ -73,7 +73,6 @@ const Index = ({
   const handleSessionChange = async (sessionId: string | null) => {
     console.log('🔄 Session changing from', previousSessionIdRef.current, 'to', sessionId);
     
-    // If we're changing sessions and currently in video mode, end all conversations
     if (previousSessionIdRef.current !== sessionId && isVideoMode) {
       console.log('🛑 Session change detected - ending all active conversations');
       try {
@@ -92,7 +91,7 @@ const Index = ({
     console.log('🛑 Auth change detected - ending all active conversations');
     try {
       await endAllActiveConversations();
-      setIsVideoMode(true); // Keep video mode as default even after auth change
+      setIsVideoMode(true);
       setVideoConversationUrl(null);
     } catch (error) {
       console.error('Failed to end conversations on auth change:', error);
@@ -100,7 +99,6 @@ const Index = ({
     onAuthChange();
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (isVideoMode) {
@@ -149,38 +147,6 @@ const Index = ({
                   </p>
                 </div>
               </div>
-            </div>
-            
-            {/* Center - Mode Toggle */}
-            <div className="flex items-center gap-3 bg-gray-100/80 dark:bg-gray-800/80 p-2 rounded-xl">
-              <Button
-                variant={isVideoMode ? "default" : "ghost"}
-                size="sm"
-                onClick={() => handleVideoModeChange(true)}
-                disabled={isAnalyzing}
-                className={`flex items-center gap-2 h-12 px-6 text-sm font-medium rounded-xl transition-all duration-200 ${
-                  isVideoMode 
-                    ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg hover:shadow-xl' 
-                    : 'hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-300'
-                }`}
-              >
-                <Video className="h-5 w-5" />
-                Video Chat
-              </Button>
-              <Button
-                variant={!isVideoMode ? "default" : "ghost"}
-                size="sm"
-                onClick={() => handleVideoModeChange(false)}
-                disabled={isAnalyzing}
-                className={`flex items-center gap-2 h-12 px-6 text-sm font-medium rounded-xl transition-all duration-200 ${
-                  !isVideoMode 
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl' 
-                    : 'hover:bg-white/50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-300'
-                }`}
-              >
-                <MessageSquare className="h-5 w-5" />
-                Text Chat
-              </Button>
             </div>
             
             {/* Right Side */}
@@ -234,7 +200,7 @@ const Index = ({
                 </Card>
               </section>
             ) : (
-              /* Text Mode - Split Layout as shown in screenshot */
+              /* Text Mode - Split Layout */
               <>
                 {/* Camera Section - Main Area */}
                 <section className="flex-1 min-w-0 p-6">
@@ -263,7 +229,7 @@ const Index = ({
                   </Card>
                 </section>
                 
-                {/* Chat Panel - Right Side (as shown in screenshot) */}
+                {/* Chat Panel - Right Side */}
                 <section className="w-96 flex-shrink-0 p-6 pr-6">
                   <StyleAdvice 
                     messages={messages} 
