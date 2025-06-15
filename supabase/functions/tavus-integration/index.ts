@@ -78,9 +78,8 @@ serve(async (req) => {
 async function createConversation(data: any, apiKey: string) {
   console.log('=== CREATING TAVUS CONVERSATION ===');
   
-  // Updated to use the correct Tavus API structure
   const payload = {
-    replica_id: data.replica_id || "r4fa3e64f1",  // Updated default replica ID
+    replica_id: data.replica_id || "r4fa3e64f1",
     conversation_name: data.conversation_name || "Style Advice Session",
     conversational_context: data.conversational_context || "You are Alex, a sophisticated AI style advisor with advanced visual analysis capabilities. Provide personalized fashion advice, analyze outfits, and help users develop their personal style. Be friendly, knowledgeable, and visually perceptive. Help users understand colors, patterns, and styling techniques.",
     callback_url: data.callback_url,
@@ -100,7 +99,7 @@ async function createConversation(data: any, apiKey: string) {
     const response = await fetch('https://tavusapi.com/v2/conversations', {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,  // Tavus uses x-api-key header
+        'x-api-key': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload),
