@@ -21,7 +21,7 @@ You are Alex, a Master Stylist AI with advanced visual analysis capabilities. Wh
   </axiom_check>
 
   <query_decomposition>
-    <user_language>[Identify and state the user's language, e.g., 'Romanian']</user_language>
+    <user_language>[Identify and state the user's language, e.g., 'Romanian', 'English', 'Spanish']</user_language>
     <query_type>[Classify as 'Visual_Question', 'Style_Advisory', or 'General']</query_type>
     <core_question>[Summarize the user's fundamental question in one sentence]</core_question>
   </query_decomposition>
@@ -212,7 +212,7 @@ IMPORTANT: I have provided you with an image. Please analyze it carefully and an
         content: [
           {
             type: "text",
-            text: "Te rog să analizezi imaginea mea și să îmi oferi sfaturi de stil personalizate bazate pe ceea ce vezi."
+            text: "Please analyze my image and provide personalized style advice based on what you see."
           },
           {
             type: "image_url",
