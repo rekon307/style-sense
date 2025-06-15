@@ -4,7 +4,6 @@ import ChatHeader from "./chat/ChatHeader";
 import ChatMessages from "./chat/ChatMessages";
 import ChatInput from "./chat/ChatInput";
 import DailyVideoFrame from "./DailyVideoFrame";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useTavus } from "@/hooks/useTavus";
 import { toast } from "@/components/ui/use-toast";
 import { Message } from "@/types/chat";
@@ -32,10 +31,12 @@ const StyleAdvice = ({
   onVideoModeChange,
   onVideoUrlChange
 }: StyleAdviceProps) => {
-  const [temperature, setTemperature] = useState<number>(0.5);
   const [isVideoMode, setIsVideoMode] = useState<boolean>(true);
   const [videoConversationUrl, setVideoConversationUrl] = useState<string | null>(null);
   const { createConversation, isCreatingConversation, cleanupOldConversations } = useTavus();
+
+  // Fixed temperature for precise mode only
+  const temperature = 0.2;
 
   // Auto-start video chat when component mounts
   useEffect(() => {
@@ -134,41 +135,6 @@ const StyleAdvice = ({
         onVideoModeChange={handleVideoModeToggle}
         onStartVideoChat={handleStartVideoChat}
       />
-      
-      {/* Response Style - only show in text mode */}
-      {!isVideoMode && (
-        <div className="border-b border-gray-100 dark:border-gray-800 px-4 py-3 bg-white dark:bg-gray-900 flex-shrink-0">
-          <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">Response Style</div>
-          <ToggleGroup 
-            type="single" 
-            value={temperature.toString()} 
-            onValueChange={(value) => value && setTemperature(parseFloat(value))}
-            className="grid grid-cols-3 gap-2"
-          >
-            <ToggleGroupItem 
-              value="0.2" 
-              className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:border-blue-500"
-              variant="outline"
-            >
-              Precise
-            </ToggleGroupItem>
-            <ToggleGroupItem 
-              value="0.5" 
-              className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:border-blue-500"
-              variant="outline"
-            >
-              Balanced
-            </ToggleGroupItem>
-            <ToggleGroupItem 
-              value="0.8" 
-              className="text-xs px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 data-[state=on]:bg-blue-500 data-[state=on]:text-white data-[state=on]:border-blue-500"
-              variant="outline"
-            >
-              Creative
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-      )}
       
       {/* Content Area - only show text chat interface */}
       {!isVideoMode && (
